@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../data/models/class_item.dart';
 import '../../domain/services/ai_extraction_service.dart';
 import '../../state/upload_provider.dart';
+import '../review/review_screen.dart';
 import 'parsing_loader_screen.dart';
 import 'source_picker_sheet.dart';
 
@@ -89,9 +90,10 @@ class _UploadScreenState extends State<UploadScreen> {
       if (widget.onClassesExtracted != null) {
         widget.onClassesExtracted!(result);
       } else {
-        // Will route to Review screen in Flow 3
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Extracted ${result.length} classes')),
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ReviewScreen(initialClasses: result),
+          ),
         );
       }
     } else if (_provider.errorMessage != null) {
@@ -164,8 +166,10 @@ class _UploadScreenState extends State<UploadScreen> {
     if (widget.onManualEdit != null) {
       widget.onManualEdit!();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Proceeding to manual entry')),
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const ReviewScreen(initialClasses: []),
+        ),
       );
     }
   }

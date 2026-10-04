@@ -35,6 +35,9 @@ class SettingsRepository {
     return UserSettings.fromMap(maps.first);
   }
 
+  /// Alias for getSettings()
+  Future<UserSettings> getUserSettings() => getSettings();
+
   /// Updates user preferences.
   Future<void> updateSettings(UserSettings settings) async {
     final db = await _dbManager.database;
@@ -46,6 +49,9 @@ class SettingsRepository {
     );
     _settingsStreamController.add(settings);
   }
+
+  /// Alias for updateSettings()
+  Future<void> updateUserSettings(UserSettings settings) => updateSettings(settings);
 
   /// Retrieves current scan quota, resetting daily or weekly counts if rollover has occurred.
   Future<ScanQuota> getScanQuota({DateTime? now}) async {
