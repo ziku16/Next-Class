@@ -53,6 +53,9 @@ class SettingsRepository {
   /// Alias for updateSettings()
   Future<void> updateUserSettings(UserSettings settings) => updateSettings(settings);
 
+  /// Alias for updateSettings()
+  Future<void> saveUserSettings(UserSettings settings) => updateSettings(settings);
+
   /// Retrieves current scan quota, resetting daily or weekly counts if rollover has occurred.
   Future<ScanQuota> getScanQuota({DateTime? now}) async {
     final db = await _dbManager.database;
