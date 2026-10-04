@@ -1,57 +1,27 @@
 import 'package:flutter/material.dart';
-import '../shared/google_button.dart';
-import '../shared/nc_banner.dart';
-import '../shared/undo_snackbar.dart';
 import 'notification_explainer_screen.dart';
 
-/// Welcome onboarding screen presenting value proposition and Google authentication.
-class WelcomeScreen extends StatefulWidget {
-  final VoidCallback? onSignInSuccess;
+/// Welcome onboarding screen presenting value proposition and direct "Get started" entry.
+/// No login or signup required — users start immediately.
+class WelcomeScreen extends StatelessWidget {
+  final VoidCallback? onGetStarted;
+  final VoidCallback? onSignInSuccess; // Alias for backward compatibility
   final bool simulateCancel;
   final bool simulateOffline;
 
   const WelcomeScreen({
     super.key,
+    this.onGetStarted,
     this.onSignInSuccess,
     this.simulateCancel = false,
     this.simulateOffline = false,
   });
 
-  @override
-  State<WelcomeScreen> createState() => _WelcomeScreenState();
-}
-
-class _WelcomeScreenState extends State<WelcomeScreen> {
-  bool _isLoading = false;
-  String? _errorMessage;
-
-  Future<void> _handleGoogleSignIn() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    // Simulate authentication delay
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    if (!mounted) return;
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (widget.simulateCancel) {
-      _showCancelledMessage();
-      return;
-    }
-
-    if (widget.simulateOffline) {
-      _showOfflineError();
-      return;
-    }
-
-    if (widget.onSignInSuccess != null) {
-      widget.onSignInSuccess!();
+  void _handleGetStarted(BuildContext context) {
+    if (onGetStarted != null) {
+      onGetStarted!();
+    } else if (onSignInSuccess != null) {
+      onSignInSuccess!();
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -59,19 +29,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         ),
       );
     }
-  }
-
-  void _showCancelledMessage() {
-    UndoSnackBar.showMessage(
-      context,
-      message: 'Sign-in cancelled. Tap the button to try again.',
-    );
-  }
-
-  void _showOfflineError() {
-    setState(() {
-      _errorMessage = "Couldn't sign you in. Check your internet and try again.";
-    });
   }
 
   @override
@@ -133,33 +90,50 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       ),
 
                       const Spacer(),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
 
-                      // Optional error banner
-                      if (_errorMessage != null) ...[
-                        NcBanner(
-                          kind: NcBannerKind.error,
-                          message: _errorMessage!,
-                          onDismiss: () => setState(() => _errorMessage = null),
+                      // Direct "Get started" Action Button (No login/signup required)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: FilledButton(
+                          key: const Key('get_started_button'),
+                          onPressed: () => _handleGetStarted(context),
+                          style: FilledButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Get started',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: theme.colorScheme.onPrimary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 20,
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // Google Sign-In Button
-                      GoogleButton(
-                        isLoading: _isLoading,
-                        onPressed: _handleGoogleSignIn,
                       ),
                       const SizedBox(height: 16),
 
-                      // Disclaimer
+                      // Friendly Tagline
                       Center(
                         child: Text(
-                          "Chalo, let's get organised.\nBy continuing you agree to our Terms and Privacy Policy.",
+                          "Chalo, let's get organised.",
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.bodySmall?.copyWith(
+                          style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
-                            height: 1.4,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),

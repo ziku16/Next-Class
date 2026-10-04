@@ -49,32 +49,34 @@ void main() {
       await tester.pump(const Duration(milliseconds: 2000));
     });
 
-    testWidgets('WelcomeScreen renders 3 value rows and Google button', (tester) async {
+    testWidgets('WelcomeScreen renders 3 value rows and direct Get started button', (tester) async {
       await tester.pumpWidget(_wrap(const WelcomeScreen()));
 
       expect(find.text('Never miss a class\nor a quiz.'), findsOneWidget);
       expect(find.text('Snap a photo of your timetable'), findsOneWidget);
       expect(find.text('We find every class for you'), findsOneWidget);
       expect(find.text('Get reminded right on time'), findsOneWidget);
-      expect(find.text('Continue with Google'), findsOneWidget);
+      expect(find.text('Get started'), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_forward_rounded), findsOneWidget);
     });
 
-    testWidgets('WelcomeScreen: auth cancel shows SnackBar', (tester) async {
-      await tester.pumpWidget(_wrap(const WelcomeScreen(simulateCancel: true)));
+    testWidgets('WelcomeScreen: tapping Get started triggers callback', (tester) async {
+      bool started = false;
+      await tester.pumpWidget(_wrap(WelcomeScreen(onGetStarted: () => started = true)));
 
-      await tester.tap(find.text('Continue with Google'));
-      await tester.pump(const Duration(milliseconds: 700));
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
 
-      expect(find.text('Sign-in cancelled. Tap the button to try again.'), findsOneWidget);
+      expect(started, isTrue);
     });
 
-    testWidgets('WelcomeScreen: auth offline shows error banner', (tester) async {
-      await tester.pumpWidget(_wrap(const WelcomeScreen(simulateOffline: true)));
+    testWidgets('WelcomeScreen: tapping Get started navigates to NotificationExplainerScreen', (tester) async {
+      await tester.pumpWidget(_wrap(const WelcomeScreen()));
 
-      await tester.tap(find.text('Continue with Google'));
-      await tester.pump(const Duration(milliseconds: 700));
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
 
-      expect(find.text("Couldn't sign you in. Check your internet and try again."), findsOneWidget);
+      expect(find.byType(NotificationExplainerScreen), findsOneWidget);
     });
 
     testWidgets('NotificationExplainerScreen renders previews and action buttons', (tester) async {
