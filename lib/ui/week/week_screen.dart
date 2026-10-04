@@ -5,6 +5,7 @@ import '../../data/repositories/timetable_repository.dart';
 import '../home/app_bottom_nav.dart';
 import '../review/edit_class_sheet.dart';
 import '../shared/class_card.dart';
+import '../shared/offline_banner.dart';
 import 'class_detail_sheet.dart';
 import 'day_selector_strip.dart';
 
@@ -23,6 +24,7 @@ class WeekScreen extends StatefulWidget {
   final ValueChanged<ClassItem>? onAddQuizForClass;
   final VoidCallback? onOpenSettings;
   final VoidCallback? onUploadTimetable;
+  final bool? isOffline;
 
   const WeekScreen({
     super.key,
@@ -33,6 +35,7 @@ class WeekScreen extends StatefulWidget {
     this.onAddQuizForClass,
     this.onOpenSettings,
     this.onUploadTimetable,
+    this.isOffline,
   });
 
   @override
@@ -240,6 +243,9 @@ class _WeekScreenState extends State<WeekScreen> {
         top: false,
         child: Column(
           children: [
+            // Slim offline bar below status bar
+            OfflineBanner(isOffline: widget.isOffline),
+
             // Horizontal Day Selector Strip
             DaySelectorStrip(
               referenceDate: _referenceDate,

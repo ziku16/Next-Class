@@ -10,6 +10,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/timetable_repository.dart';
 import '../shared/class_card.dart';
 import '../shared/nc_banner.dart';
+import '../shared/offline_banner.dart';
 import 'app_bottom_nav.dart';
 import 'quizzes_preview_row.dart';
 import 'today_header.dart';
@@ -271,10 +272,10 @@ class _TodayScreenState extends State<TodayScreen> {
         child: Column(
           children: [
             // Slim offline bar docked below status bar
-            if (_isOffline)
-              NcBanner.offline(
-                onRetry: () => _initConnectivity(),
-              ),
+            OfflineBanner(
+              isOffline: _isOffline,
+              onRetry: () => _initConnectivity(),
+            ),
 
             // Reminders disabled banner
             if (!_remindersEnabled)

@@ -6,6 +6,7 @@ import '../../data/repositories/timetable_repository.dart';
 import '../../state/quiz_provider.dart';
 import '../home/app_bottom_nav.dart';
 import '../shared/nc_banner.dart';
+import '../shared/offline_banner.dart';
 import '../shared/undo_snackbar.dart';
 import 'add_edit_quiz_sheet.dart';
 import 'quiz_card.dart';
@@ -31,6 +32,7 @@ class QuizzesScreen extends StatefulWidget {
   final ValueChanged<int>? onNavigateToTab;
   final VoidCallback? onUploadTimetable;
   final VoidCallback? onOpenSettings;
+  final bool? isOffline;
 
   const QuizzesScreen({
     super.key,
@@ -43,6 +45,7 @@ class QuizzesScreen extends StatefulWidget {
     this.onNavigateToTab,
     this.onUploadTimetable,
     this.onOpenSettings,
+    this.isOffline,
   });
 
   @override
@@ -67,7 +70,9 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
         initialQuizzes: widget.initialQuizzes,
         initialClasses: widget.initialClasses,
       );
-      _provider.loadData();
+      if (widget.initialQuizzes == null) {
+        _provider.loadData();
+      }
     }
 
     _provider.addListener(_onProviderUpdate);
@@ -181,6 +186,9 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
         top: false,
         child: Column(
           children: [
+            // Slim offline bar below status bar
+            OfflineBanner(isOffline: widget.isOffline),
+
             // Timetable Guard Warning Banner if no classes exist
             if (!hasTimetable)
               Padding(

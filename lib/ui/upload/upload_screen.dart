@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../data/models/class_item.dart';
 import '../../domain/services/ai_extraction_service.dart';
+import '../../domain/services/connectivity_service.dart';
 import '../../state/upload_provider.dart';
 import '../review/review_screen.dart';
+import '../shared/offline_banner.dart';
 import 'parsing_loader_screen.dart';
 import 'source_picker_sheet.dart';
 
@@ -12,12 +15,14 @@ class UploadScreen extends StatefulWidget {
   final UploadProvider? uploadProvider;
   final ValueChanged<List<ClassItem>>? onClassesExtracted;
   final VoidCallback? onManualEdit;
+  final bool? isOffline;
 
   const UploadScreen({
     super.key,
     this.uploadProvider,
     this.onClassesExtracted,
     this.onManualEdit,
+    this.isOffline,
   });
 
   @override
@@ -27,12 +32,30 @@ class UploadScreen extends StatefulWidget {
 class _UploadScreenState extends State<UploadScreen> {
   late final UploadProvider _provider;
   final ImagePicker _picker = ImagePicker();
+  bool _isOffline = false;
+  StreamSubscription<bool>? _connectivitySubscription;
 
   @override
   void initState() {
     super.initState();
     _provider = widget.uploadProvider ?? UploadProvider();
     _provider.addListener(_onProviderUpdate);
+
+    _isOffline = widget.isOffline ?? ConnectivityService().isOffline;
+    if (widget.isOffline == null) {
+      _connectivitySubscription =
+          ConnectivityService().onConnectivityChanged.listen((offline) {
+        if (mounted) setState(() => _isOffline = offline);
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant UploadScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isOffline != oldWidget.isOffline && widget.isOffline != null) {
+      _isOffline = widget.isOffline!;
+    }
   }
 
   void _onProviderUpdate() {
@@ -41,6 +64,7 @@ class _UploadScreenState extends State<UploadScreen> {
 
   @override
   void dispose() {
+    _connectivitySubscription?.cancel();
     _provider.removeListener(_onProviderUpdate);
     super.dispose();
   }
@@ -189,11 +213,18 @@ class _UploadScreenState extends State<UploadScreen> {
         title: const Text('Upload timetable'),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: Column(
+          children: [
+            // Offline banner below status bar
+            OfflineBanner(isOffline: _isOffline),
+
+            // Scrollable Upload Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
               // Quota Banner Badge
               Container(
                 width: double.infinity,
@@ -392,11 +423,15 @@ class _UploadScreenState extends State<UploadScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: _provider.selectedImage != null
+                  onPressed: (_provider.selectedImage != null && !_isOffline)
                       ? () => _startExtraction()
                       : null,
                   icon: const Icon(Icons.auto_awesome, size: 20),
-                  label: const Text('Extract classes'),
+                  label: Text(
+                    _isOffline
+                        ? 'Offline — Extraction unavailable'
+                        : 'Extract classes',
+                  ),
                 ),
               ),
 
@@ -416,8 +451,11 @@ class _UploadScreenState extends State<UploadScreen> {
           ),
         ),
       ),
-    );
-  }
+    ],
+  ),
+),
+);
+}
 
   Widget _buildGuidelineRow(
     BuildContext context, {
