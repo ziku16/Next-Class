@@ -3,6 +3,7 @@ import '../../core/theme/next_class_colors.dart';
 import '../../data/models/scan_quota.dart';
 import '../../data/models/user_settings.dart';
 import '../../data/repositories/settings_repository.dart';
+import '../../domain/services/ai_extraction_service.dart';
 import '../../state/settings_provider.dart';
 import '../shared/confirmation_dialogs.dart';
 import 'reminder_picker_dialog.dart';
@@ -46,6 +47,8 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late final SettingsProvider _provider;
   bool _ownsProvider = false;
+  String? _geminiApiKey;
+  final AiExtractionService _aiService = const AiExtractionService();
 
   @override
   void initState() {
@@ -62,7 +65,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _provider.loadSettings();
     }
 
+    _loadApiKey();
     _provider.addListener(_onProviderUpdate);
+  }
+
+  Future<void> _loadApiKey() async {
+    final key = await _aiService.getApiKey();
+    if (mounted) {
+      setState(() => _geminiApiKey = key);
+    }
   }
 
   @override
@@ -109,6 +120,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (confirmed == true && mounted) {
       widget.onSignOut?.call();
     }
+  }
+
+  Future<void> _handleGeminiApiKeyDialog() async {
+    final controller = TextEditingController(text: _geminiApiKey ?? '');
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.auto_awesome, color: Colors.blueAccent),
+            SizedBox(width: 8),
+            Text('Gemini AI Scanner'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'NextClass uses Google Gemini Vision AI to read and extract classes from your timetable photo.\n\nGet a free API key from Google AI Studio (aistudio.google.com) and paste it below:',
+                style: TextStyle(fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'Gemini API Key',
+                  hintText: 'AIzaSy...',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.key_outlined),
+                ),
+                autocorrect: false,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          if (_geminiApiKey != null && _geminiApiKey!.isNotEmpty)
+            TextButton(
+              onPressed: () async {
+                await _aiService.setApiKey('');
+                await _loadApiKey();
+                if (ctx.mounted) Navigator.of(ctx).pop();
+              },
+              child: const Text('Clear Key', style: TextStyle(color: Colors.red)),
+            ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final newKey = controller.text.trim();
+              await _aiService.setApiKey(newKey);
+              await _loadApiKey();
+              if (ctx.mounted) Navigator.of(ctx).pop();
+            },
+            child: const Text('Save Key'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -424,6 +498,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: _handleUploadNewTimetable,
+                ),
+                const Divider(height: 1),
+
+                // Gemini AI Key Setting Tile
+                ListTile(
+                  key: const Key('gemini_api_key_tile'),
+                  leading: Icon(
+                    Icons.auto_awesome,
+                    color: theme.colorScheme.primary,
+                  ),
+                  title: Text(
+                    'AI Timetable Scanner',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    _geminiApiKey != null && _geminiApiKey!.isNotEmpty
+                        ? 'Google Gemini Vision AI connected'
+                        : 'Configure free Gemini API key',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _geminiApiKey != null && _geminiApiKey!.isNotEmpty
+                          ? theme.colorScheme.primaryContainer
+                          : theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _geminiApiKey != null && _geminiApiKey!.isNotEmpty
+                          ? 'Active'
+                          : 'Setup',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: _geminiApiKey != null && _geminiApiKey!.isNotEmpty
+                            ? theme.colorScheme.onPrimaryContainer
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  onTap: _handleGeminiApiKeyDialog,
                 ),
               ],
             ),

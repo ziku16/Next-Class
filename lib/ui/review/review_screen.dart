@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/models/class_item.dart';
 import '../../state/timetable_provider.dart';
+import '../main_navigation_screen.dart';
 import '../shared/class_card.dart';
 import '../shared/nc_banner.dart';
 import '../shared/undo_snackbar.dart';
@@ -69,7 +70,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
       if (widget.onSaved != null) {
         widget.onSaved!();
       } else {
-        Navigator.of(context).pop(true);
+        if (mounted) {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop(true);
+          } else {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+              (route) => false,
+            );
+          }
+        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

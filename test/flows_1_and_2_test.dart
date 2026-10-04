@@ -12,6 +12,7 @@ import 'package:nextclass/ui/onboarding/welcome_screen.dart';
 import 'package:nextclass/ui/upload/parsing_loader_screen.dart';
 import 'package:nextclass/ui/upload/source_picker_sheet.dart';
 import 'package:nextclass/ui/upload/upload_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Widget _wrap(Widget child) {
@@ -29,6 +30,7 @@ void main() {
   late SettingsRepository settingsRepo;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     dbManager = await AppDatabase.createInMemory();
     settingsRepo = SettingsRepository(dbManager: dbManager);
   });

@@ -37,12 +37,6 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-
-    packaging {
-        jniLibs {
-            keepDebugSymbols.add("**/*.so")
-        }
-    }
 }
 
 kotlin {

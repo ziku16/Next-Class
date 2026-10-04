@@ -47,8 +47,13 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
-# Documentation & design assets (PDF and all Markdown files)
+# Documentation & design assets
 *.pdf
 *.md
 **/*.md
+
+# Android package artifacts
+*.apk
+*.aab
+/NextClass*.apk
 

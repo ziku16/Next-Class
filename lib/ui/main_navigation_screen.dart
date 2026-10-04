@@ -140,7 +140,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             MaterialPageRoute(
               builder: (_) => ReviewScreen(
                 initialClasses: classes,
-                onSaved: () => setState(() {}),
+                onSaved: () {
+                  Navigator.of(context).pop();
+                  setState(() {});
+                },
               ),
             ),
           );
