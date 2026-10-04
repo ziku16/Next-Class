@@ -378,6 +378,18 @@ class ClassCard extends StatelessWidget {
 
       case ClassCardState.next:
         final min = minutesUntilNext ?? 25;
+        final String timeText;
+        if (min < 60) {
+          timeText = 'in $min min';
+        } else {
+          final hours = min ~/ 60;
+          final remainingMinutes = min % 60;
+          if (remainingMinutes == 0) {
+            timeText = 'in ${hours}h';
+          } else {
+            timeText = 'in ${hours}h ${remainingMinutes}m';
+          }
+        }
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
@@ -394,7 +406,7 @@ class ClassCard extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                'in $min min',
+                timeText,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onSecondaryContainer,
                   fontWeight: FontWeight.w700,

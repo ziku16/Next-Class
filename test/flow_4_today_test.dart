@@ -223,7 +223,7 @@ void main() {
 
       // Upcoming card (Chemistry Lab, starts at 11:00)
       expect(find.text('Chemistry Lab'), findsOneWidget);
-      expect(find.text('in 75 min'), findsOneWidget);
+      expect(find.text('in 1h 15m'), findsOneWidget);
     });
   });
 

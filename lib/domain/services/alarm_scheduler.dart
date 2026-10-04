@@ -156,16 +156,28 @@ class AlarmScheduler {
     final ref = now ?? DateTime.now();
 
     final parts = settings.quizReminderTime.split(':');
-    final targetHour = int.tryParse(parts[0]) ?? 20;
-    final targetMinute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+    final defaultHour = int.tryParse(parts[0]) ?? 20;
+    final defaultMinute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
 
     for (final quiz in quizzes) {
       if (quiz.isCompleted) continue;
+
+      int targetHour = defaultHour;
+      int targetMinute = defaultMinute;
+      if (quiz.reminderTime != null && quiz.reminderTime!.isNotEmpty) {
+        final p = quiz.reminderTime!.split(':');
+        targetHour = int.tryParse(p[0]) ?? defaultHour;
+        targetMinute = p.length > 1 ? (int.tryParse(p[1]) ?? 0) : 0;
+      } else if (quiz.reminderType == 'morning_of') {
+        targetHour = 8;
+        targetMinute = 0;
+      }
 
       final reminderDateTime = calculateQuizReminderDateTime(
         dueDate: quiz.dueDate,
         reminderHour: targetHour,
         reminderMinute: targetMinute,
+        reminderType: quiz.reminderType,
       );
 
       // Only schedule if reminder is in the future
@@ -184,6 +196,8 @@ class AlarmScheduler {
           formattedDate: formattedDue,
           note: quiz.note,
           scheduledDate: scheduledTZ,
+          isDayOf: quiz.reminderType == 'morning_of' ||
+              quiz.reminderType == 'day_of',
         );
       }
     }
@@ -208,13 +222,23 @@ class AlarmScheduler {
 
   // --- Date / Time Computations ---
 
-  /// Computes the evening-before reminder date and time for a quiz
+  /// Computes reminder date and time for a quiz (morning-of or evening-before)
   DateTime calculateQuizReminderDateTime({
     required DateTime dueDate,
     required int reminderHour,
     required int reminderMinute,
+    String? reminderType,
   }) {
-    // 1 day before due date
+    if (reminderType == 'morning_of' || reminderType == 'day_of') {
+      return DateTime(
+        dueDate.year,
+        dueDate.month,
+        dueDate.day,
+        reminderHour,
+        reminderMinute,
+      );
+    }
+    // Default to 1 day before due date (evening-before)
     return DateTime(
       dueDate.year,
       dueDate.month,

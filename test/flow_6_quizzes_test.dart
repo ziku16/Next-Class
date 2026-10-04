@@ -444,7 +444,7 @@ void main() {
 
       // Verify reminder notice is visible
       expect(
-        find.text("We'll remind you at 8:00 PM the evening before this quiz."),
+        find.text('Night before quiz at 8:00 PM'),
         findsOneWidget,
       );
 

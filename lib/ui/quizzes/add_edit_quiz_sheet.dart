@@ -3,7 +3,9 @@ import 'package:intl/intl.dart';
 import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 import '../../data/models/quiz_item.dart';
+import '../../data/repositories/quiz_repository.dart';
 import '../../data/repositories/timetable_repository.dart';
+import '../../domain/services/alarm_scheduler.dart';
 import '../../state/quiz_provider.dart';
 import '../shared/nc_banner.dart';
 
@@ -83,6 +85,10 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
   late DateTime _selectedDate;
   bool _isSaving = false;
 
+  late String _reminderType;
+  late TimeOfDay _reminderTime;
+  String _customDay = 'day_of';
+
   @override
   void initState() {
     super.initState();
@@ -97,7 +103,50 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
 
     _selectedClassId = widget.initialQuiz?.classId ?? widget.preselectedClassId;
 
+    final initialReminderType =
+        widget.initialQuiz?.reminderType ?? 'evening_before';
+    _reminderType = (initialReminderType == 'morning_of' ||
+            initialReminderType == 'day_of')
+        ? 'morning_of'
+        : (initialReminderType == 'custom' ? 'custom' : 'evening_before');
+    if (initialReminderType == 'day_of') {
+      _customDay = 'day_of';
+    }
+
+    if (widget.initialQuiz?.reminderTime != null &&
+        widget.initialQuiz!.reminderTime!.isNotEmpty) {
+      final parts = widget.initialQuiz!.reminderTime!.split(':');
+      final hour = int.tryParse(parts[0]) ?? 20;
+      final minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+      _reminderTime = TimeOfDay(hour: hour, minute: minute);
+    } else {
+      _reminderTime = _reminderType == 'morning_of'
+          ? const TimeOfDay(hour: 8, minute: 0)
+          : const TimeOfDay(hour: 20, minute: 0);
+    }
+
     _resolveClasses();
+  }
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour = time.hour;
+    final minute = time.minute;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    final displayMinute = minute.toString().padLeft(2, '0');
+    return '$displayHour:$displayMinute $period';
+  }
+
+  Future<void> _pickReminderTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _reminderTime,
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _reminderTime = picked;
+      });
+    }
   }
 
   @override
@@ -180,6 +229,11 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
 
     setState(() => _isSaving = true);
 
+    final timeStr =
+        '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}';
+    final effectiveReminderType =
+        _reminderType == 'custom' ? _customDay : _reminderType;
+
     final quiz = QuizItem(
       id: widget.initialQuiz?.id ??
           'q_${DateTime.now().millisecondsSinceEpoch}',
@@ -191,6 +245,8 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
           ? _noteController.text.trim()
           : null,
       isCompleted: widget.initialQuiz?.isCompleted ?? false,
+      reminderTime: timeStr,
+      reminderType: effectiveReminderType,
     );
 
     try {
@@ -200,6 +256,16 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
         } else {
           await widget.quizProvider!.addQuiz(quiz);
         }
+      } else if (widget.timetableRepository != null) {
+        try {
+          final repo = QuizRepository();
+          if (widget.initialQuiz != null) {
+            await repo.updateQuiz(quiz);
+          } else {
+            await repo.insertQuiz(quiz);
+          }
+          await AlarmScheduler().rescheduleAll();
+        } catch (_) {}
       }
 
       widget.onSaved?.call(quiz);
@@ -511,35 +577,181 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Evening-Before Reminder Note
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
+                      // Reminder Timing Section
+                      Text(
+                        'Reminder Time',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onSurface,
                         ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.tertiaryContainer
-                              .withValues(alpha: 0.35),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.notifications_active_outlined,
-                              size: 18,
-                              color: theme.colorScheme.tertiary,
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Segmented Button: Night before, Morning of quiz, Specific time
+                      SizedBox(
+                        width: double.infinity,
+                        child: SegmentedButton<String>(
+                          key: const Key('quiz_reminder_type_segmented'),
+                          showSelectedIcon: false,
+                          segments: const [
+                            ButtonSegment<String>(
+                              value: 'evening_before',
+                              label: Text('Night before'),
+                              icon: Icon(Icons.nights_stay_rounded, size: 16),
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                "We'll remind you at 8:00 PM the evening before this quiz.",
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onTertiaryContainer,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                            ButtonSegment<String>(
+                              value: 'morning_of',
+                              label: Text('Morning'),
+                              icon: Icon(Icons.wb_sunny_rounded, size: 16),
+                            ),
+                            ButtonSegment<String>(
+                              value: 'custom',
+                              label: Text('Specific time'),
+                              icon: Icon(Icons.access_time_filled_rounded,
+                                  size: 16),
                             ),
                           ],
+                          selected: {_reminderType},
+                          onSelectionChanged: (Set<String> newSelection) {
+                            setState(() {
+                              _reminderType = newSelection.first;
+                              if (_reminderType == 'morning_of') {
+                                _reminderTime =
+                                    const TimeOfDay(hour: 8, minute: 0);
+                              } else if (_reminderType == 'evening_before') {
+                                _reminderTime =
+                                    const TimeOfDay(hour: 20, minute: 0);
+                              }
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // If Specific time chosen, show toggle for Day of Quiz vs Night Before
+                      if (_reminderType == 'custom') ...[
+                        Row(
+                          children: [
+                            Text(
+                              'Remind on:',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            ChoiceChip(
+                              label: const Text('Day of quiz'),
+                              selected: _customDay == 'day_of',
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setState(() => _customDay = 'day_of');
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            ChoiceChip(
+                              label: const Text('Night before'),
+                              selected: _customDay == 'evening_before',
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setState(() => _customDay = 'evening_before');
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+
+                      // Interactive Reminder Time Card with Edit Button
+                      InkWell(
+                        key: const Key('quiz_reminder_time_picker_button'),
+                        onTap: _pickReminderTime,
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.tertiaryContainer
+                                .withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: theme.colorScheme.tertiary
+                                  .withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.notifications_active_outlined,
+                                size: 20,
+                                color: theme.colorScheme.tertiary,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _reminderType == 'morning_of'
+                                          ? 'Morning of quiz at ${_formatTimeOfDay(_reminderTime)}'
+                                          : (_reminderType == 'evening_before'
+                                              ? 'Night before quiz at ${_formatTimeOfDay(_reminderTime)}'
+                                              : 'Reminder set for ${_formatTimeOfDay(_reminderTime)} (${_customDay == 'day_of' ? 'Day of quiz' : 'Night before'})'),
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme
+                                            .colorScheme.onTertiaryContainer,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Tap to change time',
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color: theme
+                                            .colorScheme.onTertiaryContainer
+                                            .withValues(alpha: 0.8),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: theme.colorScheme.outlineVariant,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _formatTimeOfDay(_reminderTime),
+                                      style:
+                                          theme.textTheme.labelMedium?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: theme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(Icons.edit_outlined,
+                                        size: 14,
+                                        color: theme.colorScheme.primary),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),

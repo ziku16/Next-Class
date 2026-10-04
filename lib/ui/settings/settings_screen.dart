@@ -3,6 +3,8 @@ import '../../core/theme/next_class_colors.dart';
 import '../../data/models/scan_quota.dart';
 import '../../data/models/user_settings.dart';
 import '../../data/repositories/settings_repository.dart';
+import '../../domain/services/alarm_scheduler.dart';
+import '../../domain/services/notification_service.dart';
 import '../../state/settings_provider.dart';
 import '../shared/confirmation_dialogs.dart';
 import 'reminder_picker_dialog.dart';
@@ -338,7 +340,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   value: _provider.notificationsEnabled,
-                  onChanged: (val) => _provider.toggleNotifications(val),
+                  onChanged: (val) async {
+                    if (val) {
+                      final granted =
+                          await NotificationService().requestPermissions();
+                      _provider.toggleNotifications(granted);
+                      if (granted) {
+                        await AlarmScheduler().rescheduleAll();
+                      }
+                    } else {
+                      _provider.toggleNotifications(false);
+                      await NotificationService().cancelAll();
+                    }
+                  },
                 ),
 
                 // Exact Alarms Warning Tile (shown if permission missing)
@@ -370,7 +384,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           visualDensity: VisualDensity.compact,
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                         ),
-                        onPressed: () => _provider.setExactAlarmsGranted(true),
+                        onPressed: () {
+                          _provider.setExactAlarmsGranted(true);
+                          NotificationService().requestExactAlarmsPermission();
+                        },
                         child: const Text('Fix'),
                       ),
                     ),

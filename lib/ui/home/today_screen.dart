@@ -8,6 +8,7 @@ import '../../data/models/user_settings.dart';
 import '../../data/repositories/quiz_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/timetable_repository.dart';
+import '../../state/quiz_provider.dart';
 import '../shared/class_card.dart';
 import '../shared/nc_banner.dart';
 import '../shared/offline_banner.dart';
@@ -26,6 +27,7 @@ class TodayScreen extends StatefulWidget {
   final TimetableRepository? timetableRepository;
   final QuizRepository? quizRepository;
   final SettingsRepository? settingsRepository;
+  final QuizProvider? quizProvider;
 
   final DateTime? currentTime;
   final bool? isOffline;
@@ -46,6 +48,7 @@ class TodayScreen extends StatefulWidget {
     this.timetableRepository,
     this.quizRepository,
     this.settingsRepository,
+    this.quizProvider,
     this.currentTime,
     this.isOffline,
     this.remindersEnabled,
@@ -98,7 +101,10 @@ class _TodayScreenState extends State<TodayScreen> {
       _isLoading = false;
     }
 
-    if (widget.initialQuizzes != null) {
+    if (widget.quizProvider != null) {
+      _upcomingQuizzes = widget.quizProvider!.quizzes;
+      widget.quizProvider!.addListener(_onQuizProviderUpdated);
+    } else if (widget.initialQuizzes != null) {
       _upcomingQuizzes = widget.initialQuizzes!;
     }
 
@@ -118,10 +124,19 @@ class _TodayScreenState extends State<TodayScreen> {
     _initConnectivity();
   }
 
+  void _onQuizProviderUpdated() {
+    if (mounted && widget.quizProvider != null) {
+      setState(() {
+        _upcomingQuizzes = widget.quizProvider!.quizzes;
+      });
+    }
+  }
+
   @override
   void didUpdateWidget(covariant TodayScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.currentTime != oldWidget.currentTime && widget.currentTime != null) {
+    if (widget.currentTime != oldWidget.currentTime &&
+        widget.currentTime != null) {
       _now = widget.currentTime!;
       _filterTodayClasses();
     }
@@ -137,7 +152,13 @@ class _TodayScreenState extends State<TodayScreen> {
       _allClasses = widget.initialClasses!;
       _filterTodayClasses();
     }
-    if (widget.initialQuizzes != oldWidget.initialQuizzes &&
+    if (widget.quizProvider != oldWidget.quizProvider) {
+      oldWidget.quizProvider?.removeListener(_onQuizProviderUpdated);
+      widget.quizProvider?.addListener(_onQuizProviderUpdated);
+      if (widget.quizProvider != null) {
+        _upcomingQuizzes = widget.quizProvider!.quizzes;
+      }
+    } else if (widget.initialQuizzes != oldWidget.initialQuizzes &&
         widget.initialQuizzes != null) {
       _upcomingQuizzes = widget.initialQuizzes!;
     }
@@ -145,6 +166,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
   @override
   void dispose() {
+    widget.quizProvider?.removeListener(_onQuizProviderUpdated);
     _minuteTicker?.cancel();
     _connectivitySubscription?.cancel();
     super.dispose();
@@ -180,7 +202,9 @@ class _TodayScreenState extends State<TodayScreen> {
         _filterTodayClasses();
       }
 
-      if (widget.initialQuizzes == null) {
+      if (widget.quizProvider != null) {
+        _upcomingQuizzes = widget.quizProvider!.quizzes;
+      } else if (widget.initialQuizzes == null) {
         final quizzes =
             await _quizRepo.getUpcomingQuizzes(referenceDate: _now);
         _upcomingQuizzes = quizzes;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/next_class_colors.dart';
+import '../../domain/services/notification_service.dart';
 import '../upload/upload_screen.dart';
 
 /// Step 2 of Onboarding: Explains notification value before prompting system permissions.
@@ -7,6 +8,15 @@ class NotificationExplainerScreen extends StatelessWidget {
   final VoidCallback? onComplete;
 
   const NotificationExplainerScreen({super.key, this.onComplete});
+
+  void _handleAllow(BuildContext context) {
+    try {
+      NotificationService().initialize().then((_) {
+        NotificationService().requestPermissions();
+      });
+    } catch (_) {}
+    _proceed(context);
+  }
 
   void _proceed(BuildContext context) {
     if (onComplete != null) {
@@ -42,7 +52,7 @@ class NotificationExplainerScreen extends StatelessWidget {
         centerTitle: false,
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,14 +66,23 @@ class NotificationExplainerScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                "We'll remind you before each class and the evening before each quiz. That's all, no spam.",
+                "NextClass sends 2 types of reminders: before each class and for upcoming quizzes. That's all, zero spam.",
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
-              // Mock Notification Card 1: Class Reminder
+              // Type 1: Class Reminder
+              Text(
+                '1. CLASS REMINDERS',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  letterSpacing: 1.1,
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 6),
               _buildNotificationPreviewCard(
                 context,
                 icon: Icons.calendar_month_outlined,
@@ -74,7 +93,16 @@ class NotificationExplainerScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Mock Notification Card 2: Quiz Reminder
+              // Type 2: Quiz Reminder
+              Text(
+                '2. QUIZ REMINDERS',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  letterSpacing: 1.1,
+                  fontWeight: FontWeight.w800,
+                  color: ncColors.quiz,
+                ),
+              ),
+              const SizedBox(height: 6),
               _buildNotificationPreviewCard(
                 context,
                 icon: Icons.quiz_outlined,
@@ -84,13 +112,14 @@ class NotificationExplainerScreen extends StatelessWidget {
                 body: 'Fri, 3 Oct · Bring a calculator',
               ),
 
-              const Spacer(),
+              const SizedBox(height: 32),
 
               // Primary Action: Allow reminders
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () => _proceed(context),
+                  key: const Key('allow_notifications_button'),
+                  onPressed: () => _handleAllow(context),
                   child: const Text('Allow reminders'),
                 ),
               ),

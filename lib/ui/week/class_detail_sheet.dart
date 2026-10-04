@@ -191,13 +191,21 @@ class ClassDetailSheet extends StatelessWidget {
                               color: theme.colorScheme.onSecondaryContainer,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              'in ${minutesUntilNext ?? 25} min',
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: theme.colorScheme.onSecondaryContainer,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                            () {
+                              final nextMin = minutesUntilNext ?? 25;
+                              final String timeUntilText = nextMin < 60
+                                  ? 'in $nextMin min'
+                                  : (nextMin % 60 == 0
+                                      ? 'in ${nextMin ~/ 60}h'
+                                      : 'in ${nextMin ~/ 60}h ${nextMin % 60}m');
+                              return Text(
+                                timeUntilText,
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: theme.colorScheme.onSecondaryContainer,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              );
+                            }(),
                           ],
                         ),
                       ),

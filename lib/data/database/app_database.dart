@@ -23,9 +23,10 @@ class AppDatabase {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onConfigure: _onConfigure,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -34,11 +35,23 @@ class AppDatabase {
     final dbManager = AppDatabase._internal();
     _database = await openDatabase(
       inMemoryDatabasePath,
-      version: 1,
+      version: 2,
       onConfigure: dbManager._onConfigure,
       onCreate: dbManager._onCreate,
+      onUpgrade: dbManager._onUpgrade,
     );
     return dbManager;
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      try {
+        await db.execute('ALTER TABLE quizzes ADD COLUMN reminderTime TEXT;');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE quizzes ADD COLUMN reminderType TEXT;');
+      } catch (_) {}
+    }
   }
 
   Future<void> _onConfigure(Database db) async {
@@ -70,6 +83,8 @@ class AppDatabase {
         dueDate TEXT NOT NULL,
         note TEXT,
         isCompleted INTEGER NOT NULL DEFAULT 0,
+        reminderTime TEXT,
+        reminderType TEXT,
         FOREIGN KEY (classId) REFERENCES classes(id) ON DELETE CASCADE
       )
     ''');

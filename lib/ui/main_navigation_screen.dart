@@ -3,6 +3,8 @@ import '../data/models/class_item.dart';
 import '../data/repositories/quiz_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/timetable_repository.dart';
+import '../domain/services/notification_service.dart';
+import '../state/quiz_provider.dart';
 import 'home/today_screen.dart';
 import 'quizzes/add_edit_quiz_sheet.dart';
 import 'quizzes/quizzes_screen.dart';
@@ -39,6 +41,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late final TimetableRepository _timetableRepo;
   late final QuizRepository _quizRepo;
   late final SettingsRepository _settingsRepo;
+  late final QuizProvider _quizProvider;
 
   @override
   void initState() {
@@ -47,6 +50,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _timetableRepo = widget.timetableRepository ?? TimetableRepository();
     _quizRepo = widget.quizRepository ?? QuizRepository();
     _settingsRepo = widget.settingsRepository ?? SettingsRepository();
+    _quizProvider = QuizProvider(
+      quizRepository: _quizRepo,
+      timetableRepository: _timetableRepo,
+    );
+    _quizProvider.loadData();
+    _initNotifications();
+  }
+
+  Future<void> _initNotifications() async {
+    try {
+      await NotificationService().initialize();
+    } catch (_) {}
   }
 
   void _onTabSelected(int index) {
@@ -123,6 +138,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       preselectedClassId: classItem?.id,
       classes: classes,
       timetableRepository: _timetableRepo,
+      quizProvider: _quizProvider,
       onUploadTimetable: _openUpload,
       onSaved: (_) => setState(() {}),
     );
@@ -162,6 +178,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           timetableRepository: _timetableRepo,
           quizRepository: _quizRepo,
           settingsRepository: _settingsRepo,
+          quizProvider: _quizProvider,
           onNavigateToTab: _onTabSelected,
           onOpenSettings: _openSettings,
           onUploadTimetable: _openUpload,
@@ -178,6 +195,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ),
         QuizzesScreen(
           key: const PageStorageKey('tab_quizzes'),
+          quizProvider: _quizProvider,
           quizRepository: _quizRepo,
           timetableRepository: _timetableRepo,
           onNavigateToTab: _onTabSelected,

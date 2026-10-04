@@ -14,6 +14,8 @@ class QuizItem {
   final DateTime dueDate;
   final String? note;
   final bool isCompleted;
+  final String? reminderTime; // e.g. '20:00', '08:00'
+  final String? reminderType; // 'evening_before', 'morning_of', 'custom'
 
   const QuizItem({
     required this.id,
@@ -23,6 +25,8 @@ class QuizItem {
     required this.dueDate,
     this.note,
     this.isCompleted = false,
+    this.reminderTime,
+    this.reminderType,
   });
 
   /// Calculates number of calendar days between referenceDate and dueDate.
@@ -63,6 +67,8 @@ class QuizItem {
     DateTime? dueDate,
     String? note,
     bool? isCompleted,
+    String? reminderTime,
+    String? reminderType,
   }) {
     return QuizItem(
       id: id ?? this.id,
@@ -72,6 +78,8 @@ class QuizItem {
       dueDate: dueDate ?? this.dueDate,
       note: note ?? this.note,
       isCompleted: isCompleted ?? this.isCompleted,
+      reminderTime: reminderTime ?? this.reminderTime,
+      reminderType: reminderType ?? this.reminderType,
     );
   }
 
@@ -84,6 +92,8 @@ class QuizItem {
       'dueDate': dueDate.toIso8601String(),
       'note': note,
       'isCompleted': isCompleted ? 1 : 0,
+      'reminderTime': reminderTime,
+      'reminderType': reminderType,
     };
   }
 
@@ -96,6 +106,8 @@ class QuizItem {
       dueDate: DateTime.parse(map['dueDate'] as String),
       note: map['note'] as String?,
       isCompleted: (map['isCompleted'] as int? ?? 0) == 1,
+      reminderTime: map['reminderTime'] as String?,
+      reminderType: map['reminderType'] as String?,
     );
   }
 
@@ -110,7 +122,9 @@ class QuizItem {
           title == other.title &&
           dueDate == other.dueDate &&
           note == other.note &&
-          isCompleted == other.isCompleted;
+          isCompleted == other.isCompleted &&
+          reminderTime == other.reminderTime &&
+          reminderType == other.reminderType;
 
   @override
   int get hashCode =>
@@ -120,7 +134,9 @@ class QuizItem {
       title.hashCode ^
       dueDate.hashCode ^
       note.hashCode ^
-      isCompleted.hashCode;
+      isCompleted.hashCode ^
+      reminderTime.hashCode ^
+      reminderType.hashCode;
 
   @override
   String toString() {

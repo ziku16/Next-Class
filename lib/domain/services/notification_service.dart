@@ -143,15 +143,32 @@ class NotificationService {
     return true;
   }
 
+  /// Requests exact alarms permission on Android 12+ (API 31+)
+  Future<bool> requestExactAlarmsPermission() async {
+    try {
+      final androidPlatform = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlatform != null) {
+        final granted = await androidPlatform.requestExactAlarmsPermission();
+        return granted ?? false;
+      }
+    } catch (_) {}
+    return true;
+  }
+
   /// Checks if exact alarms are permitted (Android 12+)
   Future<bool> checkExactAlarmPermission() async {
-    final androidPlatform = _notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    if (androidPlatform != null) {
-      final canSchedule = await androidPlatform.canScheduleExactNotifications();
-      return canSchedule ?? true;
-    }
+    try {
+      final androidPlatform = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlatform != null) {
+        final canSchedule =
+            await androidPlatform.canScheduleExactNotifications();
+        return canSchedule ?? true;
+      }
+    } catch (_) {}
     return true;
   }
 
@@ -249,21 +266,29 @@ class NotificationService {
     required String formattedDate,
     String? note,
     required tz.TZDateTime scheduledDate,
+    bool isDayOf = false,
   }) async {
     // Collapsed Content
-    final collapsedTitle = 'Quiz tomorrow: $subject';
-    final collapsedBody = 'Quiz tomorrow: $subject — $title';
+    final collapsedTitle =
+        isDayOf ? 'Quiz today: $subject' : 'Quiz tomorrow: $subject';
+    final collapsedBody = isDayOf
+        ? 'Quiz today: $subject — $title'
+        : 'Quiz tomorrow: $subject — $title';
 
     // Expanded Content
     final noteSuffix = (note != null && note.isNotEmpty) ? ' · $note' : '';
-    final bigText = '$formattedDate$noteSuffix | Chalo, revise tonight!';
+    final bigText = isDayOf
+        ? '$formattedDate$noteSuffix | Best of luck on your quiz!'
+        : '$formattedDate$noteSuffix | Chalo, revise tonight!';
 
     final bigTextStyle = BigTextStyleInformation(
       bigText,
       htmlFormatBigText: false,
-      contentTitle: 'Quiz tomorrow: $subject — $title',
+      contentTitle: isDayOf
+          ? 'Quiz today: $subject — $title'
+          : 'Quiz tomorrow: $subject — $title',
       htmlFormatContentTitle: false,
-      summaryText: 'Quiz Tomorrow',
+      summaryText: isDayOf ? 'Quiz Today' : 'Quiz Tomorrow',
       htmlFormatSummaryText: false,
     );
 

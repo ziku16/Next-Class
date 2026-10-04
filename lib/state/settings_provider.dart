@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../data/models/scan_quota.dart';
 import '../data/models/user_settings.dart';
 import '../data/repositories/settings_repository.dart';
+import '../domain/services/notification_service.dart';
 
 /// State management for NextClass User Settings & Reminders (Flows 7 & 8).
 /// Manages:
@@ -55,8 +56,19 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final loadedSettings = await _repo.getUserSettings();
+      var loadedSettings = await _repo.getUserSettings();
       final loadedQuota = await _repo.getScanQuota();
+
+      try {
+        final exactGranted =
+            await NotificationService().checkExactAlarmPermission();
+        if (exactGranted != loadedSettings.exactAlarmsGranted) {
+          loadedSettings =
+              loadedSettings.copyWith(exactAlarmsGranted: exactGranted);
+          await _repo.updateUserSettings(loadedSettings);
+        }
+      } catch (_) {}
+
       _settings = loadedSettings;
       _quota = loadedQuota;
       _isLoading = false;

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/theme/next_class_colors.dart';
+import '../../data/repositories/timetable_repository.dart';
+import '../main_navigation_screen.dart';
 import 'welcome_screen.dart';
 
 /// Minimalist splash screen displaying the NextClass Forward Calendar brand icon.
@@ -37,17 +39,27 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    _timer = Timer(const Duration(milliseconds: 1600), () {
+    _timer = Timer(const Duration(milliseconds: 1600), () async {
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (_, _, _) =>
-                widget.nextDestination ?? const WelcomeScreen(),
-            transitionsBuilder: (_, animation, _, child) =>
-                FadeTransition(opacity: animation, child: child),
-            transitionDuration: const Duration(milliseconds: 300),
-          ),
-        );
+        Widget destination = widget.nextDestination ?? const WelcomeScreen();
+        if (widget.nextDestination == null) {
+          try {
+            final classes = await TimetableRepository().getAllClasses();
+            if (classes.isNotEmpty) {
+              destination = const MainNavigationScreen();
+            }
+          } catch (_) {}
+        }
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (_, _, _) => destination,
+              transitionsBuilder: (_, animation, _, child) =>
+                  FadeTransition(opacity: animation, child: child),
+              transitionDuration: const Duration(milliseconds: 300),
+            ),
+          );
+        }
       }
     });
   }

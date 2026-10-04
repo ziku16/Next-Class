@@ -50,6 +50,9 @@ class QuizProvider extends ChangeNotifier {
   /// True if user has at least one class in their timetable
   bool get hasTimetableClasses => _classes.isNotEmpty;
 
+  /// Alias for activeQuizzes
+  List<QuizItem> get quizzes => activeQuizzes;
+
   /// Retrieves active quizzes from today onward that are not completed, ordered by due date ASC
   List<QuizItem> get activeQuizzes {
     final startOfToday = DateTime(
