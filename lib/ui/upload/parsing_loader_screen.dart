@@ -89,6 +89,7 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
                   height: 64,
                   child: CircularProgressIndicator(
                     strokeWidth: 3.5,
+                    value: disableAnimations ? 0.75 : null,
                     color: theme.colorScheme.primary,
                     backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                   ),

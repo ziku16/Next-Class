@@ -34,9 +34,10 @@ class OfflineBanner extends StatelessWidget {
 
   Widget _buildAnimatedContainer(BuildContext context, bool offline) {
     final theme = Theme.of(context);
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
 
     return AnimatedSize(
-      duration: animationDuration,
+      duration: disableAnimations ? Duration.zero : animationDuration,
       curve: Curves.easeInOut,
       alignment: Alignment.topCenter,
       child: offline
@@ -75,7 +76,7 @@ class OfflineBanner extends StatelessWidget {
                             horizontal: 10,
                             vertical: 4,
                           ),
-                          minimumSize: const Size(40, 32),
+                          minimumSize: const Size(48, 48),
                           textStyle: theme.textTheme.labelSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),

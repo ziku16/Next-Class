@@ -174,7 +174,7 @@ class NcBanner extends StatelessWidget {
               style: TextButton.styleFrom(
                 foregroundColor: fg,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                minimumSize: const Size(40, 36),
+                minimumSize: const Size(48, 48),
                 textStyle: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -188,7 +188,7 @@ class NcBanner extends StatelessWidget {
               icon: Icon(Icons.close, size: 18, color: fg),
               onPressed: onDismiss,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
             ),
           ],
         ],

@@ -220,6 +220,7 @@ class TodayHeader extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 color: textColor,
               ),
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),

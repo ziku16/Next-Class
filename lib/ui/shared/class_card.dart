@@ -197,19 +197,50 @@ class ClassCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Header: Subject and optional Status Badge
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
+                          // Header: Subject and optional Status Badge (drops below title under large type)
+                          Builder(
+                            builder: (context) {
+                              final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+                              final hasStatusBadge = state == ClassCardState.current ||
+                                  state == ClassCardState.next ||
+                                  state == ClassCardState.past ||
+                                  (state == ClassCardState.editable && classItem.isAiUnsure);
+
+                              if (!hasStatusBadge) {
+                                return Text(
                                   classItem.subject,
                                   style: theme.textTheme.titleMedium,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              _buildStatusBadge(context, theme, ncColors),
-                            ],
+                                );
+                              }
+
+                              if (textScale >= 1.2) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      classItem.subject,
+                                      style: theme.textTheme.titleMedium,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _buildStatusBadge(context, theme, ncColors),
+                                  ],
+                                );
+                              }
+
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      classItem.subject,
+                                      style: theme.textTheme.titleMedium,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildStatusBadge(context, theme, ncColors),
+                                ],
+                              );
+                            },
                           ),
                           const SizedBox(height: 8),
                           // Time string with Tabular Figures
