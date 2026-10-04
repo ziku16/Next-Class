@@ -25,21 +25,26 @@ class AiExtractionException implements Exception {
 /// using Google Gemini multimodal AI with offline/sample fallback.
 class AiExtractionService {
   static const String geminiApiKeyPref = 'gemini_api_key';
+  static const String defaultGeminiApiKey =
+      'AQ.Ab8RN6KDZ0KhPes79wFnbkPQqz1sYl2meCvqX-01yEipSYo7tQ';
   static String? _cachedApiKey;
 
   const AiExtractionService();
 
-  /// Gets the currently saved Gemini API key, if any.
+  /// Gets the currently saved Gemini API key, if any, falling back to default.
   Future<String?> getApiKey() async {
     if (_cachedApiKey != null) return _cachedApiKey;
     try {
       final prefs = await SharedPreferences.getInstance().timeout(
         const Duration(milliseconds: 100),
       );
-      _cachedApiKey = prefs.getString(geminiApiKeyPref);
+      final stored = prefs.getString(geminiApiKeyPref);
+      _cachedApiKey = (stored != null && stored.trim().isNotEmpty)
+          ? stored
+          : defaultGeminiApiKey;
       return _cachedApiKey;
     } catch (_) {
-      return _cachedApiKey;
+      return _cachedApiKey ?? defaultGeminiApiKey;
     }
   }
 
@@ -91,9 +96,11 @@ class AiExtractionService {
     }
 
     final apiKey = explicitApiKey ?? await getApiKey();
+    final file = File(imagePath);
+    final fileExists = await file.exists();
 
-    // If an API key is available, perform real multimodal extraction with Gemini
-    if (apiKey != null && apiKey.trim().isNotEmpty) {
+    // If an API key is available and the real photo exists, perform multimodal extraction with Gemini
+    if (apiKey != null && apiKey.trim().isNotEmpty && fileExists) {
       try {
         final classes = await _extractWithGemini(imagePath, apiKey.trim());
         if (classes.isNotEmpty) {
@@ -101,7 +108,7 @@ class AiExtractionService {
         }
       } catch (e) {
         if (e is AiExtractionException) rethrow;
-        // If remote call fails, fall back to sample or throw
+        // If remote call fails, fall back to sample
       }
     }
 
