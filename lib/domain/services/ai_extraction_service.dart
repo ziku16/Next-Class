@@ -99,20 +99,38 @@ class AiExtractionService {
     final file = File(imagePath);
     final fileExists = await file.exists();
 
-    // If an API key is available and the real photo exists, perform multimodal extraction with Gemini
-    if (apiKey != null && apiKey.trim().isNotEmpty && fileExists) {
+    // If a real photo exists, perform multimodal extraction with Gemini
+    if (fileExists) {
+      if (apiKey == null || apiKey.trim().isEmpty) {
+        throw const AiExtractionException(
+          AiExtractionErrorCode.missingApiKey,
+          "Scanning service is currently unavailable. Please add classes manually.",
+        );
+      }
       try {
         final classes = await _extractWithGemini(imagePath, apiKey.trim());
         if (classes.isNotEmpty) {
           return classes;
         }
+        throw const AiExtractionException(
+          AiExtractionErrorCode.noClassesFound,
+          "No classes could be detected in this photo. Please ensure good lighting and fit the whole timetable.",
+        );
+      } on SocketException {
+        throw const AiExtractionException(
+          AiExtractionErrorCode.noInternet,
+          "We need an internet connection to read your timetable photo. Please check your connection and try again.",
+        );
       } catch (e) {
         if (e is AiExtractionException) rethrow;
-        // If remote call fails, fall back to sample
+        throw AiExtractionException(
+          AiExtractionErrorCode.parsingFailed,
+          "Could not read timetable photo: $e",
+        );
       }
     }
 
-    // Fallback: simulate extraction delay and return realistic sample timetable
+    // Mock/test fallback when file does not exist on disk (e.g. in unit tests)
     await Future.delayed(delay);
 
     return _getSampleClasses();
@@ -139,7 +157,7 @@ class AiExtractionService {
     }
 
     final url = Uri.parse(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=$apiKey',
     );
 
     const promptText = '''
@@ -198,7 +216,7 @@ CRITICAL RULES:
     if (response.statusCode != 200) {
       throw AiExtractionException(
         AiExtractionErrorCode.parsingFailed,
-        "AI parsing service error (${response.statusCode}). Please check your API key or try again.",
+        "Could not read your timetable image. Please ensure good lighting and try again, or add classes manually.",
       );
     }
 

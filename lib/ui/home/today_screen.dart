@@ -52,7 +52,7 @@ class TodayScreen extends StatefulWidget {
     this.initialClasses,
     this.initialQuizzes,
     this.initialSettings,
-    this.userName = 'Ali',
+    this.userName = '',
     this.onNavigateToTab,
     this.onAddQuiz,
     this.onUploadTimetable,
@@ -438,7 +438,9 @@ class _TodayScreenState extends State<TodayScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Welcome, ${widget.userName}. Nothing scheduled yet.',
+            widget.userName.trim().isEmpty
+                ? 'Welcome to NextClass. Nothing scheduled yet.'
+                : 'Welcome, ${widget.userName}. Nothing scheduled yet.',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: theme.colorScheme.onSurface,

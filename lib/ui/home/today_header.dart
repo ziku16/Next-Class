@@ -107,7 +107,7 @@ class TodayHeader extends StatelessWidget {
 
   const TodayHeader({
     super.key,
-    this.userName = 'Ali',
+    this.userName = '',
     required this.currentTime,
     required this.classesToday,
     this.hasTimetable = true,
@@ -115,16 +115,18 @@ class TodayHeader extends StatelessWidget {
 
   String _getGreeting() {
     if (!hasTimetable) {
-      return 'Welcome, $userName';
+      return userName.trim().isEmpty ? 'Welcome to NextClass' : 'Welcome, $userName';
     }
     final hour = currentTime.hour;
-    if (hour < 12) {
-      return 'Good morning, $userName';
-    } else if (hour < 17) {
-      return 'Good afternoon, $userName';
-    } else {
-      return 'Good evening, $userName';
+    final prefix = hour < 12
+        ? 'Good morning'
+        : hour < 17
+            ? 'Good afternoon'
+            : 'Good evening';
+    if (userName.trim().isEmpty) {
+      return prefix;
     }
+    return '$prefix, $userName';
   }
 
   String _formatDate() {

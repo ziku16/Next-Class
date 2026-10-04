@@ -108,10 +108,41 @@ class _EditClassSheetState extends State<EditClassSheet> {
     super.dispose();
   }
 
+  String _formatDisplayTimeWithoutPeriod(TimeOfDay time) {
+    final hourOfPeriod = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final h = hourOfPeriod.toString().padLeft(2, '0');
+    final m = time.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  void _toggleStartPeriod() {
+    setState(() {
+      _startTime = TimeOfDay(
+        hour: (_startTime.hour + 12) % 24,
+        minute: _startTime.minute,
+      );
+    });
+  }
+
+  void _toggleEndPeriod() {
+    setState(() {
+      _endTime = TimeOfDay(
+        hour: (_endTime.hour + 12) % 24,
+        minute: _endTime.minute,
+      );
+    });
+  }
+
   Future<void> _pickStartTime() async {
     final picked = await showTimePicker(
       context: context,
       initialTime: _startTime,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -124,6 +155,12 @@ class _EditClassSheetState extends State<EditClassSheet> {
     final picked = await showTimePicker(
       context: context,
       initialTime: _endTime,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -285,23 +322,47 @@ class _EditClassSheetState extends State<EditClassSheet> {
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 14),
+                              horizontal: 10, vertical: 10),
                           decoration: BoxDecoration(
                             border: Border.all(color: theme.colorScheme.outline),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Icon(
-                                Icons.schedule,
-                                size: 18,
-                                color: theme.colorScheme.onSurfaceVariant,
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.schedule,
+                                    size: 16,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _formatDisplayTimeWithoutPeriod(_startTime),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _formatTimeOfDay(_startTime),
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.w700,
+                              GestureDetector(
+                                key: const Key('start_period_btn'),
+                                onTap: _toggleStartPeriod,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primaryContainer,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    _startTime.period == DayPeriod.am ? 'AM' : 'PM',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: theme.colorScheme.onPrimaryContainer,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -331,7 +392,7 @@ class _EditClassSheetState extends State<EditClassSheet> {
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 14),
+                              horizontal: 10, vertical: 10),
                           decoration: BoxDecoration(
                             border: Border.all(
                               color: showTimeError
@@ -341,22 +402,50 @@ class _EditClassSheetState extends State<EditClassSheet> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Icon(
-                                Icons.schedule,
-                                size: 18,
-                                color: showTimeError
-                                  ? theme.colorScheme.error
-                                  : theme.colorScheme.onSurfaceVariant,
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.schedule,
+                                    size: 16,
+                                    color: showTimeError
+                                        ? theme.colorScheme.error
+                                        : theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _formatDisplayTimeWithoutPeriod(_endTime),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: showTimeError
+                                          ? theme.colorScheme.error
+                                          : null,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _formatTimeOfDay(_endTime),
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: showTimeError
-                                      ? theme.colorScheme.error
-                                      : null,
+                              GestureDetector(
+                                key: const Key('end_period_btn'),
+                                onTap: _toggleEndPeriod,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: showTimeError
+                                        ? theme.colorScheme.errorContainer
+                                        : theme.colorScheme.primaryContainer,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    _endTime.period == DayPeriod.am ? 'AM' : 'PM',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: showTimeError
+                                          ? theme.colorScheme.onErrorContainer
+                                          : theme.colorScheme.onPrimaryContainer,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
