@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -121,6 +122,11 @@ class AiExtractionService {
           AiExtractionErrorCode.noInternet,
           "We need an internet connection to read your timetable photo. Please check your connection and try again.",
         );
+      } on TimeoutException {
+        throw const AiExtractionException(
+          AiExtractionErrorCode.parsingFailed,
+          "Scanning took too long to respond. Please check your connection and try again.",
+        );
       } catch (e) {
         if (e is AiExtractionException) rethrow;
         throw AiExtractionException(
@@ -211,7 +217,7 @@ CRITICAL RULES:
           headers: {'Content-Type': 'application/json'},
           body: requestBody,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(const Duration(seconds: 60));
 
     if (response.statusCode != 200) {
       throw AiExtractionException(
