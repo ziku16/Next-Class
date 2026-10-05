@@ -42,7 +42,7 @@ class AiExtractionException implements Exception {
 /// using Google Gemini multimodal AI with offline/sample fallback.
 class AiExtractionService {
   /// Verified active flash model for multimodal generation
-  static const String geminiModel = 'gemini-3.8-flash';
+  static const String geminiModel = 'gemini-3.5-flash';
 
   static const String geminiApiKeyPref = 'gemini_api_key';
   static const String defaultGeminiApiKey = String.fromEnvironment(
