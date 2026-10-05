@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:flutter/services.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -53,9 +53,12 @@ class NotificationService {
 
     try {
       tz.initializeTimeZones();
-      final timezoneInfo = await FlutterTimezone.getLocalTimezone();
-      final String timeZoneName = timezoneInfo.identifier;
-      tz.setLocalLocation(tz.getLocation(timeZoneName));
+      const channel = MethodChannel('com.nextclass.app/device_info');
+      final String? timeZoneName =
+          await channel.invokeMethod<String>('getTimeZone');
+      if (timeZoneName != null && timeZoneName.isNotEmpty) {
+        tz.setLocalLocation(tz.getLocation(timeZoneName));
+      }
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Timezone initialization note: $e');
