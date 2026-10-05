@@ -237,6 +237,51 @@ void main() {
       expect(remainingQuizzes, isEmpty);
     });
 
+    test('replaceAllClasses preserves existing quizzes and re-links them to matching subjects', () async {
+      const oldClass = ClassItem(
+        id: 'old_math_id',
+        subject: 'Mathematics',
+        subjectColorIndex: 1,
+        dayOfWeek: 'Monday',
+        startTime: '08:30',
+        endTime: '09:20',
+      );
+      final mathQuiz = QuizItem(
+        id: 'math_quiz_1',
+        classId: 'old_math_id',
+        subject: 'Mathematics',
+        title: 'Midterm Exam',
+        dueDate: DateTime(2026, 10, 15),
+      );
+
+      await timetableRepo.insertClass(oldClass);
+      await quizRepo.insertQuiz(mathQuiz);
+
+      // Now replace all classes with new scanned timetable classes
+      const newClass = ClassItem(
+        id: 'new_math_extracted_999',
+        subject: 'Mathematics',
+        subjectColorIndex: 0,
+        dayOfWeek: 'Tuesday',
+        startTime: '10:00',
+        endTime: '11:00',
+      );
+
+      await timetableRepo.replaceAllClasses([newClass]);
+
+      // Verify new class exists
+      final classes = await timetableRepo.getAllClasses();
+      expect(classes.length, 1);
+      expect(classes.first.id, 'new_math_extracted_999');
+
+      // Verify quiz is preserved and re-linked to newClass.id
+      final quizzes = await quizRepo.getAllQuizzes();
+      expect(quizzes.length, 1);
+      expect(quizzes.first.id, 'math_quiz_1');
+      expect(quizzes.first.title, 'Midterm Exam');
+      expect(quizzes.first.classId, 'new_math_extracted_999');
+    });
+
     test('Settings and ScanQuota persist and update in SQLite', () async {
       final settings = await settingsRepo.getSettings();
       expect(settings.classReminderMinutes, 15);

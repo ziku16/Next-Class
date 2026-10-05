@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/next_class_colors.dart';
 import '../../data/models/scan_quota.dart';
@@ -6,6 +7,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../domain/services/alarm_scheduler.dart';
 import '../../domain/services/notification_service.dart';
 import '../../state/settings_provider.dart';
+import '../debug/diagnostics_screen.dart';
 import '../shared/confirmation_dialogs.dart';
 import 'reminder_picker_dialog.dart';
 import 'replace_timetable_dialog.dart';
@@ -48,6 +50,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late final SettingsProvider _provider;
   bool _ownsProvider = false;
+  int _versionTapCount = 0;
 
   @override
   void initState() {
@@ -481,10 +484,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: widget.onPrivacyPolicy,
                 ),
                 const Divider(height: 1),
-                const ListTile(
-                  leading: Icon(Icons.info_outline_rounded),
-                  title: Text('Version'),
-                  trailing: Text('1.0.0'),
+                ListTile(
+                  leading: const Icon(Icons.info_outline_rounded),
+                  title: const Text('Version'),
+                  trailing: const Text('1.0.0'),
+                  onTap: () {
+                    _versionTapCount++;
+                    if (_versionTapCount >= 5 || kDebugMode) {
+                      _versionTapCount = 0;
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const DiagnosticsScreen(),
+                        ),
+                      );
+                    }
+                  },
                 ),
                 if (widget.onSignOut != null) ...[
                   const Divider(height: 1),

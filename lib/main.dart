@@ -1,10 +1,51 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
 import 'core/theme/app_theme.dart';
+import 'domain/services/alarm_scheduler.dart';
+import 'domain/services/notification_service.dart';
 import 'ui/onboarding/splash_screen.dart';
-import 'ui/onboarding/welcome_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 1. Initialize timezone database
+  tz.initializeTimeZones();
+
+  // 2. Set tz.local via native Android MethodChannel
+  try {
+    const channel = MethodChannel('com.nextclass.app/device_info');
+    final String? timeZoneName =
+        await channel.invokeMethod<String>('getTimeZone');
+    if (timeZoneName != null && timeZoneName.isNotEmpty) {
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+      debugPrint('[main] Timezone initialized to: ${tz.local.name} ($timeZoneName)');
+    } else {
+      debugPrint(
+        '[main] WARNING: Native getTimeZone returned null or empty. Fallback tz: ${tz.local.name}',
+      );
+    }
+  } catch (e, stack) {
+    debugPrint('[main] CRITICAL: Failed to get/set native timezone: $e\n$stack');
+  }
+
+  // 3. Initialize notifications plugin & create notification channels
+  try {
+    await NotificationService().initialize();
+  } catch (e, stack) {
+    debugPrint('[main] CRITICAL: Failed to initialize NotificationService: $e\n$stack');
+  }
+
+  // 4. ONLY THEN reschedule alarms from database
+  try {
+    await AlarmScheduler().rescheduleAll();
+  } catch (e, stack) {
+    debugPrint('[main] CRITICAL: Failed to reschedule alarms at startup: $e\n$stack');
+  }
+
   runApp(const NextClassApp());
 }
 

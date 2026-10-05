@@ -368,5 +368,73 @@ void main() {
           .toList();
       expect(quizCalls.isEmpty, isTrue);
     });
+
+    test('calculateNextClassReminderTZ: Monday 08:30 with 15-minute offset', () {
+      final scheduler = AlarmScheduler();
+      // Monday 2026-10-05 at 07:00 AM (before 08:15 reminder)
+      final ref = DateTime(2026, 10, 5, 7, 0);
+      final reminder = scheduler.calculateNextClassReminderTZ(
+        dayIndex: 0, // Monday
+        startTime: '08:30',
+        offsetMinutes: 15,
+        now: ref,
+      );
+
+      expect(reminder.weekday, DateTime.monday);
+      expect(reminder.hour, 8);
+      expect(reminder.minute, 15);
+      expect(reminder.day, 5);
+    });
+
+    test('calculateNextClassReminderTZ: Monday 00:10 with 30-minute offset rolls to Sunday 23:40', () {
+      final scheduler = AlarmScheduler();
+      // Friday 2026-10-02 at 12:00 PM
+      final ref = DateTime(2026, 10, 2, 12, 0);
+      final reminder = scheduler.calculateNextClassReminderTZ(
+        dayIndex: 0, // Monday
+        startTime: '00:10',
+        offsetMinutes: 30,
+        now: ref,
+      );
+
+      expect(reminder.weekday, DateTime.sunday);
+      expect(reminder.hour, 23);
+      expect(reminder.minute, 40);
+      expect(reminder.day, 4); // Sunday 4 Oct
+    });
+
+    test('calculateNextClassReminderTZ: Sunday class at 10:00 with 15-minute offset', () {
+      final scheduler = AlarmScheduler();
+      // Sunday 2026-10-04 at 08:00 AM
+      final ref = DateTime(2026, 10, 4, 8, 0);
+      final reminder = scheduler.calculateNextClassReminderTZ(
+        dayIndex: 6, // Sunday
+        startTime: '10:00',
+        offsetMinutes: 15,
+        now: ref,
+      );
+
+      expect(reminder.weekday, DateTime.sunday);
+      expect(reminder.hour, 9);
+      expect(reminder.minute, 45);
+      expect(reminder.day, 4);
+    });
+
+    test('calculateNextClassReminderTZ: now just after reminder time rolls to next week', () {
+      final scheduler = AlarmScheduler();
+      // Monday 2026-10-05 at 08:16 AM (1 minute after 08:15 reminder)
+      final ref = DateTime(2026, 10, 5, 8, 16);
+      final reminder = scheduler.calculateNextClassReminderTZ(
+        dayIndex: 0, // Monday
+        startTime: '08:30',
+        offsetMinutes: 15,
+        now: ref,
+      );
+
+      expect(reminder.weekday, DateTime.monday);
+      expect(reminder.hour, 8);
+      expect(reminder.minute, 15);
+      expect(reminder.day, 12); // Next Monday 12 Oct!
+    });
   });
 }

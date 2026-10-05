@@ -82,9 +82,17 @@ class ScanQuota {
       newDailyReset = currentTime;
     }
 
-    // Check weekly reset (more than 7 days, or passed into a new calendar week)
+    // Check weekly reset (>= 7 days, or entered a new calendar week starting Monday)
+    DateTime startOfWeek(DateTime dt) {
+      final date = DateTime(dt.year, dt.month, dt.day);
+      return date.subtract(Duration(days: date.weekday - 1));
+    }
+
     final diffDays = currentTime.difference(lastWeeklyReset).inDays;
-    if (diffDays >= 7 || (diffDays >= 1 && currentTime.weekday == DateTime.monday && lastWeeklyReset.weekday != DateTime.monday)) {
+    final isNewCalendarWeek =
+        startOfWeek(currentTime).isAfter(startOfWeek(lastWeeklyReset));
+
+    if (diffDays >= 7 || isNewCalendarWeek) {
       newWeeklyUsed = 0;
       newWeeklyReset = currentTime;
     }

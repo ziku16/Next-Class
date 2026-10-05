@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
-import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../data/models/class_item.dart';
@@ -34,14 +33,32 @@ class AlarmScheduler {
         _quizRepo = quizRepository ?? QuizRepository(),
         _settingsRepo = settingsRepository ?? SettingsRepository();
 
-  /// Deterministic ID generator for class notification (0 - 99,999)
-  static int getClassNotificationId(String classId) {
-    return (classId.hashCode & 0x7FFFFFFF) % 100000;
+  /// Deterministic ID generator for class notification (0 - 99,999).
+  /// Uses index if provided to guarantee 0 collision, or 32-bit FNV-1a hash of classId.
+  static int getClassNotificationId(String classId, [int? index]) {
+    if (index != null) {
+      return index % 100000;
+    }
+    int hash = 0x811c9dc5;
+    for (int i = 0; i < classId.length; i++) {
+      hash ^= classId.codeUnitAt(i);
+      hash = (hash * 0x01000193) & 0x7FFFFFFF;
+    }
+    return hash % 100000;
   }
 
-  /// Deterministic ID generator for quiz notification (100,000 - 199,999)
-  static int getQuizNotificationId(String quizId) {
-    return 100000 + ((quizId.hashCode & 0x7FFFFFFF) % 100000);
+  /// Deterministic ID generator for quiz notification (100,000 - 199,999).
+  /// Uses index if provided to guarantee 0 collision, or 100,000 + 32-bit FNV-1a hash of quizId.
+  static int getQuizNotificationId(String quizId, [int? index]) {
+    if (index != null) {
+      return 100000 + (index % 100000);
+    }
+    int hash = 0x811c9dc5;
+    for (int i = 0; i < quizId.length; i++) {
+      hash ^= quizId.codeUnitAt(i);
+      hash = (hash * 0x01000193) & 0x7FFFFFFF;
+    }
+    return 100000 + (hash % 100000);
   }
 
   /// Reschedules all class and quiz reminders according to current database state and settings.
@@ -52,6 +69,7 @@ class AlarmScheduler {
   /// - Device reboot
   Future<void> rescheduleAll({DateTime? now}) async {
     final currentTime = now ?? DateTime.now();
+    debugPrint('[AlarmScheduler] Starting rescheduleAll at $currentTime. Active timezone: ${tz.local.name}');
 
     try {
       await _notificationService.initialize();
@@ -64,39 +82,54 @@ class AlarmScheduler {
       // Cancel all existing scheduled notifications first to prevent stale alarms
       await _notificationService.cancelAll();
 
-      // Schedule class reminders
-      await scheduleClassReminders(
+      int scheduledCount = 0;
+      int failedCount = 0;
+      final List<String> failures = [];
+
+      // Schedule class reminders with individual error catching
+      final classResult = await scheduleClassReminders(
         classes: classes,
         settings: settings,
         now: currentTime,
       );
+      scheduledCount += classResult.scheduled;
+      failedCount += classResult.failed;
+      failures.addAll(classResult.errors);
 
-      // Schedule quiz reminders
-      await scheduleQuizReminders(
+      // Schedule quiz reminders with individual error catching
+      final quizResult = await scheduleQuizReminders(
         quizzes: quizzes,
         settings: settings,
         now: currentTime,
       );
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('AlarmScheduler.rescheduleAll failed: $e');
-      }
+      scheduledCount += quizResult.scheduled;
+      failedCount += quizResult.failed;
+      failures.addAll(quizResult.errors);
+
+      debugPrint(
+        '[AlarmScheduler] rescheduleAll summary: scheduled=$scheduledCount, failed=$failedCount. ${failures.isNotEmpty ? "Errors: $failures" : "All alarms scheduled clean."}',
+      );
+    } catch (e, stack) {
+      debugPrint('[AlarmScheduler] CRITICAL failure in rescheduleAll: $e\n$stack');
     }
   }
 
   /// Schedules pre-class reminders for all weekly timetable classes
-  Future<void> scheduleClassReminders({
+  Future<ScheduleResult> scheduleClassReminders({
     required List<ClassItem> classes,
     required UserSettings settings,
     DateTime? now,
   }) async {
     final offsetMinutes = settings.classReminderMinutes;
     if (offsetMinutes == null || offsetMinutes <= 0) {
-      // Class reminders are disabled in settings
-      return;
+      debugPrint('[AlarmScheduler] Class reminders disabled (offset=$offsetMinutes).');
+      return ScheduleResult(scheduled: 0, failed: 0, errors: []);
     }
 
     final ref = now ?? DateTime.now();
+    int scheduled = 0;
+    int failed = 0;
+    final List<String> errors = [];
 
     // Group classes by day to compute "Next class after this"
     final Map<String, List<ClassItem>> dayGroups = {};
@@ -107,100 +140,131 @@ class AlarmScheduler {
       dayList.sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
     }
 
-    for (final classItem in classes) {
-      // Find the subsequent class on the same day if available
-      final sameDayClasses = dayGroups[classItem.dayOfWeek] ?? [];
-      final currentIndex =
-          sameDayClasses.indexWhere((c) => c.id == classItem.id);
-      final ClassItem? nextClass = (currentIndex != -1 &&
-              currentIndex + 1 < sameDayClasses.length)
-          ? sameDayClasses[currentIndex + 1]
-          : null;
+    for (int i = 0; i < classes.length; i++) {
+      final classItem = classes[i];
+      try {
+        // Find the subsequent class on the same day if available
+        final sameDayClasses = dayGroups[classItem.dayOfWeek] ?? [];
+        final currentIndex =
+            sameDayClasses.indexWhere((c) => c.id == classItem.id);
+        final ClassItem? nextClass = (currentIndex != -1 &&
+                currentIndex + 1 < sameDayClasses.length)
+            ? sameDayClasses[currentIndex + 1]
+            : null;
 
-      final notificationId = getClassNotificationId(classItem.id);
+        final notificationId = getClassNotificationId(classItem.id, i);
 
-      final scheduledTZ = calculateNextClassReminderTZ(
-        dayIndex: classItem.dayIndex,
-        startTime: classItem.startTime,
-        offsetMinutes: offsetMinutes,
-        now: ref,
-      );
+        final scheduledTZ = calculateNextClassReminderTZ(
+          dayIndex: classItem.dayIndex,
+          startTime: classItem.startTime,
+          offsetMinutes: offsetMinutes,
+          now: ref,
+        );
 
-      await _notificationService.scheduleClassReminder(
-        id: notificationId,
-        subject: classItem.subject,
-        minutesBefore: offsetMinutes,
-        startTime: classItem.startTime,
-        endTime: classItem.endTime,
-        room: classItem.room,
-        teacher: classItem.teacher,
-        nextSubject: nextClass?.subject,
-        nextTime: nextClass?.startTime,
-        scheduledDate: scheduledTZ,
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-      );
+        debugPrint(
+          '[AlarmScheduler] Scheduling class alarm: id=$notificationId, subject="${classItem.subject}", scheduledTZ=$scheduledTZ',
+        );
+
+        await _notificationService.scheduleClassReminder(
+          id: notificationId,
+          subject: classItem.subject,
+          minutesBefore: offsetMinutes,
+          startTime: classItem.startTime,
+          endTime: classItem.endTime,
+          room: classItem.room,
+          teacher: classItem.teacher,
+          nextSubject: nextClass?.subject,
+          nextTime: nextClass?.startTime,
+          scheduledDate: scheduledTZ,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        );
+        scheduled++;
+      } catch (e) {
+        failed++;
+        final err = 'Class "${classItem.subject}" (id=${classItem.id}): $e';
+        errors.add(err);
+        debugPrint('[AlarmScheduler] Error scheduling $err');
+      }
     }
+
+    return ScheduleResult(scheduled: scheduled, failed: failed, errors: errors);
   }
 
   /// Schedules evening-before reminders for upcoming quizzes
-  Future<void> scheduleQuizReminders({
+  Future<ScheduleResult> scheduleQuizReminders({
     required List<QuizItem> quizzes,
     required UserSettings settings,
     DateTime? now,
   }) async {
     if (!settings.quizReminderEnabled) {
-      // Quiz reminders are disabled in settings
-      return;
+      debugPrint('[AlarmScheduler] Quiz reminders disabled in settings.');
+      return ScheduleResult(scheduled: 0, failed: 0, errors: []);
     }
 
     final ref = now ?? DateTime.now();
+    int scheduled = 0;
+    int failed = 0;
+    final List<String> errors = [];
 
     final parts = settings.quizReminderTime.split(':');
     final defaultHour = int.tryParse(parts[0]) ?? 20;
     final defaultMinute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
 
-    for (final quiz in quizzes) {
+    for (int i = 0; i < quizzes.length; i++) {
+      final quiz = quizzes[i];
       if (quiz.isCompleted) continue;
 
-      int targetHour = defaultHour;
-      int targetMinute = defaultMinute;
-      if (quiz.reminderTime != null && quiz.reminderTime!.isNotEmpty) {
-        final p = quiz.reminderTime!.split(':');
-        targetHour = int.tryParse(p[0]) ?? defaultHour;
-        targetMinute = p.length > 1 ? (int.tryParse(p[1]) ?? 0) : 0;
-      } else if (quiz.reminderType == 'morning_of') {
-        targetHour = 8;
-        targetMinute = 0;
-      }
+      try {
+        int targetHour = defaultHour;
+        int targetMinute = defaultMinute;
+        if (quiz.reminderTime != null && quiz.reminderTime!.isNotEmpty) {
+          final p = quiz.reminderTime!.split(':');
+          targetHour = int.tryParse(p[0]) ?? defaultHour;
+          targetMinute = p.length > 1 ? (int.tryParse(p[1]) ?? 0) : 0;
+        } else if (quiz.reminderType == 'morning_of') {
+          targetHour = 8;
+          targetMinute = 0;
+        }
 
-      final reminderDateTime = calculateQuizReminderDateTime(
-        dueDate: quiz.dueDate,
-        reminderHour: targetHour,
-        reminderMinute: targetMinute,
-        reminderType: quiz.reminderType,
-      );
-
-      // Only schedule if reminder is in the future
-      if (reminderDateTime.isAfter(ref)) {
-        final notificationId = getQuizNotificationId(quiz.id);
-
-        final scheduledTZ = _toTZDateTime(reminderDateTime);
-
-        final formattedDue = DateFormat('EEE, d MMM').format(quiz.dueDate);
-
-        await _notificationService.scheduleQuizReminder(
-          id: notificationId,
-          quizId: quiz.id,
-          subject: quiz.subject,
-          title: quiz.title,
-          formattedDate: formattedDue,
-          note: quiz.note,
-          scheduledDate: scheduledTZ,
-          isDayOf: quiz.reminderType == 'morning_of' ||
-              quiz.reminderType == 'day_of',
+        final reminderDateTime = calculateQuizReminderDateTime(
+          dueDate: quiz.dueDate,
+          reminderHour: targetHour,
+          reminderMinute: targetMinute,
+          reminderType: quiz.reminderType,
         );
+
+        // Only schedule if reminder is in the future
+        if (reminderDateTime.isAfter(ref)) {
+          final notificationId = getQuizNotificationId(quiz.id, i);
+          final scheduledTZ = _toTZDateTime(reminderDateTime);
+          final formattedDue = DateFormat('EEE, d MMM').format(quiz.dueDate);
+
+          debugPrint(
+            '[AlarmScheduler] Scheduling quiz alarm: id=$notificationId, subject="${quiz.subject}", scheduledTZ=$scheduledTZ',
+          );
+
+          await _notificationService.scheduleQuizReminder(
+            id: notificationId,
+            quizId: quiz.id,
+            subject: quiz.subject,
+            title: quiz.title,
+            formattedDate: formattedDue,
+            note: quiz.note,
+            scheduledDate: scheduledTZ,
+            isDayOf: quiz.reminderType == 'morning_of' ||
+                quiz.reminderType == 'day_of',
+          );
+          scheduled++;
+        }
+      } catch (e) {
+        failed++;
+        final err = 'Quiz "${quiz.title}" (id=${quiz.id}): $e';
+        errors.add(err);
+        debugPrint('[AlarmScheduler] Error scheduling $err');
       }
     }
+
+    return ScheduleResult(scheduled: scheduled, failed: failed, errors: errors);
   }
 
   /// Cancels reminder for a specific class
@@ -295,28 +359,29 @@ class AlarmScheduler {
     return _toTZDateTime(scheduled);
   }
 
+  /// Converts a standard DateTime to tz.TZDateTime using tz.local (no silent UTC fallback).
   tz.TZDateTime _toTZDateTime(DateTime dt) {
-    try {
-      return tz.TZDateTime(
-        tz.local,
-        dt.year,
-        dt.month,
-        dt.day,
-        dt.hour,
-        dt.minute,
-        dt.second,
-      );
-    } catch (_) {
-      try {
-        return tz.TZDateTime.from(dt, tz.local);
-      } catch (_) {
-        try {
-          return tz.TZDateTime.from(dt, tz.getLocation('UTC'));
-        } catch (_) {
-          tz.initializeTimeZones();
-          return tz.TZDateTime.from(dt, tz.UTC);
-        }
-      }
-    }
+    return tz.TZDateTime(
+      tz.local,
+      dt.year,
+      dt.month,
+      dt.day,
+      dt.hour,
+      dt.minute,
+      dt.second,
+    );
   }
+}
+
+/// Helper class to track scheduling success/failure details
+class ScheduleResult {
+  final int scheduled;
+  final int failed;
+  final List<String> errors;
+
+  const ScheduleResult({
+    required this.scheduled,
+    required this.failed,
+    required this.errors,
+  });
 }

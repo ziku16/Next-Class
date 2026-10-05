@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/class_item.dart';
@@ -10,36 +11,58 @@ enum AiExtractionErrorCode {
   parsingFailed,
   noClassesFound,
   missingApiKey,
+  badRequest,
+  invalidApiKey,
+  modelNotFound,
+  rateLimited,
+  serverError,
+  serviceUnavailable,
+  malformedJson,
 }
 
 class AiExtractionException implements Exception {
   final AiExtractionErrorCode code;
   final String message;
+  final int? statusCode;
+  final String? responseBody;
 
-  const AiExtractionException(this.code, this.message);
+  const AiExtractionException(
+    this.code,
+    this.message, {
+    this.statusCode,
+    this.responseBody,
+  });
 
   @override
-  String toString() => 'AiExtractionException($code): $message';
+  String toString() =>
+      'AiExtractionException($code, statusCode: $statusCode): $message';
 }
 
 /// Service that ingests timetable photos and extracts structured class schedules
 /// using Google Gemini multimodal AI with offline/sample fallback.
 class AiExtractionService {
+  /// Verified active flash model for multimodal generation
+  static const String geminiModel = 'gemini-3.8-flash';
+
   static const String geminiApiKeyPref = 'gemini_api_key';
-  static const String defaultGeminiApiKey =
-      'AQ.Ab8RN6KDZ0KhPes79wFnbkPQqz1sYl2meCvqX-01yEipSYo7tQ';
+  static const String defaultGeminiApiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: 'AQ.Ab8RN6KDZ0KhPes79wFnbkPQqz1sYl2meCvqX-01yEipSYo7tQ',
+  );
   static String? _cachedApiKey;
 
   const AiExtractionService();
 
   /// Gets the currently saved Gemini API key, if any, falling back to default.
   Future<String?> getApiKey() async {
-    if (_cachedApiKey != null) return _cachedApiKey;
+    if (_cachedApiKey != null && _cachedApiKey!.trim().isNotEmpty) {
+      return _cachedApiKey;
+    }
     try {
       final prefs = await SharedPreferences.getInstance();
       final stored = prefs.getString(geminiApiKeyPref);
       _cachedApiKey = (stored != null && stored.trim().isNotEmpty)
-          ? stored
+          ? stored.trim()
           : defaultGeminiApiKey;
       return _cachedApiKey;
     } catch (_) {
@@ -103,7 +126,7 @@ class AiExtractionService {
       if (apiKey == null || apiKey.trim().isEmpty) {
         throw const AiExtractionException(
           AiExtractionErrorCode.missingApiKey,
-          "Scanning service is currently unavailable. Please add classes manually.",
+          "Gemini API key is missing or empty. Please configure a valid key.",
         );
       }
 
@@ -119,7 +142,8 @@ class AiExtractionService {
             AiExtractionErrorCode.noClassesFound,
             "No classes could be detected in this photo. Please ensure good lighting and fit the whole timetable.",
           );
-        } on SocketException catch (_) {
+        } on SocketException catch (e) {
+          debugPrint('[AiExtractionService] SocketException on attempt $attempts: $e');
           if (attempts >= 2) {
             throw const AiExtractionException(
               AiExtractionErrorCode.noInternet,
@@ -127,24 +151,34 @@ class AiExtractionService {
             );
           }
           await Future.delayed(const Duration(milliseconds: 1000));
-        } on http.ClientException catch (_) {
+        } on http.ClientException catch (e) {
+          debugPrint('[AiExtractionService] ClientException on attempt $attempts: $e');
           if (attempts >= 2) {
             throw const AiExtractionException(
               AiExtractionErrorCode.noInternet,
-              "We need an internet connection to read your timetable photo. Please check your connection and try again.",
+              "Connection interrupted while contacting AI service. Please check your network and try again.",
             );
           }
           await Future.delayed(const Duration(milliseconds: 1000));
-        } on TimeoutException catch (_) {
+        } on TimeoutException catch (e) {
+          debugPrint('[AiExtractionService] TimeoutException on attempt $attempts: $e');
           if (attempts >= 2) {
             throw const AiExtractionException(
               AiExtractionErrorCode.parsingFailed,
-              "Scanning took too long to respond. Please check your connection and try again.",
+              "Scanning took too long to respond (timeout). Please try again with a clearer photo.",
             );
           }
           await Future.delayed(const Duration(milliseconds: 1000));
+        } on AiExtractionException catch (e) {
+          // Retry ONLY on 503 Service Unavailable, NEVER on 4xx errors
+          if (e.code == AiExtractionErrorCode.serviceUnavailable && attempts < 2) {
+            debugPrint('[AiExtractionService] Retrying on 503 Service Unavailable...');
+            await Future.delayed(const Duration(milliseconds: 1500));
+            continue;
+          }
+          rethrow;
         } catch (e) {
-          if (e is AiExtractionException) rethrow;
+          debugPrint('[AiExtractionService] Unexpected error on attempt $attempts: $e');
           if (attempts >= 2) {
             throw AiExtractionException(
               AiExtractionErrorCode.parsingFailed,
@@ -162,7 +196,55 @@ class AiExtractionService {
     return _getSampleClasses();
   }
 
-  Future<List<ClassItem>> _extractWithGemini(String imagePath, String apiKey) async {
+  /// Inspects magic bytes and file extension to derive correct MIME type
+  String _detectMimeType(List<int> bytes, String filePath) {
+    if (bytes.length >= 3 &&
+        bytes[0] == 0xFF &&
+        bytes[1] == 0xD8 &&
+        bytes[2] == 0xFF) {
+      return 'image/jpeg';
+    }
+    if (bytes.length >= 8 &&
+        bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47 &&
+        bytes[4] == 0x0D &&
+        bytes[5] == 0x0A &&
+        bytes[6] == 0x1A &&
+        bytes[7] == 0x0A) {
+      return 'image/png';
+    }
+    if (bytes.length >= 12 &&
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46 &&
+        bytes[8] == 0x57 &&
+        bytes[9] == 0x45 &&
+        bytes[10] == 0x42 &&
+        bytes[11] == 0x50) {
+      return 'image/webp';
+    }
+    if (bytes.length >= 12) {
+      final brand = String.fromCharCodes(bytes.sublist(4, 12));
+      if (brand.contains('ftypheic') ||
+          brand.contains('ftypmif1') ||
+          brand.contains('ftypheix')) {
+        return 'image/heic';
+      }
+    }
+
+    // Fallback to file extension
+    final lower = filePath.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.heic') || lower.endsWith('.heif')) return 'image/heic';
+    return 'image/jpeg';
+  }
+
+  Future<List<ClassItem>> _extractWithGemini(
+      String imagePath, String apiKey) async {
     final file = File(imagePath);
     if (!await file.exists()) {
       throw const AiExtractionException(
@@ -173,17 +255,10 @@ class AiExtractionService {
 
     final bytes = await file.readAsBytes();
     final base64Image = base64Encode(bytes);
-
-    String mimeType = 'image/jpeg';
-    final lower = imagePath.toLowerCase();
-    if (lower.endsWith('.png')) {
-      mimeType = 'image/png';
-    } else if (lower.endsWith('.webp')) {
-      mimeType = 'image/webp';
-    }
+    final mimeType = _detectMimeType(bytes, imagePath);
 
     final url = Uri.parse(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=$apiKey',
+      'https://generativelanguage.googleapis.com/v1beta/models/$geminiModel:generateContent?key=$apiKey',
     );
 
     const promptText = '''
@@ -227,28 +302,108 @@ CRITICAL RULES:
       ],
       'generationConfig': {
         'temperature': 0.1,
+        'maxOutputTokens': 8192,
         'responseMimeType': 'application/json',
+        'thinkingConfig': {
+          'thinkingBudget': 0,
+        },
       }
     });
 
-    final response = await http
-        .post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: requestBody,
-        )
-        .timeout(const Duration(seconds: 60));
-
-    if (response.statusCode != 200) {
-      throw AiExtractionException(
+    final http.Response response;
+    try {
+      response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: requestBody,
+          )
+          .timeout(const Duration(seconds: 60));
+    } on TimeoutException {
+      debugPrint('[AiExtractionService] Request timed out after 60s');
+      throw const AiExtractionException(
         AiExtractionErrorCode.parsingFailed,
-        "Could not read your timetable image. Please ensure good lighting and try again, or add classes manually.",
+        "Request to Gemini timed out after 60 seconds. Please try again.",
       );
     }
 
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    // Log HTTP status code and response body for non-200 responses
+    if (response.statusCode != 200) {
+      debugPrint(
+        '[AiExtractionService] Gemini HTTP Error ${response.statusCode}: ${response.body}',
+      );
+      switch (response.statusCode) {
+        case 400:
+          throw AiExtractionException(
+            AiExtractionErrorCode.badRequest,
+            'Invalid request to AI service (${response.statusCode}). Please try another photo.',
+            statusCode: response.statusCode,
+            responseBody: response.body,
+          );
+        case 401:
+        case 403:
+          throw AiExtractionException(
+            AiExtractionErrorCode.invalidApiKey,
+            'Invalid or restricted Gemini API key (${response.statusCode}). Please verify your API key.',
+            statusCode: response.statusCode,
+            responseBody: response.body,
+          );
+        case 404:
+          throw AiExtractionException(
+            AiExtractionErrorCode.modelNotFound,
+            'AI model "$geminiModel" not found (${response.statusCode}). Please check model availability.',
+            statusCode: response.statusCode,
+            responseBody: response.body,
+          );
+        case 429:
+          throw AiExtractionException(
+            AiExtractionErrorCode.rateLimited,
+            'AI rate limit reached (${response.statusCode}). Please wait a minute and try again.',
+            statusCode: response.statusCode,
+            responseBody: response.body,
+          );
+        case 503:
+          throw AiExtractionException(
+            AiExtractionErrorCode.serviceUnavailable,
+            'Gemini service temporarily unavailable (${response.statusCode}). Please try again shortly.',
+            statusCode: response.statusCode,
+            responseBody: response.body,
+          );
+        default:
+          if (response.statusCode >= 500 && response.statusCode < 600) {
+            throw AiExtractionException(
+              AiExtractionErrorCode.serverError,
+              'Gemini server error (${response.statusCode}). Please try again later.',
+              statusCode: response.statusCode,
+              responseBody: response.body,
+            );
+          }
+          throw AiExtractionException(
+            AiExtractionErrorCode.parsingFailed,
+            'Gemini error (${response.statusCode}): ${response.body}',
+            statusCode: response.statusCode,
+            responseBody: response.body,
+          );
+      }
+    }
+
+    Map<String, dynamic> data;
+    try {
+      data = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('[AiExtractionService] JSON decode failed for response body: ${response.body}');
+      throw AiExtractionException(
+        AiExtractionErrorCode.malformedJson,
+        'Received malformed response from AI scanner: $e',
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      );
+    }
+
     final candidates = data['candidates'] as List<dynamic>?;
     if (candidates == null || candidates.isEmpty) {
+      final promptFeedback = data['promptFeedback'];
+      debugPrint('[AiExtractionService] No candidates returned. Prompt feedback: $promptFeedback');
       throw const AiExtractionException(
         AiExtractionErrorCode.noClassesFound,
         "No classes detected in this image. Please take a clearer photo or add classes manually.",
@@ -264,8 +419,27 @@ CRITICAL RULES:
       );
     }
 
-    String rawText = parts.first['text'] as String? ?? '';
-    rawText = rawText.trim();
+    // Concatenate all non-"thought" text parts
+    final StringBuffer textBuffer = StringBuffer();
+    for (final part in parts) {
+      if (part is Map<String, dynamic>) {
+        final isThought = part['thought'] == true;
+        if (!isThought && part.containsKey('text')) {
+          textBuffer.write(part['text'] as String? ?? '');
+        }
+      }
+    }
+
+    String rawText = textBuffer.toString().trim();
+    if (rawText.isEmpty) {
+      debugPrint('[AiExtractionService] All parts were empty or thoughts. Parts: $parts');
+      throw const AiExtractionException(
+        AiExtractionErrorCode.malformedJson,
+        "AI response contained no text content.",
+      );
+    }
+
+    // Strip markdown code fences
     if (rawText.startsWith('```json')) {
       rawText = rawText.substring(7);
     } else if (rawText.startsWith('```')) {
@@ -276,10 +450,45 @@ CRITICAL RULES:
     }
     rawText = rawText.trim();
 
-    final dynamic parsedJson = jsonDecode(rawText);
-    if (parsedJson is! List) {
+    dynamic parsedJson;
+    try {
+      parsedJson = jsonDecode(rawText);
+    } catch (e) {
+      debugPrint('[AiExtractionService] Failed to decode rawText into JSON: $rawText');
+      throw AiExtractionException(
+        AiExtractionErrorCode.malformedJson,
+        "Failed to parse class schedule from AI response: $e",
+      );
+    }
+
+    List<dynamic> classList;
+    if (parsedJson is List) {
+      classList = parsedJson;
+    } else if (parsedJson is Map<String, dynamic>) {
+      // Check common wrapper keys (e.g. {"classes": [...]}, {"timetable": [...]})
+      if (parsedJson['classes'] is List) {
+        classList = parsedJson['classes'] as List;
+      } else if (parsedJson['timetable'] is List) {
+        classList = parsedJson['timetable'] as List;
+      } else if (parsedJson['schedule'] is List) {
+        classList = parsedJson['schedule'] as List;
+      } else {
+        final listValue = parsedJson.values.firstWhere(
+          (v) => v is List,
+          orElse: () => null,
+        );
+        if (listValue is List) {
+          classList = listValue;
+        } else {
+          throw const AiExtractionException(
+            AiExtractionErrorCode.malformedJson,
+            "AI response JSON was an object but contained no class list.",
+          );
+        }
+      }
+    } else {
       throw const AiExtractionException(
-        AiExtractionErrorCode.parsingFailed,
+        AiExtractionErrorCode.malformedJson,
         "Invalid response format from AI scanner.",
       );
     }
@@ -288,12 +497,14 @@ CRITICAL RULES:
     int nextColorIndex = 0;
 
     final result = <ClassItem>[];
-    for (int i = 0; i < parsedJson.length; i++) {
-      final item = parsedJson[i];
+    for (int i = 0; i < classList.length; i++) {
+      final item = classList[i];
       if (item is Map<String, dynamic>) {
         final subject = (item['subject'] ?? 'Untitled Class').toString().trim();
-        final dayOfWeek = _normalizeDayOfWeek((item['dayOfWeek'] ?? 'Monday').toString());
-        final startTime = _normalizeTime((item['startTime'] ?? '09:00').toString());
+        final dayOfWeek =
+            _normalizeDayOfWeek((item['dayOfWeek'] ?? 'Monday').toString());
+        final startTime =
+            _normalizeTime((item['startTime'] ?? '09:00').toString());
         final endTime = _normalizeTime((item['endTime'] ?? '10:00').toString());
         final room = (item['room'] ?? '').toString().trim();
         final teacher = (item['teacher'] ?? '').toString().trim();
@@ -321,6 +532,57 @@ CRITICAL RULES:
     }
 
     return result;
+  }
+
+  /// Sends a tiny test request to Gemini API to verify connectivity and key validity.
+  Future<String> pingGemini({String? explicitApiKey}) async {
+    final apiKey = explicitApiKey ?? await getApiKey();
+    if (apiKey == null || apiKey.trim().isEmpty) {
+      throw const AiExtractionException(
+        AiExtractionErrorCode.missingApiKey,
+        'Gemini API key is empty.',
+      );
+    }
+
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/$geminiModel:generateContent?key=${apiKey.trim()}',
+    );
+
+    final body = jsonEncode({
+      'contents': [
+        {
+          'parts': [
+            {'text': 'Reply with single word: OK'}
+          ]
+        }
+      ],
+      'generationConfig': {
+        'maxOutputTokens': 16,
+        'thinkingConfig': {
+          'thinkingBudget': 0,
+        },
+      }
+    });
+
+    final response = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: body,
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode != 200) {
+      debugPrint('[AiExtractionService.ping] HTTP ${response.statusCode}: ${response.body}');
+      throw AiExtractionException(
+        AiExtractionErrorCode.parsingFailed,
+        'HTTP ${response.statusCode}: ${response.body}',
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      );
+    }
+
+    return response.body;
   }
 
   String _normalizeDayOfWeek(String raw) {

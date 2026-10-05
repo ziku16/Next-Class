@@ -9,8 +9,8 @@ import 'package:timezone/timezone.dart' as tz;
 /// Notification management service for NextClass (Flow 9 / Phase 10).
 /// Handles:
 /// - Plugin initialization for Android & iOS
-/// - Channel 1: `class_reminders` (High importance, collapsed & expanded BigTextStyle)
-/// - Channel 2: `quiz_reminders` (High importance, evening-before alert)
+/// - Channel 1: `class_reminders_v2` (High importance, collapsed & expanded BigTextStyle)
+/// - Channel 2: `quiz_reminders_v2` (High importance, evening-before alert)
 /// - Tap payload dispatching for deep linking
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -35,14 +35,14 @@ class NotificationService {
   FlutterLocalNotificationsPlugin get plugin => _notificationsPlugin;
   bool get isInitialized => _isInitialized;
 
-  // --- Notification Channel Constants ---
+  // --- Notification Channel Constants (v2 to avoid cached system channel settings) ---
 
-  static const String classChannelId = 'class_reminders';
+  static const String classChannelId = 'class_reminders_v2';
   static const String classChannelName = 'Class reminders';
   static const String classChannelDescription =
       'Notifications sent before each class';
 
-  static const String quizChannelId = 'quiz_reminders';
+  static const String quizChannelId = 'quiz_reminders_v2';
   static const String quizChannelName = 'Quiz reminders';
   static const String quizChannelDescription =
       'Notifications sent the evening before upcoming quizzes';
@@ -51,6 +51,7 @@ class NotificationService {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
+    // Timezone setup
     try {
       tz.initializeTimeZones();
       const channel = MethodChannel('com.nextclass.app/device_info');
@@ -58,11 +59,12 @@ class NotificationService {
           await channel.invokeMethod<String>('getTimeZone');
       if (timeZoneName != null && timeZoneName.isNotEmpty) {
         tz.setLocalLocation(tz.getLocation(timeZoneName));
+        debugPrint('[NotificationService] Timezone initialized to: ${tz.local.name} (device returned: $timeZoneName)');
+      } else {
+        debugPrint('[NotificationService] WARNING: Native getTimeZone returned null or empty. Fallback tz.local: ${tz.local.name}');
       }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Timezone initialization note: $e');
-      }
+    } catch (e, stack) {
+      debugPrint('[NotificationService] CRITICAL: Timezone initialization failed: $e\n$stack');
     }
 
     const androidSettings =
@@ -90,7 +92,7 @@ class NotificationService {
         },
       );
 
-      // Create Android Notification Channels
+      // Create Android Notification Channels with Importance.high
       final androidPlatform = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
@@ -120,10 +122,10 @@ class NotificationService {
       }
 
       _isInitialized = true;
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('NotificationService initialization skipped/failed: $e');
-      }
+      debugPrint('[NotificationService] Plugin and channels initialized successfully');
+    } catch (e, stack) {
+      debugPrint('[NotificationService] CRITICAL: NotificationService initialization failed: $e\n$stack');
+      rethrow;
     }
   }
 
@@ -134,6 +136,7 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlatform != null) {
       final granted = await androidPlatform.requestNotificationsPermission();
+      debugPrint('[NotificationService] requestNotificationsPermission result: $granted');
       return granted ?? false;
     }
 
@@ -160,9 +163,12 @@ class NotificationService {
               AndroidFlutterLocalNotificationsPlugin>();
       if (androidPlatform != null) {
         final granted = await androidPlatform.requestExactAlarmsPermission();
+        debugPrint('[NotificationService] requestExactAlarmsPermission result: $granted');
         return granted ?? false;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[NotificationService] Error requesting exact alarms permission: $e');
+    }
     return true;
   }
 
@@ -177,11 +183,23 @@ class NotificationService {
             await androidPlatform.canScheduleExactNotifications();
         return canSchedule ?? true;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[NotificationService] Error checking exact alarm permission: $e');
+    }
     return true;
   }
 
-  /// Schedules or displays a Class Reminder on the `class_reminders` channel
+  /// Retrieves list of all currently scheduled pending notification requests
+  Future<List<PendingNotificationRequest>> getPendingNotificationRequests() async {
+    try {
+      return await _notificationsPlugin.pendingNotificationRequests();
+    } catch (e) {
+      debugPrint('[NotificationService] Error querying pendingNotificationRequests: $e');
+      return [];
+    }
+  }
+
+  /// Schedules or displays a Class Reminder on the `class_reminders_v2` channel
   Future<void> scheduleClassReminder({
     required int id,
     required String subject,
@@ -246,6 +264,12 @@ class NotificationService {
       'subject': subject,
     });
 
+    // Check exact alarm permission; if not granted, fall back to inexactAllowWhileIdle
+    final bool exactPermitted = await checkExactAlarmPermission();
+    final scheduleMode = exactPermitted
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
+
     try {
       await _notificationsPlugin.zonedSchedule(
         id,
@@ -253,20 +277,20 @@ class NotificationService {
         collapsedBody,
         scheduledDate,
         notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: matchDateTimeComponents,
         payload: payload,
       );
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Failed to schedule class notification ($id): $e');
-      }
+      debugPrint('[NotificationService] Scheduled class reminder: id=$id, subject="$subject", time=$scheduledDate, mode=$scheduleMode');
+    } catch (e, stack) {
+      debugPrint('[NotificationService] CRITICAL: zonedSchedule failed for class ($id - "$subject"): $e\n$stack');
+      rethrow;
     }
   }
 
-  /// Schedules a Quiz Reminder on the `quiz_reminders` channel
+  /// Schedules a Quiz Reminder on the `quiz_reminders_v2` channel
   Future<void> scheduleQuizReminder({
     required int id,
     required String quizId,
@@ -330,6 +354,11 @@ class NotificationService {
       'subject': subject,
     });
 
+    final bool exactPermitted = await checkExactAlarmPermission();
+    final scheduleMode = exactPermitted
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
+
     try {
       await _notificationsPlugin.zonedSchedule(
         id,
@@ -337,15 +366,15 @@ class NotificationService {
         collapsedBody,
         scheduledDate,
         notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
       );
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Failed to schedule quiz notification ($id): $e');
-      }
+      debugPrint('[NotificationService] Scheduled quiz reminder: id=$id, subject="$subject", time=$scheduledDate, mode=$scheduleMode');
+    } catch (e, stack) {
+      debugPrint('[NotificationService] CRITICAL: zonedSchedule failed for quiz ($id - "$subject"): $e\n$stack');
+      rethrow;
     }
   }
 
@@ -353,14 +382,20 @@ class NotificationService {
   Future<void> cancel(int id) async {
     try {
       await _notificationsPlugin.cancel(id);
-    } catch (_) {}
+      debugPrint('[NotificationService] Cancelled notification id: $id');
+    } catch (e) {
+      debugPrint('[NotificationService] Error cancelling notification id $id: $e');
+    }
   }
 
   /// Cancels all scheduled notifications
   Future<void> cancelAll() async {
     try {
       await _notificationsPlugin.cancelAll();
-    } catch (_) {}
+      debugPrint('[NotificationService] Cancelled all notifications');
+    } catch (e) {
+      debugPrint('[NotificationService] Error cancelling all notifications: $e');
+    }
   }
 
   void dispose() {
