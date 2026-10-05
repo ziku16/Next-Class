@@ -216,7 +216,7 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
                   _buildRow(
                     'Exact Alarms Permitted',
                     _exactAlarmsPermitted ? 'YES (Exact)' : 'NO (Falling back to Inexact)',
-                    highlightColor: _exactAlarmsPermitted ? nc.emerald : nc.amber,
+                    highlightColor: _exactAlarmsPermitted ? nc.success : nc.warning,
                   ),
                 ]),
                 const SizedBox(height: 20),
@@ -261,9 +261,9 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.Border.all(
+                      border: Border.all(
                         color: _pingResult!.startsWith('SUCCESS')
-                            ? nc.emerald
+                            ? nc.success
                             : theme.colorScheme.error,
                       ),
                     ),

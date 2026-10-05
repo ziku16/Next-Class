@@ -63,8 +63,8 @@ class NotificationService {
       } else {
         debugPrint('[NotificationService] WARNING: Native getTimeZone returned null or empty. Fallback tz.local: ${tz.local.name}');
       }
-    } catch (e, stack) {
-      debugPrint('[NotificationService] CRITICAL: Timezone initialization failed: $e\n$stack');
+    } catch (e) {
+      debugPrint('[NotificationService] Timezone native resolution note: $e (tz.local: ${tz.local.name})');
     }
 
     const androidSettings =
@@ -93,39 +93,42 @@ class NotificationService {
       );
 
       // Create Android Notification Channels with Importance.high
-      final androidPlatform = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+      try {
+        final androidPlatform = _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
 
-      if (androidPlatform != null) {
-        await androidPlatform.createNotificationChannel(
-          const AndroidNotificationChannel(
-            classChannelId,
-            classChannelName,
-            description: classChannelDescription,
-            importance: Importance.high,
-            playSound: true,
-            enableVibration: true,
-          ),
-        );
+        if (androidPlatform != null) {
+          await androidPlatform.createNotificationChannel(
+            const AndroidNotificationChannel(
+              classChannelId,
+              classChannelName,
+              description: classChannelDescription,
+              importance: Importance.high,
+              playSound: true,
+              enableVibration: true,
+            ),
+          );
 
-        await androidPlatform.createNotificationChannel(
-          const AndroidNotificationChannel(
-            quizChannelId,
-            quizChannelName,
-            description: quizChannelDescription,
-            importance: Importance.high,
-            playSound: true,
-            enableVibration: true,
-          ),
-        );
+          await androidPlatform.createNotificationChannel(
+            const AndroidNotificationChannel(
+              quizChannelId,
+              quizChannelName,
+              description: quizChannelDescription,
+              importance: Importance.high,
+              playSound: true,
+              enableVibration: true,
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('[NotificationService] Android platform channels skipped/unavailable: $e');
       }
 
       _isInitialized = true;
       debugPrint('[NotificationService] Plugin and channels initialized successfully');
     } catch (e, stack) {
       debugPrint('[NotificationService] CRITICAL: NotificationService initialization failed: $e\n$stack');
-      rethrow;
     }
   }
 
