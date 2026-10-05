@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
+import 'package:timezone/data/latest_all.dart' as tz_init;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../data/models/class_item.dart';
@@ -69,6 +70,11 @@ class AlarmScheduler {
   /// - Device reboot
   Future<void> rescheduleAll({DateTime? now}) async {
     final currentTime = now ?? DateTime.now();
+    try {
+      tz.local;
+    } catch (_) {
+      tz_init.initializeTimeZones();
+    }
     debugPrint('[AlarmScheduler] Starting rescheduleAll at $currentTime. Active timezone: ${tz.local.name}');
 
     try {
@@ -361,6 +367,11 @@ class AlarmScheduler {
 
   /// Converts a standard DateTime to tz.TZDateTime using tz.local (no silent UTC fallback).
   tz.TZDateTime _toTZDateTime(DateTime dt) {
+    try {
+      tz.local;
+    } catch (_) {
+      tz_init.initializeTimeZones();
+    }
     return tz.TZDateTime(
       tz.local,
       dt.year,

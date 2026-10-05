@@ -138,9 +138,9 @@ void main() {
       final fakePlugin = FakeFlutterLocalNotificationsPlugin();
       final service = NotificationService.test(fakePlugin);
 
-      expect(NotificationService.classChannelId, 'class_reminders');
+      expect(NotificationService.classChannelId, 'class_reminders_v2');
       expect(NotificationService.classChannelName, 'Class reminders');
-      expect(NotificationService.quizChannelId, 'quiz_reminders');
+      expect(NotificationService.quizChannelId, 'quiz_reminders_v2');
       expect(NotificationService.quizChannelName, 'Quiz reminders');
       expect(service.plugin, isNotNull);
     });
@@ -182,7 +182,7 @@ void main() {
       // Verify expanded BigTextStyle Information
       final details = call['notificationDetails'] as NotificationDetails;
       final androidDetails = details.android!;
-      expect(androidDetails.channelId, 'class_reminders');
+      expect(androidDetails.channelId, NotificationService.classChannelId);
       expect(androidDetails.importance, Importance.high);
       expect(androidDetails.priority, Priority.high);
 
@@ -224,7 +224,7 @@ void main() {
       // Verify expanded BigTextStyle Information
       final details = call['notificationDetails'] as NotificationDetails;
       final androidDetails = details.android!;
-      expect(androidDetails.channelId, 'quiz_reminders');
+      expect(androidDetails.channelId, NotificationService.quizChannelId);
       expect(androidDetails.importance, Importance.high);
 
       final style = androidDetails.styleInformation as BigTextStyleInformation;
