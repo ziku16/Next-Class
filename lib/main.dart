@@ -22,9 +22,7 @@ class NextClassApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      home: home ?? const SplashScreen(
-        nextDestination: WelcomeScreen(),
-      ),
+      home: home ?? const SplashScreen(),
     );
   }
 }

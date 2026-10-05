@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/class_item.dart';
+import '../../domain/services/alarm_scheduler.dart';
 import '../../state/timetable_provider.dart';
 import '../main_navigation_screen.dart';
 import '../shared/class_card.dart';
@@ -62,6 +64,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (!mounted) return;
 
     if (success) {
+      try {
+        SharedPreferences.getInstance().then((prefs) {
+          prefs.setBool('has_seen_onboarding', true);
+        });
+        AlarmScheduler().rescheduleAll();
+      } catch (_) {}
+
       UndoSnackBar.showMessage(
         context,
         message: 'Timetable saved. Chalo!',

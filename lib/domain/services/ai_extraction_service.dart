@@ -36,9 +36,7 @@ class AiExtractionService {
   Future<String?> getApiKey() async {
     if (_cachedApiKey != null) return _cachedApiKey;
     try {
-      final prefs = await SharedPreferences.getInstance().timeout(
-        const Duration(milliseconds: 100),
-      );
+      final prefs = await SharedPreferences.getInstance();
       final stored = prefs.getString(geminiApiKeyPref);
       _cachedApiKey = (stored != null && stored.trim().isNotEmpty)
           ? stored
@@ -108,31 +106,53 @@ class AiExtractionService {
           "Scanning service is currently unavailable. Please add classes manually.",
         );
       }
-      try {
-        final classes = await _extractWithGemini(imagePath, apiKey.trim());
-        if (classes.isNotEmpty) {
-          return classes;
+
+      int attempts = 0;
+      while (attempts < 2) {
+        attempts++;
+        try {
+          final classes = await _extractWithGemini(imagePath, apiKey.trim());
+          if (classes.isNotEmpty) {
+            return classes;
+          }
+          throw const AiExtractionException(
+            AiExtractionErrorCode.noClassesFound,
+            "No classes could be detected in this photo. Please ensure good lighting and fit the whole timetable.",
+          );
+        } on SocketException catch (_) {
+          if (attempts >= 2) {
+            throw const AiExtractionException(
+              AiExtractionErrorCode.noInternet,
+              "We need an internet connection to read your timetable photo. Please check your connection and try again.",
+            );
+          }
+          await Future.delayed(const Duration(milliseconds: 1000));
+        } on http.ClientException catch (_) {
+          if (attempts >= 2) {
+            throw const AiExtractionException(
+              AiExtractionErrorCode.noInternet,
+              "We need an internet connection to read your timetable photo. Please check your connection and try again.",
+            );
+          }
+          await Future.delayed(const Duration(milliseconds: 1000));
+        } on TimeoutException catch (_) {
+          if (attempts >= 2) {
+            throw const AiExtractionException(
+              AiExtractionErrorCode.parsingFailed,
+              "Scanning took too long to respond. Please check your connection and try again.",
+            );
+          }
+          await Future.delayed(const Duration(milliseconds: 1000));
+        } catch (e) {
+          if (e is AiExtractionException) rethrow;
+          if (attempts >= 2) {
+            throw AiExtractionException(
+              AiExtractionErrorCode.parsingFailed,
+              "Could not read timetable photo: $e",
+            );
+          }
+          await Future.delayed(const Duration(milliseconds: 1000));
         }
-        throw const AiExtractionException(
-          AiExtractionErrorCode.noClassesFound,
-          "No classes could be detected in this photo. Please ensure good lighting and fit the whole timetable.",
-        );
-      } on SocketException {
-        throw const AiExtractionException(
-          AiExtractionErrorCode.noInternet,
-          "We need an internet connection to read your timetable photo. Please check your connection and try again.",
-        );
-      } on TimeoutException {
-        throw const AiExtractionException(
-          AiExtractionErrorCode.parsingFailed,
-          "Scanning took too long to respond. Please check your connection and try again.",
-        );
-      } catch (e) {
-        if (e is AiExtractionException) rethrow;
-        throw AiExtractionException(
-          AiExtractionErrorCode.parsingFailed,
-          "Could not read timetable photo: $e",
-        );
       }
     }
 

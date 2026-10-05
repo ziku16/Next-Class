@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/class_item.dart';
 import '../../domain/services/ai_extraction_service.dart';
+import '../../domain/services/alarm_scheduler.dart';
 import '../../domain/services/connectivity_service.dart';
 import '../../state/upload_provider.dart';
 import '../main_navigation_screen.dart';
@@ -70,7 +72,13 @@ class _UploadScreenState extends State<UploadScreen> {
     super.dispose();
   }
 
-  void _navigateToHome() {
+  void _navigateToHome() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_seen_onboarding', true);
+      await AlarmScheduler().rescheduleAll();
+    } catch (_) {}
+    if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
       (route) => false,
@@ -79,7 +87,12 @@ class _UploadScreenState extends State<UploadScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final picked = await _picker.pickImage(source: source);
+      final picked = await _picker.pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
       if (picked != null) {
         _provider.setSelectedImage(picked);
       }

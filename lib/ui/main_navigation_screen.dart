@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/class_item.dart';
 import '../data/repositories/quiz_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/timetable_repository.dart';
+import '../domain/services/alarm_scheduler.dart';
 import '../domain/services/notification_service.dart';
 import '../state/quiz_provider.dart';
 import 'home/today_screen.dart';
@@ -60,7 +62,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   Future<void> _initNotifications() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_seen_onboarding', true);
+
       await NotificationService().initialize();
+      await NotificationService().requestPermissions();
+      await AlarmScheduler().rescheduleAll();
     } catch (_) {}
   }
 
@@ -83,7 +90,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 MaterialPageRoute(
                   builder: (_) => ReviewScreen(
                     initialClasses: classes,
-                    onSaved: () => Navigator.of(context).pop(),
+                    onSaved: () async {
+                      try {
+                        await AlarmScheduler().rescheduleAll();
+                      } catch (_) {}
+                      Navigator.of(context).pop();
+                      setState(() {});
+                    },
                   ),
                 ),
               );
@@ -103,7 +116,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               MaterialPageRoute(
                 builder: (_) => ReviewScreen(
                   initialClasses: classes,
-                  onSaved: () {
+                  onSaved: () async {
+                    try {
+                      await AlarmScheduler().rescheduleAll();
+                    } catch (_) {}
                     Navigator.of(context).popUntil((route) => route.isFirst);
                     setState(() {});
                   },
@@ -116,7 +132,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               MaterialPageRoute(
                 builder: (_) => ReviewScreen(
                   initialClasses: const [],
-                  onSaved: () {
+                  onSaved: () async {
+                    try {
+                      await AlarmScheduler().rescheduleAll();
+                    } catch (_) {}
                     Navigator.of(context).popUntil((route) => route.isFirst);
                     setState(() {});
                   },

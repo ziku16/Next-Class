@@ -297,13 +297,25 @@ class AlarmScheduler {
 
   tz.TZDateTime _toTZDateTime(DateTime dt) {
     try {
-      return tz.TZDateTime.from(dt, tz.local);
+      return tz.TZDateTime(
+        tz.local,
+        dt.year,
+        dt.month,
+        dt.day,
+        dt.hour,
+        dt.minute,
+        dt.second,
+      );
     } catch (_) {
       try {
-        return tz.TZDateTime.from(dt, tz.getLocation('UTC'));
+        return tz.TZDateTime.from(dt, tz.local);
       } catch (_) {
-        tz.initializeTimeZones();
-        return tz.TZDateTime.from(dt, tz.UTC);
+        try {
+          return tz.TZDateTime.from(dt, tz.getLocation('UTC'));
+        } catch (_) {
+          tz.initializeTimeZones();
+          return tz.TZDateTime.from(dt, tz.UTC);
+        }
       }
     }
   }

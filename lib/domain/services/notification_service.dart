@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 /// Notification management service for NextClass (Flow 9 / Phase 10).
@@ -52,8 +53,13 @@ class NotificationService {
 
     try {
       tz.initializeTimeZones();
-    } catch (_) {
-      // Timezone data already initialized
+      final timezoneInfo = await FlutterTimezone.getLocalTimezone();
+      final String timeZoneName = timezoneInfo.identifier;
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Timezone initialization note: $e');
+      }
     }
 
     const androidSettings =
