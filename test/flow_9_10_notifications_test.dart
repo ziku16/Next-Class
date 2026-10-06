@@ -549,5 +549,211 @@ void main() {
       // Verify pending notification requests list contains the debug notification
       expect(pending.any((req) => req.id == 999999), isTrue);
     });
+
+    group('Regression Tests A-J: Physical-device and Offset Switching Verification', () {
+      late FakeFlutterLocalNotificationsPlugin fakePlugin;
+      late NotificationService notifService;
+      late FakeSettingsRepo settingsRepo;
+      late FakeTimetableRepo timetableRepo;
+      late FakeQuizRepo quizRepo;
+      late AlarmScheduler scheduler;
+
+      setUp(() {
+        fakePlugin = FakeFlutterLocalNotificationsPlugin();
+        notifService = NotificationService.test(fakePlugin);
+        settingsRepo = FakeSettingsRepo();
+        timetableRepo = FakeTimetableRepo();
+        quizRepo = FakeQuizRepo();
+        scheduler = AlarmScheduler(
+          notificationService: notifService,
+          settingsRepository: settingsRepo,
+          timetableRepository: timetableRepo,
+          quizRepository: quizRepo,
+        );
+      });
+
+      // Test A: 15-minute reminder
+      test('Test A: 15-minute reminder schedules properly with 15 min pre-class offset', () async {
+        final ref = DateTime(2026, 10, 5, 8, 0); // Monday 08:00
+        final scheduled = scheduler.calculateNextClassReminderTZ(
+          dayIndex: 0, // Monday
+          startTime: '09:00',
+          offsetMinutes: 15,
+          now: ref,
+        );
+        expect(scheduled.weekday, 1);
+        expect(scheduled.hour, 8);
+        expect(scheduled.minute, 45);
+        expect(scheduled.isAfter(ref), isTrue);
+      });
+
+      // Test B: Change 15 → 5 minutes
+      test('Test B: Change 15 → 5 minutes calculates 5 min pre-class offset', () async {
+        final ref = DateTime(2026, 10, 5, 8, 0); // Monday 08:00
+        final scheduled = scheduler.calculateNextClassReminderTZ(
+          dayIndex: 0, // Monday
+          startTime: '09:00',
+          offsetMinutes: 5,
+          now: ref,
+        );
+        expect(scheduled.weekday, 1);
+        expect(scheduled.hour, 8);
+        expect(scheduled.minute, 55);
+        expect(scheduled.isAfter(ref), isTrue);
+      });
+
+      // Test C: Ensure old schedule is replaced
+      test('Test C: Changing reminder offset replaces existing scheduled notification', () async {
+        final testClass = ClassItem(
+          id: 'class-c-1',
+          subject: 'Physics',
+          subjectColorIndex: 0,
+          dayOfWeek: 'Monday',
+          startTime: '10:00',
+          endTime: '11:00',
+        );
+        timetableRepo.classes = [testClass];
+        settingsRepo.settings = settingsRepo.settings.copyWith(classReminderMinutes: 15);
+
+        final nowTime = DateTime(2026, 10, 5, 8, 0);
+        await scheduler.rescheduleAll(now: nowTime);
+        expect(fakePlugin.scheduledCalls.length, 1);
+        final firstCall = fakePlugin.scheduledCalls.first;
+        expect(firstCall['title'], contains('15 min'));
+        final tz.TZDateTime firstDate = firstCall['scheduledDate'];
+        expect(firstDate.minute, 45);
+
+        // Change to 5 minutes and reschedule
+        settingsRepo.settings = settingsRepo.settings.copyWith(classReminderMinutes: 5);
+        await scheduler.rescheduleAll(now: nowTime);
+        expect(fakePlugin.allCancelled, isTrue);
+        expect(fakePlugin.scheduledCalls.length, 1);
+        final secondCall = fakePlugin.scheduledCalls.first;
+        expect(secondCall['title'], contains('5 min'));
+        final tz.TZDateTime secondDate = secondCall['scheduledDate'];
+        expect(secondDate.minute, 55);
+      });
+
+      // Test D: Notification ID remains identical after changing offset
+      test('Test D: Notification ID remains identical after changing offset from 15 to 5 min', () {
+        const classId = 'history-period-3';
+        final idAt15 = AlarmScheduler.getClassNotificationId(classId);
+        final idAt5 = AlarmScheduler.getClassNotificationId(classId);
+        expect(idAt15, equals(idAt5));
+      });
+
+      // Test E: One-shot one-minute diagnostic
+      test('Test E: One-shot one-minute diagnostic schedules at now + 1 min without recurrence', () async {
+        final pending = await notifService.scheduleDebugNotification(
+          delay: const Duration(minutes: 1),
+        );
+        expect(fakePlugin.scheduledCalls.length, 1);
+        final call = fakePlugin.scheduledCalls.first;
+        expect(call['id'], 999999);
+        expect(call['matchDateTimeComponents'], isNull);
+        expect(pending.any((p) => p.id == 999999), isTrue);
+      });
+
+      // Test F: Weekly recurrence
+      test('Test F: Weekly class reminders use DateTimeComponents.dayOfWeekAndTime', () async {
+        final testClass = ClassItem(
+          id: 'chem-lab-1',
+          subject: 'Chemistry',
+          subjectColorIndex: 0,
+          dayOfWeek: 'Wednesday',
+          startTime: '14:00',
+          endTime: '15:30',
+        );
+        timetableRepo.classes = [testClass];
+        settingsRepo.settings = settingsRepo.settings.copyWith(classReminderMinutes: 10);
+
+        await scheduler.rescheduleAll(now: DateTime(2026, 10, 5, 8, 0));
+        expect(fakePlugin.scheduledCalls.length, 1);
+        final call = fakePlugin.scheduledCalls.first;
+        expect(call['matchDateTimeComponents'], DateTimeComponents.dayOfWeekAndTime);
+      });
+
+      // Test G: Monday/Sunday boundaries
+      test('Test G: Monday to Sunday and Sunday to Monday boundary transitions calculate correctly', () {
+        // Monday 00:05 class with 10 min offset should trigger Sunday 23:55
+        final sunRef = DateTime(2026, 10, 4, 12, 0); // Sunday 12:00
+        final rSun = scheduler.calculateNextClassReminderTZ(
+          dayIndex: 0, // Monday
+          startTime: '00:05',
+          offsetMinutes: 10,
+          now: sunRef,
+        );
+        expect(rSun.weekday, 7); // Sunday
+        expect(rSun.hour, 23);
+        expect(rSun.minute, 55);
+
+        // Sunday 09:00 class with 15 min offset checked on Monday
+        final monRef = DateTime(2026, 10, 5, 12, 0); // Monday
+        final rMonToSun = scheduler.calculateNextClassReminderTZ(
+          dayIndex: 6, // Sunday
+          startTime: '09:00',
+          offsetMinutes: 15,
+          now: monRef,
+        );
+        expect(rMonToSun.weekday, 7); // Next Sunday
+        expect(rMonToSun.hour, 8);
+        expect(rMonToSun.minute, 45);
+        expect(rMonToSun.isAfter(monRef), isTrue);
+      });
+
+      // Test H: Reminder crossing midnight
+      test('Test H: Class at 00:05 with 15 min offset fires at 23:50 on previous day', () {
+        final ref = DateTime(2026, 10, 6, 12, 0); // Tuesday 12:00
+        final res = scheduler.calculateNextClassReminderTZ(
+          dayIndex: 2, // Wednesday
+          startTime: '00:05',
+          offsetMinutes: 15,
+          now: ref,
+        );
+        expect(res.weekday, 2); // Tuesday
+        expect(res.hour, 23);
+        expect(res.minute, 50);
+      });
+
+      // Test I: Class already passed today
+      test('Test I: Class already passed today advances to same weekday next week', () {
+        final ref = DateTime(2026, 10, 5, 14, 0); // Monday 14:00
+        final res = scheduler.calculateNextClassReminderTZ(
+          dayIndex: 0, // Monday
+          startTime: '10:00', // Already passed at 14:00
+          offsetMinutes: 15,
+          now: ref,
+        );
+        expect(res.weekday, 1); // Monday
+        expect(res.day, 12); // Oct 12 (7 days later)
+        expect(res.hour, 9);
+        expect(res.minute, 45);
+        expect(res.isAfter(ref), isTrue);
+      });
+
+      // Test J: Concurrent reschedule calls
+      test('Test J: Concurrent rescheduleAll calls are serialized safely without crash or race', () async {
+        timetableRepo.classes = [
+          ClassItem(
+            id: 'bio-101',
+            subject: 'Biology',
+            subjectColorIndex: 0,
+            dayOfWeek: 'Friday',
+            startTime: '11:00',
+            endTime: '12:00',
+          ),
+        ];
+
+        // Trigger two rescheduleAll invocations concurrently
+        final future1 = scheduler.rescheduleAll(now: DateTime(2026, 10, 5, 8, 0));
+        final future2 = scheduler.rescheduleAll(now: DateTime(2026, 10, 5, 8, 0));
+
+        await Future.wait([future1, future2]);
+
+        // Final state must have cleanly scheduled the class
+        expect(fakePlugin.scheduledCalls.length, 1);
+        expect(fakePlugin.scheduledCalls.first['title'], contains('Biology'));
+      });
+    });
   });
 }

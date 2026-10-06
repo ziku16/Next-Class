@@ -492,14 +492,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   leading: const Icon(Icons.info_outline_rounded),
                   title: const Text('Version'),
                   trailing: const Text('1.0.0'),
+                  onTap: () => _showNotificationDiagnosticsSheet(context),
                   onLongPress: () async {
+                    final notifService = NotificationService();
+                    final canExact = await notifService.checkExactAlarmPermission();
                     final pending =
-                        await NotificationService().scheduleDebugNotification();
+                        await notifService.scheduleDebugNotification();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'Scheduled 1-min test notification! (${pending.length} pending)',
+                            'Scheduled 1-min test notification! (Exact: $canExact, ${pending.length} pending)',
                           ),
                           behavior: SnackBarBehavior.floating,
                           duration: const Duration(seconds: 4),
@@ -562,6 +565,133 @@ class _SettingsScreenState extends State<SettingsScreen> {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: children,
+      ),
+    );
+  }
+
+  Future<void> _showNotificationDiagnosticsSheet(BuildContext context) async {
+    final notifService = NotificationService();
+    final canExact = await notifService.checkExactAlarmPermission();
+    final pending = await notifService.getPendingNotificationRequests();
+    if (!context.mounted) return;
+
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Notification Diagnostics',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Exact Alarms:'),
+                        Text(
+                          canExact ? 'Granted (ExactAllowWhileIdle)' : 'Denied (Inexact fallback)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: canExact ? Colors.green : Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Pending Alarms:'),
+                        Text(
+                          '${pending.length}',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                icon: const Icon(Icons.timer_outlined),
+                label: const Text('Schedule 1-Minute Diagnostic (Exact)'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(44),
+                ),
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  final p = await notifService.scheduleDebugNotification(
+                    delay: const Duration(minutes: 1),
+                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Scheduled 1-min test! (${p.length} pending, Exact: $canExact)'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.alarm_outlined),
+                label: const Text('Schedule 5-Minute Diagnostic (Exact)'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(44),
+                ),
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  final p = await notifService.scheduleDebugNotification(
+                    delay: const Duration(minutes: 5),
+                    id: 999998,
+                    title: 'NextClass 5-Min Test',
+                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Scheduled 5-min test! (${p.length} pending, Exact: $canExact)'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

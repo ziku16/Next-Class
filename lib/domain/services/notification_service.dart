@@ -300,14 +300,24 @@ class NotificationService {
 
     // Standard notification scheduling: prefer exactAllowWhileIdle, gracefully fall back to inexactAllowWhileIdle
     AndroidScheduleMode scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+    bool canExact = true;
     try {
-      final canExact = await checkExactAlarmPermission();
+      canExact = await checkExactAlarmPermission();
       if (!canExact) {
         scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
       }
     } catch (_) {
       scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
     }
+
+    debugPrint('''
+[NotificationService] Scheduling class reminder:
+  ID: $id
+  Subject: "$subject"
+  Time: $scheduledDate (weekday: ${scheduledDate.weekday})
+  Mode: $scheduleMode (canExact: $canExact)
+  Recurrence: ${matchDateTimeComponents?.name ?? 'one-shot'}
+''');
 
     try {
       await _notificationsPlugin.zonedSchedule(
@@ -322,7 +332,7 @@ class NotificationService {
         matchDateTimeComponents: matchDateTimeComponents,
         payload: payload,
       );
-      debugPrint('[NotificationService] Scheduled class reminder: id=$id, subject="$subject", time=$scheduledDate, mode=$scheduleMode');
+      debugPrint('[NotificationService] Successfully scheduled class reminder: id=$id, subject="$subject", time=$scheduledDate, mode=$scheduleMode');
     } catch (e) {
       if (scheduleMode != AndroidScheduleMode.inexactAllowWhileIdle) {
         debugPrint('[NotificationService] Exact alarm failed ($e), falling back to inexactAllowWhileIdle for class $id');
@@ -479,42 +489,86 @@ class NotificationService {
 
   /// Diagnostic / debug method to prove that a basic one-shot scheduled notification works.
   /// Uses a one-shot notification without [DateTimeComponents].
-  /// Logs now time, scheduled time, and verifies presence in [pendingNotificationRequests].
+  /// Logs now time, scheduled time, exact alarm capability, and verifies presence in [pendingNotificationRequests].
   Future<List<PendingNotificationRequest>> scheduleDebugNotification({
     Duration delay = const Duration(minutes: 1),
-    AndroidScheduleMode scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle,
+    AndroidScheduleMode? scheduleMode,
+    String? title,
+    String? body,
+    int id = 999999,
   }) async {
     await initialize();
 
+    final canExact = await checkExactAlarmPermission();
+    final effectiveMode = scheduleMode ??
+        (canExact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle);
+
     final scheduledDate = tz.TZDateTime.now(tz.local).add(delay);
 
+    debugPrint('[DEBUG] Timezone: ${tz.local.name}');
+    debugPrint('[DEBUG] Exact Alarms Permitted: $canExact');
     debugPrint('[DEBUG] NOW: ${tz.TZDateTime.now(tz.local)} (local zone: ${tz.local.name})');
-    debugPrint('[DEBUG] SCHEDULED: $scheduledDate (mode: $scheduleMode)');
+    debugPrint('[DEBUG] SCHEDULED: $scheduledDate (delay: ${delay.inSeconds}s, mode: $effectiveMode)');
 
-    await _notificationsPlugin.zonedSchedule(
-      999999,
-      'NextClass Scheduled Test',
-      'If you see this, scheduled notifications work.',
-      scheduledDate,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          classChannelId,
-          classChannelName,
-          channelDescription: classChannelDescription,
-          importance: Importance.high,
-          priority: Priority.high,
+    final notifTitle = title ?? 'NextClass Scheduled Test';
+    final notifBody = body ?? 'If you see this, scheduled notifications work.';
+
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        id,
+        notifTitle,
+        notifBody,
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            classChannelId,
+            classChannelName,
+            channelDescription: classChannelDescription,
+            importance: Importance.high,
+            priority: Priority.high,
+            playSound: true,
+            enableVibration: true,
+          ),
         ),
-      ),
-      androidScheduleMode: scheduleMode,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+        androidScheduleMode: effectiveMode,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    } catch (e) {
+      if (effectiveMode != AndroidScheduleMode.inexactAllowWhileIdle) {
+        debugPrint('[DEBUG] Exact alarm failed ($e), falling back to inexactAllowWhileIdle for debug notification');
+        await _notificationsPlugin.zonedSchedule(
+          id,
+          notifTitle,
+          notifBody,
+          scheduledDate,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              classChannelId,
+              classChannelName,
+              channelDescription: classChannelDescription,
+              importance: Importance.high,
+              priority: Priority.high,
+              playSound: true,
+              enableVibration: true,
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+        );
+      } else {
+        rethrow;
+      }
+    }
 
     final pending = await _notificationsPlugin.pendingNotificationRequests();
 
     debugPrint(
-      '[DEBUG] Pending notifications: '
-      '${pending.map((e) => '${e.id}=${e.title}').toList()}',
+      '[DEBUG] Pending notifications (${pending.length}): '
+      '${pending.map((e) => '[${e.id}] "${e.title}"').toList()}',
     );
 
     return pending;

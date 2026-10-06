@@ -178,9 +178,26 @@ class AlarmScheduler {
           now: ref,
         );
 
-        debugPrint(
-          '[AlarmScheduler] Scheduling class alarm: id=$notificationId, subject="${classItem.subject}", scheduledTZ=$scheduledTZ',
-        );
+        final canExact = await _notificationService.checkExactAlarmPermission();
+        final scheduleMode = canExact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle;
+
+        debugPrint('''
+[AlarmScheduler]
+Subject: ${classItem.subject}
+Class: ${classItem.dayOfWeek} ${classItem.startTime}
+Offset: $offsetMinutes
+Now: ${ref.toIso8601String()}
+Timezone: ${tz.local.name}
+Scheduled: ${scheduledTZ.toIso8601String()}
+Target Weekday: ${scheduledTZ.weekday}
+Target Local Date: ${scheduledTZ.year}-${scheduledTZ.month.toString().padLeft(2, '0')}-${scheduledTZ.day.toString().padLeft(2, '0')}
+Target Local Time: ${scheduledTZ.hour.toString().padLeft(2, '0')}:${scheduledTZ.minute.toString().padLeft(2, '0')}
+ID: $notificationId
+Mode: $scheduleMode
+Recurrence: dayOfWeekAndTime
+''');
 
         await _notificationService.scheduleClassReminder(
           id: notificationId,
@@ -359,13 +376,35 @@ class AlarmScheduler {
     if (targetWeekday < 1) targetWeekday += 7;
     if (targetWeekday > 7) targetWeekday -= 7;
 
-    final ref = now ?? DateTime.now();
-    var scheduled = DateTime(
+    try {
+      tz.local;
+    } catch (_) {
+      tz_init.initializeTimeZones();
+    }
+
+    final ref = now != null
+        ? (now is tz.TZDateTime
+            ? now
+            : tz.TZDateTime(
+                tz.local,
+                now.year,
+                now.month,
+                now.day,
+                now.hour,
+                now.minute,
+                now.second,
+                now.millisecond,
+              ))
+        : tz.TZDateTime.now(tz.local);
+
+    var scheduled = tz.TZDateTime(
+      tz.local,
       ref.year,
       ref.month,
       ref.day,
       reminderHour,
       reminderMinute,
+      0,
     );
 
     // Advance to target weekday and ensure scheduled date is strictly in the future
@@ -373,11 +412,12 @@ class AlarmScheduler {
       scheduled = scheduled.add(const Duration(days: 1));
     }
 
-    return _toTZDateTime(scheduled);
+    return scheduled;
   }
 
   /// Converts a standard DateTime to tz.TZDateTime using tz.local (no silent UTC fallback).
   tz.TZDateTime _toTZDateTime(DateTime dt) {
+    if (dt is tz.TZDateTime) return dt;
     try {
       tz.local;
     } catch (_) {
