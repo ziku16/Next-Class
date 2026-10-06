@@ -76,7 +76,7 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
     onQuiz: Color(0xFF000000),
     quizContainer: Color(0xFFFFD180),
     onQuizContainer: Color(0xFF000000),
-    quizUrgent: Color(0xFFFF1744),
+    quizUrgent: Color(0xFFD50000),
     onQuizUrgent: Color(0xFFFFFFFF),
     success: Color(0xFF00C853),
     successContainer: Color(0xFFB9F6CA),

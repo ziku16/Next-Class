@@ -329,18 +329,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
-                                    behavior: SnackBarBehavior.floating,
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                 const Divider(height: 1),
 
                 // Quiz Reminder Toggle
@@ -668,8 +656,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: children,
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          children: children,
+        ),
       ),
     );
   }

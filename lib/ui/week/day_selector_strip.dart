@@ -167,7 +167,7 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  dayName.toUpperCase(),
+                  dayName,
                   style: const TextStyle(
                     fontFamily: 'SpaceGrotesk',
                     fontSize: 11,
@@ -194,23 +194,6 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-
-            // Small indicator dot if today and not selected
-            if (isToday && !isSelected) ...[
-              const SizedBox(height: 2),
-              Container(
-                width: 4,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ],
         ),
       ),
     );

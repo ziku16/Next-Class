@@ -373,6 +373,7 @@ class _WeekScreenState extends State<WeekScreen> {
                   ? const Center(child: CircularProgressIndicator())
                   : ListView.builder(
                       controller: _scrollController,
+                      cacheExtent: 5000,
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
                       itemCount: 7,
                       itemBuilder: (context, index) {
