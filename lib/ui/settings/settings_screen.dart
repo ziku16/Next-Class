@@ -488,10 +488,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: widget.onPrivacyPolicy,
                 ),
                 const Divider(height: 1),
-                const ListTile(
-                  leading: Icon(Icons.info_outline_rounded),
-                  title: Text('Version'),
-                  trailing: Text('1.0.0'),
+                ListTile(
+                  leading: const Icon(Icons.info_outline_rounded),
+                  title: const Text('Version'),
+                  trailing: const Text('1.0.0'),
+                  onLongPress: () async {
+                    final pending =
+                        await NotificationService().scheduleDebugNotification();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Scheduled 1-min test notification! (${pending.length} pending)',
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    }
+                  },
                 ),
                 if (widget.onSignOut != null) ...[
                   const Divider(height: 1),
