@@ -144,19 +144,61 @@ class _ReviewScreenState extends State<ReviewScreen> {
             _handleBack();
           },
           child: Scaffold(
-            backgroundColor: theme.colorScheme.surface,
+            backgroundColor: const Color(0xFFFAF6EE),
             appBar: AppBar(
+              backgroundColor: const Color(0xFFFAF6EE),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
                 tooltip: 'Back',
                 onPressed: _handleBack,
               ),
-              title: const Text('Check your classes'),
+              title: const Text(
+                'Check your classes',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  color: Colors.black,
+                ),
+              ),
               centerTitle: false,
               actions: [
-                TextButton(
-                  onPressed: _provider.isSaving ? null : _handleSave,
-                  child: const Text('Save'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black,
+                          offset: Offset(2, 2),
+                          blurRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFE500),
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          side: const BorderSide(color: Colors.black, width: 2.0),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                      ),
+                      onPressed: _provider.isSaving ? null : _handleSave,
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
               ],
@@ -173,27 +215,50 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   ),
                 ],
 
-                // "Hide empty days" Toggle Switch
+                // "Hide empty days" Toggle Control Card
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Hide empty days',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.black, width: 2.5),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black,
+                          offset: Offset(2.5, 2.5),
+                          blurRadius: 0,
                         ),
-                      ),
-                      Switch(
-                        value: _provider.hideEmptyDays,
-                        onChanged: (val) => _provider.setHideEmptyDays(val),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Hide empty days',
+                          style: TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Switch(
+                          value: _provider.hideEmptyDays,
+                          activeColor: Colors.black,
+                          activeTrackColor: const Color(0xFFFF5500),
+                          inactiveThumbColor: Colors.black,
+                          inactiveTrackColor: const Color(0xFFDCE2E6),
+                          trackOutlineColor: WidgetStateProperty.all(Colors.black),
+                          trackOutlineWidth: WidgetStateProperty.all(2.0),
+                          onChanged: (val) => _provider.setHideEmptyDays(val),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const Divider(height: 1),
+                const Divider(height: 2, thickness: 2, color: Colors.black),
 
                 // Grouped Day-by-Day List
                 Expanded(
@@ -209,43 +274,62 @@ class _ReviewScreenState extends State<ReviewScreen> {
             ),
             bottomNavigationBar: Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFAF6EE),
                 border: Border(
                   top: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+                    color: Colors.black,
+                    width: 3.0,
                   ),
                 ),
               ),
               child: SafeArea(
                 top: false,
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed:
-                        _provider.isSaving ? null : _handleSave,
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black,
+                        offset: Offset(3.5, 3.5),
+                        blurRadius: 0,
                       ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: FilledButton(
+                      onPressed:
+                          _provider.isSaving ? null : _handleSave,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF5500),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          side: const BorderSide(color: Colors.black, width: 2.5),
+                        ),
+                      ),
+                      child: _provider.isSaving
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Save timetable',
+                              style: TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                letterSpacing: 0.5,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
-                    child: _provider.isSaving
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Save timetable',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                            ),
-                          ),
                   ),
                 ),
               ),
@@ -279,15 +363,36 @@ class _ReviewScreenState extends State<ReviewScreen> {
             children: [
               Text(
                 '$day · $countLabel',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.onSurface,
+                style: const TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  color: Colors.black,
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline, size: 22),
-                tooltip: 'Add class to $day',
-                onPressed: () => _handleAddClass(day),
+              GestureDetector(
+                onTap: () => _handleAddClass(day),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFE500),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.black, width: 2.0),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black,
+                        offset: Offset(2, 2),
+                        blurRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    size: 18,
+                    color: Colors.black,
+                  ),
+                ),
               ),
             ],
           ),
@@ -299,17 +404,26 @@ class _ReviewScreenState extends State<ReviewScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-                  style: BorderStyle.solid,
+                  color: Colors.black,
+                  width: 2.0,
                 ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black,
+                    offset: Offset(2.5, 2.5),
+                    blurRadius: 0,
+                  ),
+                ],
               ),
-              child: Text(
+              child: const Text(
                 'Nothing here yet',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w700,
                   fontStyle: FontStyle.italic,
                 ),
               ),

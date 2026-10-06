@@ -86,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final ncColors = context.ncColors;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: const Color(0xFFFAF6EE),
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -95,54 +95,95 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Direction A: Forward Calendar Brand Icon
+                // Direction A: Forward Calendar Brand Icon with Revo-Brutalist Frame
                 Container(
-                  width: 96,
-                  height: 96,
+                  width: 104,
+                  height: 104,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(24),
+                    color: const Color(0xFFFFE500),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black, width: 3.5),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black,
+                        offset: Offset(4.5, 4.5),
+                        blurRadius: 0,
+                      ),
+                    ],
                   ),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.calendar_month_rounded,
-                        size: 52,
-                        color: theme.colorScheme.primary,
+                        size: 54,
+                        color: Colors.black,
                       ),
                       Positioned(
-                        right: 18,
-                        bottom: 18,
+                        right: 14,
+                        bottom: 14,
                         child: Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(5),
                           decoration: BoxDecoration(
-                            color: ncColors.quiz,
+                            color: const Color(0xFFFF5500),
                             shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black, width: 2),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.arrow_forward_rounded,
                             size: 16,
-                            color: ncColors.onQuiz,
+                            color: Colors.white,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                Text(
+                const SizedBox(height: 24),
+                const Text(
                   'NextClass',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
+                  style: TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1.0,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
+                const Text(
                   'Never miss a class or a quiz',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.black, width: 2),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black,
+                        offset: Offset(2, 2),
+                        blurRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: const Text(
+                    'ACADEMIC ASSISTANT',
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ],

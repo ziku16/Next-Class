@@ -36,77 +36,120 @@ class NotificationExplainerScreen extends StatelessWidget {
     final ncColors = context.ncColors;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: const Color(0xFFFAF6EE),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFFAF6EE),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(
-          'Step 2 of 3',
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
+        title: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFE500),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.black, width: 1.5),
+          ),
+          child: const Text(
+            'Step 2 of 3',
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+              letterSpacing: 0.5,
+              color: Colors.black,
+            ),
           ),
         ),
         centerTitle: false,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Want a nudge\nbefore class?',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  height: 1.2,
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 32,
+                  height: 1.15,
+                  color: Colors.black,
+                  letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
+              const Text(
                 "NextClass sends 2 types of reminders: before each class and for upcoming quizzes. That's all, zero spam.",
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                  height: 1.35,
                 ),
               ),
               const SizedBox(height: 24),
 
               // Type 1: Class Reminder
-              Text(
-                '1. CLASS REMINDERS',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  letterSpacing: 1.1,
-                  fontWeight: FontWeight.w800,
-                  color: theme.colorScheme.primary,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFE500),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.black, width: 1.5),
+                ),
+                child: const Text(
+                  '1. CLASS REMINDERS',
+                  style: TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    color: Colors.black,
+                  ),
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               _buildNotificationPreviewCard(
                 context,
                 icon: Icons.calendar_month_outlined,
-                iconColor: theme.colorScheme.primary,
+                iconColor: const Color(0xFFFF5500),
                 appName: 'NextClass · now',
                 title: 'Physics in 15 min · Room B-12',
                 body: '09:30 – 10:20 · Ms. Sara',
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
               // Type 2: Quiz Reminder
-              Text(
-                '2. QUIZ REMINDERS',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  letterSpacing: 1.1,
-                  fontWeight: FontWeight.w800,
-                  color: ncColors.quiz,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00E676),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.black, width: 1.5),
+                ),
+                child: const Text(
+                  '2. QUIZ REMINDERS',
+                  style: TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    color: Colors.black,
+                  ),
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               _buildNotificationPreviewCard(
                 context,
                 icon: Icons.quiz_outlined,
-                iconColor: ncColors.quiz,
+                iconColor: const Color(0xFFFF5500),
                 appName: 'NextClass · 8:00 pm',
                 title: 'Quiz tomorrow: Chemistry — Ch. 4–5',
                 body: 'Fri, 3 Oct · Bring a calculator',
@@ -115,12 +158,42 @@ class NotificationExplainerScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Primary Action: Allow reminders
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  key: const Key('allow_notifications_button'),
-                  onPressed: () => _handleAllow(context),
-                  child: const Text('Allow reminders'),
+              Container(
+                decoration: const BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(3.5, 3.5),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    key: const Key('allow_notifications_button'),
+                    onPressed: () => _handleAllow(context),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF5500),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        side: const BorderSide(color: Colors.black, width: 2.5),
+                      ),
+                    ),
+                    child: const Text(
+                      'Allow reminders',
+                      style: TextStyle(
+                        fontFamily: 'SpaceGrotesk',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -130,7 +203,15 @@ class NotificationExplainerScreen extends StatelessWidget {
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () => _proceed(context),
-                  child: const Text('Not now'),
+                  child: const Text(
+                    'Not now',
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
+                      fontSize: 15,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -149,17 +230,23 @@ class NotificationExplainerScreen extends StatelessWidget {
     required String title,
     required String body,
   }) {
-    final theme = Theme.of(context);
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: Colors.black,
+          width: 2.5,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(3, 3),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,8 +257,11 @@ class NotificationExplainerScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 appName,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: const TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  color: Colors.black54,
                 ),
               ),
             ],
@@ -179,15 +269,21 @@ class NotificationExplainerScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             title,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
+            style: const TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontWeight: FontWeight.w900,
+              fontSize: 15,
+              color: Colors.black,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             body,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: const TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: Colors.black87,
             ),
           ),
         ],

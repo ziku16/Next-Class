@@ -24,9 +24,10 @@ class EditClassSheet extends StatefulWidget {
     return showModalBottomSheet<ClassItem>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: const Color(0xFFFAF6EE),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        side: BorderSide(color: Colors.black, width: 3.5),
       ),
       builder: (ctx) => EditClassSheet(
         initialClass: initialClass,
@@ -208,337 +209,555 @@ class _EditClassSheetState extends State<EditClassSheet> {
         _hasAttemptedSubmit && _subjectController.text.trim().isEmpty;
     final showTimeError = !_isTimeValid;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Center drag handle
-            Center(
-              child: Container(
-                width: 32,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
+    return Container(
+      color: const Color(0xFFFAF6EE),
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Center drag handle
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Header Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  isEditing ? 'Edit class' : 'Add class',
-                  style: theme.textTheme.titleLarge?.copyWith(
+              // Header Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isEditing ? 'Edit class' : 'Add class',
+                    style: const TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.black, width: 2.0),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black,
+                            offset: Offset(2, 2),
+                            blurRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.close, size: 18, color: Colors.black),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Day Dropdown
+              const Text(
+                'Day',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                decoration: const BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(2.5, 2.5),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: DropdownButtonFormField<String>(
+                  initialValue: _selectedDay,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                    ),
+                  ),
+                  items: ClassItem.daysOfWeek.map((day) {
+                    return DropdownMenuItem(
+                      value: day,
+                      child: Text(
+                        day,
+                        style: const TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedDay = val);
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Subject name field
+              const Text(
+                'Subject',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                decoration: const BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(2.5, 2.5),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _subjectController,
+                  textCapitalization: TextCapitalization.words,
+                  style: const TextStyle(
+                    fontFamily: 'SpaceGrotesk',
                     fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'e.g. Mathematics, Physics',
+                    errorText: showSubjectError ? 'Add a subject name' : null,
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                    ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                  tooltip: 'Close',
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 16),
 
-            // Day Dropdown
-            Text(
-              'Day',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedDay,
-              decoration: InputDecoration(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              items: ClassItem.daysOfWeek.map((day) {
-                return DropdownMenuItem(
-                  value: day,
-                  child: Text(day),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedDay = val);
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Subject name field
-            Text(
-              'Subject',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _subjectController,
-              textCapitalization: TextCapitalization.words,
-              decoration: InputDecoration(
-                hintText: 'e.g. Mathematics, Physics',
-                errorText: showSubjectError ? 'Add a subject name' : null,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Start & End Time Pickers Row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Starts
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Starts',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      InkWell(
-                        key: const Key('start_time_tile'),
-                        onTap: _pickStartTime,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: theme.colorScheme.outline),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.schedule,
-                                    size: 16,
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _formatDisplayTimeWithoutPeriod(_startTime),
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              GestureDetector(
-                                key: const Key('start_period_btn'),
-                                onTap: _toggleStartPeriod,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primaryContainer,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    _startTime.period == DayPeriod.am ? 'AM' : 'PM',
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                      color: theme.colorScheme.onPrimaryContainer,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+              // Start & End Time Pickers Row
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Starts
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Starts',
+                          style: TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                            color: Colors.black,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-
-                // Ends
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ends',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      InkWell(
-                        key: const Key('end_time_tile'),
-                        onTap: _pickEndTime,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: showTimeError
-                                  ? theme.colorScheme.error
-                                  : theme.colorScheme.outline,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.schedule,
-                                    size: 16,
-                                    color: showTimeError
-                                        ? theme.colorScheme.error
-                                        : theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _formatDisplayTimeWithoutPeriod(_endTime),
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: showTimeError
-                                          ? theme.colorScheme.error
-                                          : null,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              GestureDetector(
-                                key: const Key('end_period_btn'),
-                                onTap: _toggleEndPeriod,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: showTimeError
-                                        ? theme.colorScheme.errorContainer
-                                        : theme.colorScheme.primaryContainer,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    _endTime.period == DayPeriod.am ? 'AM' : 'PM',
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                      color: showTimeError
-                                          ? theme.colorScheme.onErrorContainer
-                                          : theme.colorScheme.onPrimaryContainer,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (showTimeError) ...[
                         const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 14,
-                              color: theme.colorScheme.error,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                'Must be after start',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.error,
+                        InkWell(
+                          key: const Key('start_time_tile'),
+                          onTap: _pickStartTime,
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(color: Colors.black, width: 2.5),
+                              borderRadius: BorderRadius.circular(6),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black,
+                                  offset: Offset(2.5, 2.5),
+                                  blurRadius: 0,
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.schedule,
+                                      size: 16,
+                                      color: Colors.black,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _formatDisplayTimeWithoutPeriod(_startTime),
+                                      style: const TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                GestureDetector(
+                                  key: const Key('start_period_btn'),
+                                  onTap: _toggleStartPeriod,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFE500),
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: Colors.black, width: 1.5),
+                                    ),
+                                    child: Text(
+                                      _startTime.period == DayPeriod.am ? 'AM' : 'PM',
+                                      style: const TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
-                    ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Ends
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Ends',
+                          style: TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        InkWell(
+                          key: const Key('end_time_tile'),
+                          onTap: _pickEndTime,
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(
+                                color: showTimeError
+                                    ? const Color(0xFFFF1744)
+                                    : Colors.black,
+                                width: 2.5,
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black,
+                                  offset: Offset(2.5, 2.5),
+                                  blurRadius: 0,
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.schedule,
+                                      size: 16,
+                                      color: showTimeError
+                                          ? const Color(0xFFFF1744)
+                                          : Colors.black,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _formatDisplayTimeWithoutPeriod(_endTime),
+                                      style: TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w900,
+                                        color: showTimeError
+                                            ? const Color(0xFFFF1744)
+                                            : Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                GestureDetector(
+                                  key: const Key('end_period_btn'),
+                                  onTap: _toggleEndPeriod,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: showTimeError
+                                          ? const Color(0xFFFFCDD2)
+                                          : const Color(0xFFFFE500),
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: Colors.black, width: 1.5),
+                                    ),
+                                    child: Text(
+                                      _endTime.period == DayPeriod.am ? 'AM' : 'PM',
+                                      style: TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w900,
+                                        color: showTimeError
+                                            ? const Color(0xFFFF1744)
+                                            : Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (showTimeError) ...[
+                          const SizedBox(height: 6),
+                          const Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 14,
+                                color: Color(0xFFFF1744),
+                              ),
+                              SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  'Must be after start',
+                                  style: TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFFF1744),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Room (optional)
+              const Text(
+                'Room (optional)',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                decoration: const BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(2.5, 2.5),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _roomController,
+                  style: const TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'e.g. Room B-12, Lab 2',
+                    prefixIcon: const Icon(Icons.meeting_room_outlined, size: 20, color: Colors.black),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                    ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Room (optional)
-            Text(
-              'Room (optional)',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
               ),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _roomController,
-              decoration: InputDecoration(
-                hintText: 'e.g. Room B-12, Lab 2',
-                prefixIcon: const Icon(Icons.meeting_room_outlined, size: 20),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 16),
+
+              // Teacher (optional)
+              const Text(
+                'Teacher (optional)',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                  color: Colors.black,
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // Teacher (optional)
-            Text(
-              'Teacher (optional)',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _teacherController,
-              decoration: InputDecoration(
-                hintText: 'e.g. Ms. Sara, Dr. John',
-                prefixIcon: const Icon(Icons.person_outline, size: 20),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 6),
+              Container(
+                decoration: const BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(2.5, 2.5),
+                      blurRadius: 0,
+                    ),
+                  ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 28),
-
-            // Save class button (disabled until subject is non-empty and End > Start)
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: FilledButton(
-                onPressed: _canSave ? _saveClass : null,
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                child: TextField(
+                  controller: _teacherController,
+                  style: const TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'e.g. Ms. Sara, Dr. John',
+                    prefixIcon: const Icon(Icons.person_outline, size: 20, color: Colors.black),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                    ),
                   ),
                 ),
-                child: const Text('Save class'),
               ),
-            ),
-          ],
+              const SizedBox(height: 28),
+
+              // Save class button (disabled until subject is non-empty and End > Start)
+              Container(
+                decoration: BoxDecoration(
+                  boxShadow: _canSave
+                      ? const [
+                          BoxShadow(
+                            color: Colors.black,
+                            offset: Offset(3.5, 3.5),
+                            blurRadius: 0,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed: _canSave ? _saveClass : null,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _canSave
+                          ? const Color(0xFFFF5500)
+                          : const Color(0xFFDCE2E6),
+                      foregroundColor:
+                          _canSave ? Colors.white : Colors.black45,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        side: BorderSide(
+                          color: _canSave ? Colors.black : Colors.black38,
+                          width: 2.5,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      'Save class',
+                      style: TextStyle(
+                        fontFamily: 'SpaceGrotesk',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                        color: _canSave ? Colors.white : Colors.black45,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

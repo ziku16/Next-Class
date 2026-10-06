@@ -33,9 +33,10 @@ class ClassDetailSheet extends StatelessWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: const Color(0xFFFAF6EE),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        side: BorderSide(color: Colors.black, width: 3.5),
       ),
       builder: (ctx) => ClassDetailSheet(
         classItem: classItem,
@@ -55,7 +56,8 @@ class ClassDetailSheet extends StatelessWidget {
         ncColors.getSubjectColor(classItem.subjectColorIndex);
 
     return SafeArea(
-      child: Padding(
+      child: Container(
+        color: const Color(0xFFFAF6EE),
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -64,26 +66,27 @@ class ClassDetailSheet extends StatelessWidget {
             // Drag Handle
             Center(
               child: Container(
-                width: 36,
-                height: 4,
+                width: 44,
+                height: 5,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(2.5),
                 ),
               ),
             ),
             const SizedBox(height: 20),
 
-            // Subject Header with 6 dp Color Stripe
+            // Subject Header with 8 dp Color Stripe
             IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Container(
-                    width: 6,
+                    width: 8,
                     decoration: BoxDecoration(
                       color: subjectColor,
                       borderRadius: BorderRadius.circular(3),
+                      border: Border.all(color: Colors.black, width: 2.0),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -93,17 +96,31 @@ class ClassDetailSheet extends StatelessWidget {
                       children: [
                         Text(
                           classItem.subject,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: theme.colorScheme.onSurface,
+                          style: const TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                            height: 1.15,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${classItem.dayOfWeek} · ${classItem.startTime} – ${classItem.endTime}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3ECE0),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.black, width: 1.5),
+                          ),
+                          child: Text(
+                            '${classItem.dayOfWeek} · ${classItem.startTime} – ${classItem.endTime}',
+                            style: const TextStyle(
+                              fontFamily: 'SpaceGrotesk',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                       ],
@@ -114,10 +131,18 @@ class ClassDetailSheet extends StatelessWidget {
                       alignment: Alignment.topRight,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                            horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
+                          color: const Color(0xFFFFE500),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.black, width: 2.0),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(2, 2),
+                              blurRadius: 0,
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -125,17 +150,19 @@ class ClassDetailSheet extends StatelessWidget {
                             Container(
                               width: 8,
                               height: 8,
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary,
+                              decoration: const BoxDecoration(
+                                color: Colors.black,
                                 shape: BoxShape.circle,
                               ),
                             ),
                             const SizedBox(width: 6),
-                            Text(
+                            const Text(
                               'Now',
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: theme.colorScheme.onPrimaryContainer,
-                                fontWeight: FontWeight.w700,
+                              style: TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.black,
                               ),
                             ),
                           ],
@@ -147,25 +174,35 @@ class ClassDetailSheet extends StatelessWidget {
                       alignment: Alignment.topRight,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                            horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHigh,
-                          borderRadius: BorderRadius.circular(12),
+                          color: const Color(0xFFE0E0E0),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.black, width: 2.0),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(2, 2),
+                              blurRadius: 0,
+                            ),
+                          ],
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.check_circle_outline,
                               size: 14,
-                              color: ncColors.success,
+                              color: Colors.black,
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               'Done',
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w700,
+                              style: TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.black,
                               ),
                             ),
                           ],
@@ -177,18 +214,26 @@ class ClassDetailSheet extends StatelessWidget {
                       alignment: Alignment.topRight,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                            horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.secondaryContainer,
-                          borderRadius: BorderRadius.circular(12),
+                          color: const Color(0xFFFF5500),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.black, width: 2.0),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(2, 2),
+                              blurRadius: 0,
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.schedule,
                               size: 14,
-                              color: theme.colorScheme.onSecondaryContainer,
+                              color: Colors.white,
                             ),
                             const SizedBox(width: 4),
                             () {
@@ -200,9 +245,11 @@ class ClassDetailSheet extends StatelessWidget {
                                       : 'in ${nextMin ~/ 60}h ${nextMin % 60}m');
                               return Text(
                                 timeUntilText,
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: theme.colorScheme.onSecondaryContainer,
-                                  fontWeight: FontWeight.w700,
+                                style: const TextStyle(
+                                  fontFamily: 'SpaceGrotesk',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
                                 ),
                               );
                             }(),
@@ -215,25 +262,41 @@ class ClassDetailSheet extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Metadata: Room & Teacher Tiles
+            // Metadata: Room & Teacher Brutalist Card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(16),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                  color: Colors.black,
+                  width: 2.5,
                 ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black,
+                    offset: Offset(3.5, 3.5),
+                    blurRadius: 0,
+                  ),
+                ],
               ),
               child: Column(
                 children: [
                   // Room Row
                   Row(
                     children: [
-                      Icon(
-                        Icons.meeting_room_outlined,
-                        size: 20,
-                        color: theme.colorScheme.onSurfaceVariant,
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFE500),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                        child: const Icon(
+                          Icons.meeting_room_outlined,
+                          size: 18,
+                          color: Colors.black,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -241,22 +304,35 @@ class ClassDetailSheet extends StatelessWidget {
                           classItem.room != null && classItem.room!.isNotEmpty
                               ? classItem.room!
                               : 'No room assigned',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.w500,
+                          style: const TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const Divider(height: 20),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Divider(height: 2, thickness: 1.5, color: Colors.black),
+                  ),
                   // Teacher Row
                   Row(
                     children: [
-                      Icon(
-                        Icons.person_outline_rounded,
-                        size: 20,
-                        color: theme.colorScheme.onSurfaceVariant,
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00E676),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                        child: const Icon(
+                          Icons.person_outline_rounded,
+                          size: 18,
+                          color: Colors.black,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -265,9 +341,11 @@ class ClassDetailSheet extends StatelessWidget {
                                   classItem.teacher!.isNotEmpty
                               ? classItem.teacher!
                               : 'No teacher assigned',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.w500,
+                          style: const TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
                           ),
                         ),
                       ),
@@ -276,22 +354,45 @@ class ClassDetailSheet extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
 
             // Primary Action: Add Quiz
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  onAddQuiz?.call();
-                },
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Add quiz for this class'),
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+            Container(
+              decoration: const BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black,
+                    offset: Offset(3.5, 3.5),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onAddQuiz?.call();
+                  },
+                  icon: const Icon(Icons.add_rounded, color: Colors.white),
+                  label: const Text(
+                    'Add quiz for this class',
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF5500),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      side: const BorderSide(color: Colors.black, width: 2.5),
+                    ),
                   ),
                 ),
               ),
@@ -299,19 +400,42 @@ class ClassDetailSheet extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Secondary Action: Edit Class
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  onEditClass?.call();
-                },
-                icon: const Icon(Icons.edit_outlined),
-                label: const Text('Edit class'),
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+            Container(
+              decoration: const BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black,
+                    offset: Offset(3.5, 3.5),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onEditClass?.call();
+                  },
+                  icon: const Icon(Icons.edit_outlined, color: Colors.black),
+                  label: const Text(
+                    'Edit class',
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    side: const BorderSide(color: Colors.black, width: 2.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
                 ),
               ),

@@ -161,19 +161,60 @@ class _UploadScreenState extends State<UploadScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Scan limit reached'),
-        content: Text(message),
+        backgroundColor: const Color(0xFFFAF6EE),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: const BorderSide(color: Colors.black, width: 3.5),
+        ),
+        title: const Text(
+          'Scan limit reached',
+          style: TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontWeight: FontWeight.w900,
+            color: Colors.black,
+          ),
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Close'),
+            child: const Text(
+              'Close',
+              style: TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontWeight: FontWeight.w800,
+                color: Colors.black,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               _handleManualEdit();
             },
-            child: const Text('Edit manually'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF5500),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: Colors.black, width: 2),
+              ),
+            ),
+            child: const Text(
+              'Edit manually',
+              style: TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
@@ -191,22 +232,63 @@ class _UploadScreenState extends State<UploadScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
+        backgroundColor: const Color(0xFFFAF6EE),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: const BorderSide(color: Colors.black, width: 3.5),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontWeight: FontWeight.w900,
+            color: Colors.black,
+          ),
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               _handleManualEdit();
             },
-            child: const Text('Edit manually'),
+            child: const Text(
+              'Edit manually',
+              style: TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontWeight: FontWeight.w800,
+                color: Colors.black,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               _startExtraction();
             },
-            child: const Text('Try again'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF5500),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: Colors.black, width: 2),
+              ),
+            ),
+            child: const Text(
+              'Try again',
+              style: TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
@@ -233,30 +315,90 @@ class _UploadScreenState extends State<UploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final quota = _provider.quota;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: const Color(0xFFFAF6EE),
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              _navigateToHome();
-            }
-          },
-        ),
-        title: const Text('Upload timetable'),
-        actions: [
-          TextButton.icon(
-            onPressed: _navigateToHome,
-            icon: const Icon(Icons.home_outlined, size: 20),
-            label: const Text('Home'),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Center(
+            child: GestureDetector(
+              onTap: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  _navigateToHome();
+                }
+              },
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.black, width: 2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(2, 2),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
+              ),
+            ),
           ),
-          const SizedBox(width: 8),
+        ),
+        title: const Text(
+          'Upload timetable',
+          style: TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            letterSpacing: -0.5,
+            color: Colors.black,
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: _navigateToHome,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.black, width: 2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(2, 2),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.home_outlined, size: 18, color: Colors.black),
+                    SizedBox(width: 4),
+                    Text(
+                      'Home',
+                      style: TextStyle(
+                        fontFamily: 'SpaceGrotesk',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       body: SafeArea(
@@ -268,270 +410,490 @@ class _UploadScreenState extends State<UploadScreen> {
             // Scrollable Upload Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-              // Quota Banner Badge
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.photo_camera_outlined,
-                      size: 18,
-                      color: theme.colorScheme.onSecondaryContainer,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        quota.quotaLabel,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.onSecondaryContainer,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    // Quota Banner Badge
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFE500),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.black, width: 2.5),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black,
+                            offset: Offset(2.5, 2.5),
+                            blurRadius: 0,
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              Text(
-                'Add your timetable',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "Take a clear photo of your class timetable. We'll read every class for you.",
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Image Selection Area
-              if (_provider.selectedImage == null) ...[
-                // Empty Picker Box
-                InkWell(
-                  onTap: _openSourcePicker,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: theme.colorScheme.outlineVariant,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.add_a_photo_outlined,
-                            size: 28,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Take or choose a photo',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ] else ...[
-                // Selected Image Preview Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: theme.colorScheme.primary,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
+                      child: Row(
                         children: [
-                          Icon(
-                            Icons.image_outlined,
-                            color: theme.colorScheme.primary,
-                            size: 28,
+                          const Icon(
+                            Icons.photo_camera_rounded,
+                            size: 20,
+                            color: Colors.black,
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Text(
+                              quota.quotaLabel,
+                              style: const TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                color: Colors.black,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    const Text(
+                      'Add your timetable',
+                      style: TextStyle(
+                        fontFamily: 'SpaceGrotesk',
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      "Take a clear photo of your class timetable. We'll read every class for you.",
+                      style: TextStyle(
+                        fontFamily: 'SpaceGrotesk',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Image Selection Area
+                    if (_provider.selectedImage == null) ...[
+                      // Empty Picker Box
+                      InkWell(
+                        onTap: _openSourcePicker,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Colors.black,
+                              width: 3.0,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black,
+                                offset: Offset(4, 4),
+                                blurRadius: 0,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFF5500),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.black, width: 2.5),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black,
+                                      offset: Offset(2.5, 2.5),
+                                      blurRadius: 0,
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.add_a_photo_outlined,
+                                  size: 32,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Take or choose a photo',
+                                style: TextStyle(
+                                  fontFamily: 'SpaceGrotesk',
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ] else ...[
+                      // Selected Image Preview Card
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.black,
+                            width: 3.0,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(4, 4),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
                               children: [
-                                Text(
-                                  'Photo selected',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF00E676),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: Colors.black, width: 2),
+                                  ),
+                                  child: const Icon(
+                                    Icons.image_outlined,
+                                    color: Colors.black,
+                                    size: 24,
                                   ),
                                 ),
-                                Text(
-                                  _provider.selectedImage!.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Photo selected',
+                                        style: TextStyle(
+                                          fontFamily: 'SpaceGrotesk',
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                      Text(
+                                        _provider.selectedImage!.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'SpaceGrotesk',
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: _provider.clearImage,
+                                  child: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDCE2E6),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.black, width: 2),
+                                    ),
+                                    child: const Icon(Icons.close, size: 18, color: Colors.black),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: _provider.clearImage,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _pickImage(ImageSource.camera),
-                              icon: const Icon(Icons.refresh, size: 18),
-                              label: const Text('Retake'),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _pickImage(ImageSource.camera),
+                                    style: OutlinedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Colors.black,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                        side: const BorderSide(color: Colors.black, width: 2),
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.refresh, size: 18, color: Colors.black),
+                                    label: const Text(
+                                      'Retake',
+                                      style: TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _pickImage(ImageSource.gallery),
+                                    style: OutlinedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Colors.black,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                        side: const BorderSide(color: Colors.black, width: 2),
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.image, size: 18, color: Colors.black),
+                                    label: const Text(
+                                      'Choose another',
+                                      style: TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _pickImage(ImageSource.gallery),
-                              icon: const Icon(Icons.image, size: 18),
-                              label: const Text('Choose another'),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
-                  ),
-                ),
-              ],
 
-              const SizedBox(height: 28),
+                    const SizedBox(height: 24),
 
-              // Guidelines Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    _buildGuidelineRow(
-                      context,
-                      icon: Icons.light_mode_outlined,
-                      text: 'Good light, no shadows',
+                    // Guidelines Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.black, width: 2.5),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black,
+                            offset: Offset(3, 3),
+                            blurRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF00E676),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: Colors.black, width: 1.5),
+                                ),
+                                child: const Text(
+                                  'TIPS',
+                                  style: TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 10,
+                                    letterSpacing: 1.0,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'PHOTO GUIDELINES',
+                                style: TextStyle(
+                                  fontFamily: 'SpaceGrotesk',
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12,
+                                  letterSpacing: 0.5,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _buildGuidelineRow(
+                            context,
+                            icon: Icons.light_mode_outlined,
+                            text: 'Good light, no shadows',
+                          ),
+                          const SizedBox(height: 10),
+                          _buildGuidelineRow(
+                            context,
+                            icon: Icons.crop_free_rounded,
+                            text: 'Fit the whole table in the frame',
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildGuidelineRow(
-                      context,
-                      icon: Icons.crop_free_rounded,
-                      text: 'Fit the whole table in the frame',
+
+                    const SizedBox(height: 32),
+
+                    // Primary Action: Extract classes
+                    Container(
+                      decoration: BoxDecoration(
+                        boxShadow: (_provider.selectedImage != null && !_isOffline)
+                            ? const [
+                                BoxShadow(
+                                  color: Colors.black,
+                                  offset: Offset(3.5, 3.5),
+                                  blurRadius: 0,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: FilledButton.icon(
+                          onPressed: (_provider.selectedImage != null && !_isOffline)
+                              ? () => _startExtraction()
+                              : null,
+                          icon: const Icon(Icons.auto_awesome, size: 20),
+                          label: Text(
+                            _isOffline
+                                ? 'Offline — Extraction unavailable'
+                                : 'Extract classes',
+                            style: const TextStyle(
+                              fontFamily: 'SpaceGrotesk',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF5500),
+                            disabledBackgroundColor: const Color(0xFFDCE2E6),
+                            foregroundColor: Colors.white,
+                            disabledForegroundColor: Colors.black38,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              side: BorderSide(
+                                color: (_provider.selectedImage != null && !_isOffline)
+                                    ? Colors.black
+                                    : Colors.black26,
+                                width: 2.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
+
+                    const SizedBox(height: 14),
+
+                    // Secondary Fallback: Add classes manually
+                    Container(
+                      decoration: const BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black,
+                            offset: Offset(2.5, 2.5),
+                            blurRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: _handleManualEdit,
+                          icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.black),
+                          label: const Text(
+                            'Add classes manually',
+                            style: TextStyle(
+                              fontFamily: 'SpaceGrotesk',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                              color: Colors.black,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              side: const BorderSide(color: Colors.black, width: 2.5),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Tertiary: Skip to Home
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton.icon(
+                        onPressed: _navigateToHome,
+                        icon: const Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.black87),
+                        label: const Text(
+                          'Skip and go to Home',
+                          style: TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 36),
-
-              // Primary Action: Extract classes
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: (_provider.selectedImage != null && !_isOffline)
-                      ? () => _startExtraction()
-                      : null,
-                  icon: const Icon(Icons.auto_awesome, size: 20),
-                  label: Text(
-                    _isOffline
-                        ? 'Offline — Extraction unavailable'
-                        : 'Extract classes',
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Secondary Fallback: Add classes manually
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: _handleManualEdit,
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text('Add classes manually'),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Tertiary: Skip to Home
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: _navigateToHome,
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                  label: const Text('Skip and go to Home'),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    ],
-  ),
-),
-);
-}
+    );
+  }
 
   Widget _buildGuidelineRow(
     BuildContext context, {
     required IconData icon,
     required String text,
   }) {
-    final theme = Theme.of(context);
-
     return Row(
       children: [
-        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFE500),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.black, width: 1.5),
+          ),
+          child: Icon(icon, size: 16, color: Colors.black),
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
+            style: const TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              color: Colors.black,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
             ),
           ),
         ),

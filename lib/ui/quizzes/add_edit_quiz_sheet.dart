@@ -38,7 +38,7 @@ class AddEditQuizSheet extends StatefulWidget {
     this.onSaved,
   });
 
-  /// Displays the AddEditQuizSheet in a 28 dp rounded modal sheet
+  /// Displays the AddEditQuizSheet in a revo-brutalist modal sheet
   static Future<QuizItem?> show(
     BuildContext context, {
     QuizItem? initialQuiz,
@@ -52,9 +52,10 @@ class AddEditQuizSheet extends StatefulWidget {
     return showModalBottomSheet<QuizItem>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: const Color(0xFFFAF6EE),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        side: BorderSide(color: Colors.black, width: 3.5),
       ),
       builder: (ctx) => AddEditQuizSheet(
         initialQuiz: initialQuiz,
@@ -298,20 +299,19 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Drag Handle
+              // Brutalist Drag Handle
               Center(
                 child: Container(
-                  width: 36,
-                  height: 4,
+                  width: 44,
+                  height: 5,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(2.5),
                   ),
                 ),
               ),
@@ -321,16 +321,56 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    isEditing ? 'Edit quiz' : 'Add quiz',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.onSurface,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF5500),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.black, width: 2),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(2, 2),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.quiz_rounded, size: 16, color: Colors.white),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        isEditing ? 'Edit quiz' : 'Add quiz',
+                        style: const TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 22,
+                          letterSpacing: -0.5,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.black, width: 2),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black,
+                            offset: Offset(2, 2),
+                            blurRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.close, size: 18, color: Colors.black),
+                    ),
                   ),
                 ],
               ),
@@ -353,37 +393,72 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                 Center(
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.school_outlined,
-                        size: 56,
-                        color: theme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.5),
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFE500),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.black, width: 2.5),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(3, 3),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.school_outlined, size: 36, color: Colors.black),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       Text(
                         'Upload your timetable to link quizzes directly to your classes.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      widget.onUploadTimetable?.call();
-                    },
-                    icon: const Icon(Icons.upload_file_rounded),
-                    label: const Text('Upload timetable'),
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                Container(
+                  decoration: const BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black,
+                        offset: Offset(3, 3),
+                        blurRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        widget.onUploadTimetable?.call();
+                      },
+                      icon: const Icon(Icons.upload_file_rounded, color: Colors.white),
+                      label: const Text(
+                        'Upload timetable',
+                        style: TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF5500),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          side: const BorderSide(color: Colors.black, width: 2.5),
+                        ),
                       ),
                     ),
                   ),
@@ -403,145 +478,220 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Class Dropdown Selector
-                      Text(
+                      const Text(
                         'Class',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
+                        style: TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                          color: Colors.black,
                         ),
                       ),
                       const SizedBox(height: 6),
-                      DropdownButtonFormField<String>(
-                        key: const Key('quiz_class_dropdown'),
-                        isExpanded: true,
-                        initialValue: _selectedClassId,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: theme.colorScheme.surfaceContainerLow,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outlineVariant,
+                      Container(
+                        decoration: const BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(2.5, 2.5),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: DropdownButtonFormField<String>(
+                          key: const Key('quiz_class_dropdown'),
+                          isExpanded: true,
+                          initialValue: _selectedClassId,
+                          dropdownColor: const Color(0xFFFAF6EE),
+                          style: const TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                            fontSize: 14,
+                          ),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            prefixIcon: const Icon(Icons.class_outlined, color: Colors.black, size: 20),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
                             ),
                           ),
-                          prefixIcon: const Icon(Icons.class_outlined),
+                          items: _availableClasses.map((item) {
+                            final color =
+                                ncColors.getSubjectColor(item.subjectColorIndex);
+                            return DropdownMenuItem<String>(
+                              value: item.id,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 12,
+                                    height: 12,
+                                    decoration: BoxDecoration(
+                                      color: color,
+                                      border: Border.all(color: Colors.black, width: 1.5),
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      '${item.subject} (${item.dayOfWeek} ${item.startTime})',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedClassId = val;
+                            });
+                          },
+                          validator: (val) =>
+                              val == null ? 'Please select a class' : null,
                         ),
-                        items: _availableClasses.map((item) {
-                          final color =
-                              ncColors.getSubjectColor(item.subjectColorIndex);
-                          return DropdownMenuItem<String>(
-                            value: item.id,
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '${item.subject} (${item.dayOfWeek} ${item.startTime})',
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedClassId = val;
-                          });
-                        },
-                        validator: (val) =>
-                            val == null ? 'Please select a class' : null,
                       ),
                       const SizedBox(height: 16),
 
                       // Quiz Topic / Title (Required)
-                      Text(
+                      const Text(
                         'Quiz Topic / Title',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
+                        style: TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                          color: Colors.black,
                         ),
                       ),
                       const SizedBox(height: 6),
-                      TextFormField(
-                        key: const Key('quiz_title_field'),
-                        controller: _titleController,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: InputDecoration(
-                          hintText: 'e.g. Unit 3, Ch. 4–5, Midterm 1',
-                          filled: true,
-                          fillColor: theme.colorScheme.surfaceContainerLow,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outlineVariant,
+                      Container(
+                        decoration: const BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(2.5, 2.5),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: TextFormField(
+                          key: const Key('quiz_title_field'),
+                          controller: _titleController,
+                          textCapitalization: TextCapitalization.sentences,
+                          style: const TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                            fontSize: 14,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'e.g. Unit 3, Ch. 4–5, Midterm 1',
+                            hintStyle: const TextStyle(
+                              fontFamily: 'SpaceGrotesk',
+                              color: Colors.black45,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            prefixIcon: const Icon(Icons.edit_note_rounded, color: Colors.black, size: 22),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
                             ),
                           ),
-                          prefixIcon: const Icon(Icons.edit_note_rounded),
+                          validator: (val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return 'Please enter a quiz topic or title';
+                            }
+                            return null;
+                          },
                         ),
-                        validator: (val) {
-                          if (val == null || val.trim().isEmpty) {
-                            return 'Please enter a quiz topic or title';
-                          }
-                          return null;
-                        },
                       ),
                       const SizedBox(height: 16),
 
                       // Due Date Picker Tile
-                      Text(
+                      const Text(
                         'Due Date',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
+                        style: TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                          color: Colors.black,
                         ),
                       ),
                       const SizedBox(height: 6),
                       InkWell(
                         key: const Key('quiz_date_picker_tile'),
                         onTap: _pickDate,
-                        borderRadius: BorderRadius.circular(14),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 14,
-                            vertical: 14,
+                            vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: theme.colorScheme.outlineVariant,
-                            ),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.black, width: 2.5),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black,
+                                offset: Offset(2.5, 2.5),
+                                blurRadius: 0,
+                              ),
+                            ],
                           ),
                           child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.calendar_today_rounded,
                                 size: 20,
-                                color: theme.colorScheme.primary,
+                                color: Colors.black,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   DateFormat('EEEE, d MMMM yyyy')
                                       .format(_selectedDate),
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.onSurface,
-                                    fontWeight: FontWeight.w600,
+                                  style: const TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ),
-                              Icon(
+                              const Icon(
                                 Icons.arrow_drop_down,
-                                color: theme.colorScheme.onSurfaceVariant,
+                                color: Colors.black,
                               ),
                             ],
                           ),
@@ -550,92 +700,152 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       const SizedBox(height: 16),
 
                       // Optional Note
-                      Text(
+                      const Text(
                         'Notes (optional)',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
+                        style: TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                          color: Colors.black,
                         ),
                       ),
                       const SizedBox(height: 6),
-                      TextFormField(
-                        key: const Key('quiz_note_field'),
-                        controller: _noteController,
-                        maxLines: 2,
-                        decoration: InputDecoration(
-                          hintText: 'e.g. Bring a calculator, formula sheet allowed',
-                          filled: true,
-                          fillColor: theme.colorScheme.surfaceContainerLow,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outlineVariant,
+                      Container(
+                        decoration: const BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(2.5, 2.5),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: TextFormField(
+                          key: const Key('quiz_note_field'),
+                          controller: _noteController,
+                          maxLines: 2,
+                          style: const TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                            fontSize: 14,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'e.g. Bring a calculator, formula sheet allowed',
+                            hintStyle: const TextStyle(
+                              fontFamily: 'SpaceGrotesk',
+                              color: Colors.black45,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            prefixIcon: const Icon(Icons.notes_rounded, color: Colors.black, size: 20),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
                             ),
                           ),
-                          prefixIcon: const Icon(Icons.notes_rounded),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
                       // Reminder Timing Section
-                      Text(
+                      const Text(
                         'Reminder Time',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
+                        style: TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                          color: Colors.black,
                         ),
                       ),
                       const SizedBox(height: 8),
 
                       // Segmented Button: Night before, Morning of quiz, Specific time
-                      SizedBox(
-                        width: double.infinity,
-                        child: SegmentedButton<String>(
-                          key: const Key('quiz_reminder_type_segmented'),
-                          showSelectedIcon: false,
-                          segments: const [
-                            ButtonSegment<String>(
-                              value: 'evening_before',
-                              label: Text('Night before'),
-                              icon: Icon(Icons.nights_stay_rounded, size: 16),
-                            ),
-                            ButtonSegment<String>(
-                              value: 'morning_of',
-                              label: Text('Morning'),
-                              icon: Icon(Icons.wb_sunny_rounded, size: 16),
-                            ),
-                            ButtonSegment<String>(
-                              value: 'custom',
-                              label: Text('Specific time'),
-                              icon: Icon(Icons.access_time_filled_rounded,
-                                  size: 16),
+                      Container(
+                        decoration: const BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(2.5, 2.5),
+                              blurRadius: 0,
                             ),
                           ],
-                          selected: {_reminderType},
-                          onSelectionChanged: (Set<String> newSelection) {
-                            setState(() {
-                              _reminderType = newSelection.first;
-                              if (_reminderType == 'morning_of') {
-                                _reminderTime =
-                                    const TimeOfDay(hour: 8, minute: 0);
-                              } else if (_reminderType == 'evening_before') {
-                                _reminderTime =
-                                    const TimeOfDay(hour: 20, minute: 0);
-                              }
-                            });
-                          },
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: SegmentedButton<String>(
+                            key: const Key('quiz_reminder_type_segmented'),
+                            showSelectedIcon: false,
+                            style: ButtonStyle(
+                              shape: WidgetStateProperty.all(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  side: const BorderSide(color: Colors.black, width: 2.5),
+                                ),
+                              ),
+                              side: WidgetStateProperty.all(
+                                const BorderSide(color: Colors.black, width: 2.5),
+                              ),
+                            ),
+                            segments: const [
+                              ButtonSegment<String>(
+                                value: 'evening_before',
+                                label: Text('Night before', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                                icon: Icon(Icons.nights_stay_rounded, size: 16),
+                              ),
+                              ButtonSegment<String>(
+                                value: 'morning_of',
+                                label: Text('Morning', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                                icon: Icon(Icons.wb_sunny_rounded, size: 16),
+                              ),
+                              ButtonSegment<String>(
+                                value: 'custom',
+                                label: Text('Specific time', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                                icon: Icon(Icons.access_time_filled_rounded,
+                                    size: 16),
+                              ),
+                            ],
+                            selected: {_reminderType},
+                            onSelectionChanged: (Set<String> newSelection) {
+                              setState(() {
+                                _reminderType = newSelection.first;
+                                if (_reminderType == 'morning_of') {
+                                  _reminderTime =
+                                      const TimeOfDay(hour: 8, minute: 0);
+                                } else if (_reminderType == 'evening_before') {
+                                  _reminderTime =
+                                      const TimeOfDay(hour: 20, minute: 0);
+                                }
+                              });
+                            },
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
 
                       // If Specific time chosen, show toggle for Day of Quiz vs Night Before
                       if (_reminderType == 'custom') ...[
                         Row(
                           children: [
-                            Text(
+                            const Text(
                               'Remind on:',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
+                              style: TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                                color: Colors.black,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -667,27 +877,32 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       InkWell(
                         key: const Key('quiz_reminder_time_picker_button'),
                         onTap: _pickReminderTime,
-                        borderRadius: BorderRadius.circular(14),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.tertiaryContainer
-                                .withValues(alpha: 0.35),
-                            borderRadius: BorderRadius.circular(14),
+                            color: const Color(0xFFFFE500),
+                            borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: theme.colorScheme.tertiary
-                                  .withValues(alpha: 0.25),
+                              color: Colors.black,
+                              width: 2.5,
                             ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black,
+                                offset: Offset(2.5, 2.5),
+                                blurRadius: 0,
+                              ),
+                            ],
                           ),
                           child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.notifications_active_outlined,
-                                size: 20,
-                                color: theme.colorScheme.tertiary,
+                                size: 22,
+                                color: Colors.black,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -700,21 +915,21 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                                           : (_reminderType == 'evening_before'
                                               ? 'Night before quiz at ${_formatTimeOfDay(_reminderTime)}'
                                               : 'Reminder set for ${_formatTimeOfDay(_reminderTime)} (${_customDay == 'day_of' ? 'Day of quiz' : 'Night before'})'),
-                                      style:
-                                          theme.textTheme.bodyMedium?.copyWith(
-                                        color: theme
-                                            .colorScheme.onTertiaryContainer,
-                                        fontWeight: FontWeight.w700,
+                                      style: const TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
-                                    Text(
+                                    const Text(
                                       'Tap to change time',
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        color: theme
-                                            .colorScheme.onTertiaryContainer
-                                            .withValues(alpha: 0.8),
+                                      style: TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 11,
                                       ),
                                     ),
                                   ],
@@ -726,10 +941,11 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(8),
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                    color: theme.colorScheme.outlineVariant,
+                                    color: Colors.black,
+                                    width: 2,
                                   ),
                                 ),
                                 child: Row(
@@ -737,16 +953,17 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                                   children: [
                                     Text(
                                       _formatTimeOfDay(_reminderTime),
-                                      style:
-                                          theme.textTheme.labelMedium?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: theme.colorScheme.onSurface,
+                                      style: const TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 12,
+                                        color: Colors.black,
                                       ),
                                     ),
                                     const SizedBox(width: 4),
-                                    Icon(Icons.edit_outlined,
+                                    const Icon(Icons.edit_outlined,
                                         size: 14,
-                                        color: theme.colorScheme.primary),
+                                        color: Colors.black),
                                   ],
                                 ),
                               ),
@@ -757,29 +974,50 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       const SizedBox(height: 24),
 
                       // Save Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: FilledButton.icon(
-                          key: const Key('save_quiz_button'),
-                          onPressed: _isSaving ? null : _handleSave,
-                          icon: _isSaving
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.check_rounded),
-                          label: Text(
-                            isEditing ? 'Save changes' : 'Save quiz',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          style: FilledButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
+                      Container(
+                        decoration: const BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black,
+                              offset: Offset(3.5, 3.5),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: FilledButton.icon(
+                            key: const Key('save_quiz_button'),
+                            onPressed: _isSaving ? null : _handleSave,
+                            icon: _isSaving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.check_rounded, color: Colors.white),
+                            label: Text(
+                              isEditing ? 'Save changes' : 'Save quiz',
+                              style: const TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                letterSpacing: 0.5,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF5500),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                                side: const BorderSide(color: Colors.black, width: 2.5),
+                              ),
                             ),
                           ),
                         ),

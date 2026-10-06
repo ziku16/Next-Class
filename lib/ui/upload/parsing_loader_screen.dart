@@ -75,51 +75,94 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: const Color(0xFFFAF6EE),
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Calm glowing / pulsing circular indicator
-                SizedBox(
-                  width: 64,
-                  height: 64,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 3.5,
-                    value: disableAnimations ? 0.75 : null,
-                    color: theme.colorScheme.primary,
-                    backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.black, width: 3.5),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black,
+                    offset: Offset(4.5, 4.5),
+                    blurRadius: 0,
                   ),
-                ),
-                const SizedBox(height: 36),
-
-                // Rotating Copy with 150 ms crossfade
-                AnimatedSwitcher(
-                  duration: disableAnimations
-                      ? Duration.zero
-                      : const Duration(milliseconds: 150),
-                  child: Text(
-                    _rotatingCopy[_currentCopyIndex],
-                    key: ValueKey<int>(_currentCopyIndex),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Brutalist status badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE500),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.black, width: 2),
+                    ),
+                    child: const Text(
+                      'AI OCR SCANNER',
+                      style: TextStyle(
+                        fontFamily: 'SpaceGrotesk',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11,
+                        letterSpacing: 1.0,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
+                  const SizedBox(height: 28),
 
-                // Subtitle
-                Text(
-                  'Usually 5 to 15 seconds',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  // High-energy circular progress indicator
+                  SizedBox(
+                    width: 68,
+                    height: 68,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 5.0,
+                      value: disableAnimations ? 0.75 : null,
+                      color: const Color(0xFFFF5500),
+                      backgroundColor: const Color(0xFFFFE500),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 28),
+
+                  // Rotating Copy with 150 ms crossfade
+                  AnimatedSwitcher(
+                    duration: disableAnimations
+                        ? Duration.zero
+                        : const Duration(milliseconds: 150),
+                    child: Text(
+                      _rotatingCopy[_currentCopyIndex],
+                      key: ValueKey<int>(_currentCopyIndex),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'SpaceGrotesk',
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Subtitle
+                  const Text(
+                    'Usually 5 to 15 seconds',
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

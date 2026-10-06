@@ -10,8 +10,10 @@ class SourcePickerSheet extends StatelessWidget {
     return showModalBottomSheet<ImageSource>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: const Color(0xFFFAF6EE),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        side: BorderSide(color: Colors.black, width: 3.5),
       ),
       builder: (context) => const SourcePickerSheet(),
     );
@@ -19,115 +21,229 @@ class SourcePickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Brutalist Drag Handle
             Center(
               child: Container(
-                width: 36,
-                height: 4,
+                width: 44,
+                height: 5,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(2.5),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            Text(
+            const SizedBox(height: 18),
+            const Text(
               'Add a timetable photo',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
+              style: TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.5,
+                color: Colors.black,
               ),
             ),
             const SizedBox(height: 4),
-            Text(
+            const Text(
               'Take a clear picture or select from your gallery.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
               ),
             ),
             const SizedBox(height: 20),
 
             // Camera Option
-            ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              leading: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+            Container(
+              decoration: const BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black,
+                    offset: Offset(3, 3),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: Colors.black, width: 2.5),
                 ),
-                child: Icon(
-                  Icons.photo_camera_outlined,
-                  color: theme.colorScheme.onSecondaryContainer,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => Navigator.of(context).pop(ImageSource.camera),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFE500),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.black, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.photo_camera_rounded,
+                            color: Colors.black,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Camera',
+                                style: TextStyle(
+                                  fontFamily: 'SpaceGrotesk',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Take a fresh photo',
+                                style: TextStyle(
+                                  fontFamily: 'SpaceGrotesk',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.black),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              title: Text(
-                'Camera',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              subtitle: Text(
-                'Take a fresh photo',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
 
             // Gallery Option
-            ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              leading: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+            Container(
+              decoration: const BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black,
+                    offset: Offset(3, 3),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: Colors.black, width: 2.5),
                 ),
-                child: Icon(
-                  Icons.photo_library_outlined,
-                  color: theme.colorScheme.onSecondaryContainer,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00E676),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.black, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.photo_library_rounded,
+                            color: Colors.black,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Gallery',
+                                style: TextStyle(
+                                  fontFamily: 'SpaceGrotesk',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Pick one you already have',
+                                style: TextStyle(
+                                  fontFamily: 'SpaceGrotesk',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.black),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              title: Text(
-                'Gallery',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              subtitle: Text(
-                'Pick one you already have',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
 
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(null),
-                child: const Text('Cancel'),
+            Container(
+              decoration: const BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black,
+                    offset: Offset(2.5, 2.5),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(null),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDCE2E6),
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      side: const BorderSide(color: Colors.black, width: 2.5),
+                    ),
+                  ),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

@@ -19,35 +19,73 @@ class DiscardDialog extends StatelessWidget {
     final theme = Theme.of(context);
 
     return AlertDialog(
+      backgroundColor: const Color(0xFFFAF6EE),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: Colors.black, width: 3.5),
       ),
-      title: Text(
+      title: const Text(
         'Discard changes?',
-        style: theme.textTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.w700,
+        style: TextStyle(
+          fontFamily: 'SpaceGrotesk',
+          fontWeight: FontWeight.w900,
+          fontSize: 22,
+          color: Colors.black,
         ),
       ),
-      content: Text(
+      content: const Text(
         "You've edited your classes but haven't saved. If you leave now, those changes will be lost.",
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
+        style: TextStyle(
+          fontFamily: 'SpaceGrotesk',
+          color: Colors.black87,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
           height: 1.4,
         ),
       ),
-      actionsPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Keep editing'),
-        ),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: theme.colorScheme.error,
-            foregroundColor: theme.colorScheme.onError,
+          child: const Text(
+            'Keep editing',
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontWeight: FontWeight.w900,
+              color: Colors.black,
+            ),
           ),
-          onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('Discard'),
+        ),
+        Container(
+          decoration: const BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black,
+                offset: Offset(2.5, 2.5),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF1744),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: Colors.black, width: 2.0),
+              ),
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Discard',
+              style: TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
       ],
     );

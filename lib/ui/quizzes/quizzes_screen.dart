@@ -150,18 +150,38 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Quizzes',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: theme.colorScheme.primary,
+          style: TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontWeight: FontWeight.w900,
+            fontSize: 22,
+            letterSpacing: -0.5,
+            color: Colors.black,
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
-            onPressed: widget.onOpenSettings,
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: widget.onOpenSettings,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.black, width: 2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(2, 2),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.settings_outlined, size: 20, color: Colors.black),
+              ),
+            ),
           ),
         ],
       ),
@@ -171,15 +191,35 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
           widget.onNavigateToTab?.call(index);
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        key: const Key('add_quiz_fab'),
-        onPressed: () => _openAddQuizSheet(),
-        backgroundColor: theme.colorScheme.tertiaryContainer,
-        foregroundColor: theme.colorScheme.onTertiaryContainer,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text(
-          '+ Add quiz',
-          style: TextStyle(fontWeight: FontWeight.w700),
+      floatingActionButton: Container(
+        decoration: const BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black,
+              offset: Offset(3.5, 3.5),
+              blurRadius: 0,
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          key: const Key('add_quiz_fab'),
+          onPressed: () => _openAddQuizSheet(),
+          backgroundColor: theme.colorScheme.tertiaryContainer,
+          foregroundColor: theme.colorScheme.onTertiaryContainer,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
+            side: const BorderSide(color: Colors.black, width: 2.5),
+          ),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text(
+            '+ Add quiz',
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
+          ),
         ),
       ),
       body: SafeArea(
@@ -276,38 +316,60 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section Title
+          // Brutalist Section Badge
           Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Row(
-              children: [
-                if (isUrgent) ...[
-                  Icon(
-                    Icons.alarm_rounded,
-                    size: 16,
-                    color: theme.colorScheme.tertiary,
+            padding: const EdgeInsets.only(left: 2, bottom: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: isUrgent ? const Color(0xFFFF5500) : const Color(0xFFDCE2E6),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.black, width: 2),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black,
+                    offset: Offset(2, 2),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isUrgent) ...[
+                    const Icon(Icons.alarm_rounded, size: 14, color: Colors.white),
+                    const SizedBox(width: 4),
+                  ],
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
+                      fontSize: 12,
+                      color: isUrgent ? Colors.white : Colors.black,
+                    ),
                   ),
                   const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: isUrgent ? Colors.black : Colors.white,
+                      borderRadius: BorderRadius.circular(3),
+                      border: Border.all(color: Colors.black, width: 1.5),
+                    ),
+                    child: Text(
+                      '${quizzes.length}',
+                      style: TextStyle(
+                        fontFamily: 'SpaceGrotesk',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11,
+                        color: isUrgent ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ),
                 ],
-                Text(
-                  title,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                    color: isUrgent
-                        ? theme.colorScheme.tertiary
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '· ${quizzes.length}',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
 
@@ -339,54 +401,105 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
   ) {
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.4),
-                shape: BoxShape.circle,
+        padding: const EdgeInsets.all(28),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.black, width: 3),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black,
+                offset: Offset(4, 4),
+                blurRadius: 0,
               ),
-              child: Icon(
-                Icons.quiz_outlined,
-                size: 52,
-                color: theme.colorScheme.tertiary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No quizzes yet',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: theme.colorScheme.onSurface,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              "When your teacher announces one, add it here and we'll remind you the evening before.",
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.4,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 28),
-            FilledButton.tonalIcon(
-              onPressed: () => _openAddQuizSheet(),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Add your first quiz'),
-              style: FilledButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFE500),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.black, width: 2.5),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(3, 3),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.quiz_outlined,
+                  size: 34,
+                  color: Colors.black,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+              const Text(
+                'No quizzes yet',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "When your teacher announces one, add it here and we'll remind you the evening before.",
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Container(
+                decoration: const BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(3, 3),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: FilledButton.tonalIcon(
+                  onPressed: () => _openAddQuizSheet(),
+                  icon: const Icon(Icons.add_rounded, color: Colors.white),
+                  label: const Text(
+                    'Add your first quiz',
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF5500),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      side: const BorderSide(color: Colors.black, width: 2.5),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
