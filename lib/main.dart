@@ -21,8 +21,24 @@ void main() async {
     final String? timeZoneName =
         await channel.invokeMethod<String>('getTimeZone');
     if (timeZoneName != null && timeZoneName.isNotEmpty) {
-      tz.setLocalLocation(tz.getLocation(timeZoneName));
-      debugPrint('[main] Timezone initialized to: ${tz.local.name} ($timeZoneName)');
+      try {
+        tz.setLocalLocation(tz.getLocation(timeZoneName));
+        debugPrint('[main] Timezone initialized to: ${tz.local.name} ($timeZoneName)');
+      } catch (tzErr) {
+        debugPrint('[main] Location not found for $timeZoneName ($tzErr). Attempting offset match...');
+        final offset = DateTime.now().timeZoneOffset;
+        tz.Location? matched;
+        for (final loc in tz.timeZoneDatabase.locations.values) {
+          if (loc.currentTimeZone.offset == offset.inMilliseconds) {
+            matched = loc;
+            break;
+          }
+        }
+        if (matched != null) {
+          tz.setLocalLocation(matched);
+          debugPrint('[main] Fallback matched timezone: ${tz.local.name} (offset ${offset.inHours}h)');
+        }
+      }
     } else {
       debugPrint(
         '[main] WARNING: Native getTimeZone returned null or empty. Fallback tz: ${tz.local.name}',

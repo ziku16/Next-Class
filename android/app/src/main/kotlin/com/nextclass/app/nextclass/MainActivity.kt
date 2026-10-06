@@ -11,7 +11,12 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.nextclass.app/device_info")
             .setMethodCallHandler { call, result ->
                 if (call.method == "getTimeZone") {
-                    result.success(TimeZone.getDefault().id)
+                    val zoneId = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        java.time.ZoneId.systemDefault().id
+                    } else {
+                        TimeZone.getDefault().id
+                    }
+                    result.success(zoneId)
                 } else {
                     result.notImplemented()
                 }

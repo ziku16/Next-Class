@@ -35,11 +35,8 @@ class AlarmScheduler {
         _settingsRepo = settingsRepository ?? SettingsRepository();
 
   /// Deterministic ID generator for class notification (0 - 99,999).
-  /// Uses index if provided to guarantee 0 collision, or 32-bit FNV-1a hash of classId.
+  /// Uses 32-bit FNV-1a hash of classId so the ID is invariant to timetable ordering.
   static int getClassNotificationId(String classId, [int? index]) {
-    if (index != null) {
-      return index % 100000;
-    }
     int hash = 0x811c9dc5;
     for (int i = 0; i < classId.length; i++) {
       hash ^= classId.codeUnitAt(i);
@@ -49,11 +46,8 @@ class AlarmScheduler {
   }
 
   /// Deterministic ID generator for quiz notification (100,000 - 199,999).
-  /// Uses index if provided to guarantee 0 collision, or 100,000 + 32-bit FNV-1a hash of quizId.
+  /// Uses 100,000 + 32-bit FNV-1a hash of quizId so the ID is invariant to timetable ordering.
   static int getQuizNotificationId(String quizId, [int? index]) {
-    if (index != null) {
-      return 100000 + (index % 100000);
-    }
     int hash = 0x811c9dc5;
     for (int i = 0; i < quizId.length; i++) {
       hash ^= quizId.codeUnitAt(i);
@@ -62,13 +56,24 @@ class AlarmScheduler {
     return 100000 + (hash % 100000);
   }
 
+  static bool _isRescheduling = false;
+  static bool _rescheduleQueued = false;
+
   /// Reschedules all class and quiz reminders according to current database state and settings.
+  /// Serialized to prevent concurrent rescheduling operations from cancelling each other.
   /// Called on:
   /// - Timetable replacement / review save
   /// - Quiz add / edit / delete
   /// - Reminder preferences changes in Settings
   /// - Device reboot
   Future<void> rescheduleAll({DateTime? now}) async {
+    if (_isRescheduling) {
+      _rescheduleQueued = true;
+      debugPrint('[AlarmScheduler] Reschedule already in progress. Queued next run.');
+      return;
+    }
+    _isRescheduling = true;
+
     final currentTime = now ?? DateTime.now();
     try {
       tz.local;
@@ -117,6 +122,12 @@ class AlarmScheduler {
       );
     } catch (e, stack) {
       debugPrint('[AlarmScheduler] CRITICAL failure in rescheduleAll: $e\n$stack');
+    } finally {
+      _isRescheduling = false;
+      if (_rescheduleQueued) {
+        _rescheduleQueued = false;
+        await rescheduleAll(now: now);
+      }
     }
   }
 
@@ -158,7 +169,7 @@ class AlarmScheduler {
             ? sameDayClasses[currentIndex + 1]
             : null;
 
-        final notificationId = getClassNotificationId(classItem.id, i);
+        final notificationId = getClassNotificationId(classItem.id);
 
         final scheduledTZ = calculateNextClassReminderTZ(
           dayIndex: classItem.dayIndex,
@@ -241,7 +252,7 @@ class AlarmScheduler {
 
         // Only schedule if reminder is in the future
         if (reminderDateTime.isAfter(ref)) {
-          final notificationId = getQuizNotificationId(quiz.id, i);
+          final notificationId = getQuizNotificationId(quiz.id);
           final scheduledTZ = _toTZDateTime(reminderDateTime);
           final formattedDue = DateFormat('EEE, d MMM').format(quiz.dueDate);
 
@@ -357,8 +368,8 @@ class AlarmScheduler {
       reminderMinute,
     );
 
-    // Advance to target weekday
-    while (scheduled.weekday != targetWeekday || scheduled.isBefore(ref)) {
+    // Advance to target weekday and ensure scheduled date is strictly in the future
+    while (scheduled.weekday != targetWeekday || !scheduled.isAfter(ref)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
 

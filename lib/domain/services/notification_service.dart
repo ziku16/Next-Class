@@ -59,8 +59,24 @@ class NotificationService {
       final String? timeZoneName =
           await channel.invokeMethod<String>('getTimeZone');
       if (timeZoneName != null && timeZoneName.isNotEmpty) {
-        tz.setLocalLocation(tz.getLocation(timeZoneName));
-        debugPrint('[NotificationService] Timezone initialized to: ${tz.local.name} (device returned: $timeZoneName)');
+        try {
+          tz.setLocalLocation(tz.getLocation(timeZoneName));
+          debugPrint('[NotificationService] Timezone initialized to: ${tz.local.name} (device returned: $timeZoneName)');
+        } catch (tzErr) {
+          debugPrint('[NotificationService] Location not found for $timeZoneName ($tzErr). Attempting offset match...');
+          final offset = DateTime.now().timeZoneOffset;
+          tz.Location? matched;
+          for (final loc in tz.timeZoneDatabase.locations.values) {
+            if (loc.currentTimeZone.offset == offset.inMilliseconds) {
+              matched = loc;
+              break;
+            }
+          }
+          if (matched != null) {
+            tz.setLocalLocation(matched);
+            debugPrint('[NotificationService] Fallback matched timezone: ${tz.local.name} (offset ${offset.inHours}h)');
+          }
+        }
       } else {
         debugPrint('[NotificationService] WARNING: Native getTimeZone returned null or empty. Fallback tz.local: ${tz.local.name}');
       }
@@ -459,6 +475,49 @@ class NotificationService {
     } catch (e) {
       debugPrint('[NotificationService] Error cancelling all notifications: $e');
     }
+  }
+
+  /// Diagnostic / debug method to prove that a basic one-shot scheduled notification works.
+  /// Uses a one-shot notification without [DateTimeComponents].
+  /// Logs now time, scheduled time, and verifies presence in [pendingNotificationRequests].
+  Future<List<PendingNotificationRequest>> scheduleDebugNotification({
+    Duration delay = const Duration(minutes: 1),
+    AndroidScheduleMode scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle,
+  }) async {
+    await initialize();
+
+    final scheduledDate = tz.TZDateTime.now(tz.local).add(delay);
+
+    debugPrint('[DEBUG] NOW: ${tz.TZDateTime.now(tz.local)} (local zone: ${tz.local.name})');
+    debugPrint('[DEBUG] SCHEDULED: $scheduledDate (mode: $scheduleMode)');
+
+    await _notificationsPlugin.zonedSchedule(
+      999999,
+      'NextClass Scheduled Test',
+      'If you see this, scheduled notifications work.',
+      scheduledDate,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          classChannelId,
+          classChannelName,
+          channelDescription: classChannelDescription,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      androidScheduleMode: scheduleMode,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
+
+    final pending = await _notificationsPlugin.pendingNotificationRequests();
+
+    debugPrint(
+      '[DEBUG] Pending notifications: '
+      '${pending.map((e) => '${e.id}=${e.title}').toList()}',
+    );
+
+    return pending;
   }
 
   void dispose() {

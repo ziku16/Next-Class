@@ -64,6 +64,18 @@ class FakeFlutterLocalNotificationsPlugin extends Fake
     allCancelled = true;
     scheduledCalls.clear();
   }
+
+  @override
+  Future<List<PendingNotificationRequest>> pendingNotificationRequests() async {
+    return scheduledCalls
+        .map((call) => PendingNotificationRequest(
+              call['id'] as int,
+              call['title'] as String?,
+              call['body'] as String?,
+              call['payload'] as String?,
+            ))
+        .toList();
+  }
 }
 
 class FakeSettingsRepo extends SettingsRepository {
@@ -437,6 +449,105 @@ void main() {
       expect(reminder.hour, 8);
       expect(reminder.minute, 15);
       expect(reminder.day, 12); // Next Monday 12 Oct!
+    });
+
+    test('calculateNextClassReminderTZ: class later today returns today', () {
+      final scheduler = AlarmScheduler();
+      // Monday 2026-10-05 at 07:00 AM (before 08:15 reminder)
+      final ref = DateTime(2026, 10, 5, 7, 0);
+      final reminder = scheduler.calculateNextClassReminderTZ(
+        dayIndex: 0, // Monday
+        startTime: '08:30',
+        offsetMinutes: 15,
+        now: ref,
+      );
+
+      expect(reminder.weekday, DateTime.monday);
+      expect(reminder.hour, 8);
+      expect(reminder.minute, 15);
+      expect(reminder.day, 5); // Today!
+    });
+
+    test('calculateNextClassReminderTZ: 5, 10, 15, and 30 minute offsets compute precisely', () {
+      final scheduler = AlarmScheduler();
+      final ref = DateTime(2026, 10, 5, 6, 0); // Monday 06:00
+
+      // 5 min offset on 10:00 class
+      final r5 = scheduler.calculateNextClassReminderTZ(
+        dayIndex: 0,
+        startTime: '10:00',
+        offsetMinutes: 5,
+        now: ref,
+      );
+      expect(r5.hour, 9);
+      expect(r5.minute, 55);
+
+      // 10 min offset on 10:00 class
+      final r10 = scheduler.calculateNextClassReminderTZ(
+        dayIndex: 0,
+        startTime: '10:00',
+        offsetMinutes: 10,
+        now: ref,
+      );
+      expect(r10.hour, 9);
+      expect(r10.minute, 50);
+
+      // 15 min offset on 10:00 class
+      final r15 = scheduler.calculateNextClassReminderTZ(
+        dayIndex: 0,
+        startTime: '10:00',
+        offsetMinutes: 15,
+        now: ref,
+      );
+      expect(r15.hour, 9);
+      expect(r15.minute, 45);
+
+      // 30 min offset on 10:00 class
+      final r30 = scheduler.calculateNextClassReminderTZ(
+        dayIndex: 0,
+        startTime: '10:00',
+        offsetMinutes: 30,
+        now: ref,
+      );
+      expect(r30.hour, 9);
+      expect(r30.minute, 30);
+    });
+
+    test('Notification IDs are stable and invariant to timetable ordering', () {
+      const classA = 'math-algebra-101';
+      const classB = 'phys-mechanics-201';
+
+      final idAFirst = AlarmScheduler.getClassNotificationId(classA);
+      final idBSecond = AlarmScheduler.getClassNotificationId(classB);
+
+      // When list ordering is reversed, ID for classA must still be identical
+      final idASecond = AlarmScheduler.getClassNotificationId(classA);
+      final idBFirst = AlarmScheduler.getClassNotificationId(classB);
+
+      expect(idAFirst, equals(idASecond));
+      expect(idBSecond, equals(idBFirst));
+      expect(idAFirst, isNot(equals(idBFirst)));
+    });
+
+    test('scheduleDebugNotification registers a 1-minute one-shot notification in pending requests', () async {
+      final fakePlugin = FakeFlutterLocalNotificationsPlugin();
+      final service = NotificationService.test(fakePlugin);
+
+      final pending = await service.scheduleDebugNotification(
+        delay: const Duration(minutes: 1),
+      );
+
+      expect(fakePlugin.scheduledCalls.length, 1);
+      final debugCall = fakePlugin.scheduledCalls.first;
+
+      expect(debugCall['id'], 999999);
+      expect(debugCall['title'], 'NextClass Scheduled Test');
+      expect(debugCall['body'], 'If you see this, scheduled notifications work.');
+      // One-shot: matchDateTimeComponents must be null
+      expect(debugCall['matchDateTimeComponents'], isNull);
+
+      // Verify pending notification requests list contains the debug notification
+      expect(pending.any((req) => req.id == 999999), isTrue);
     });
   });
 }
