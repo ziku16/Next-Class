@@ -262,14 +262,6 @@ class _TodayScreenState extends State<TodayScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
-        title: Text(
-          'NextClass',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: Colors.black,
-            letterSpacing: 0.5,
-          ),
-        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),

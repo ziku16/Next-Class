@@ -140,9 +140,11 @@ class ClassCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             '${classItem.startTime} – ${classItem.endTime}${classItem.room != null ? ' · ${classItem.room}' : ''}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w700,
+                            style: const TextStyle(
+                              fontFamily: 'SpaceGrotesk',
+                              color: Colors.black,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
                             ),
                           ),
                         ],
@@ -310,16 +312,19 @@ class ClassCard extends StatelessWidget {
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
+                                    const Icon(
                                       Icons.meeting_room_outlined,
                                       size: 16,
-                                      color: theme.colorScheme.onSurfaceVariant,
+                                      color: Colors.black,
                                     ),
-                                    const SizedBox(width: 4),
+                                    const SizedBox(width: 5),
                                     Text(
                                       classItem.room!,
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
+                                      style: const TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.black,
                                       ),
                                     ),
                                   ],
@@ -328,16 +333,19 @@ class ClassCard extends StatelessWidget {
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
+                                    const Icon(
                                       Icons.person_outline,
                                       size: 16,
-                                      color: theme.colorScheme.onSurfaceVariant,
+                                      color: Colors.black,
                                     ),
-                                    const SizedBox(width: 4),
+                                    const SizedBox(width: 5),
                                     Text(
                                       classItem.teacher!,
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
+                                      style: const TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.black,
                                       ),
                                     ),
                                   ],
