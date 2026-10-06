@@ -324,9 +324,9 @@ void main() {
       expect(find.text('Quiz reminder'), findsOneWidget);
       expect(find.text('8:00 pm'), findsOneWidget);
 
-      // Exact alarms warning tile displayed when not granted
-      expect(find.byKey(const Key('exact_alarms_warning_tile')), findsOneWidget);
-      expect(find.text('Exact alarms are off'), findsOneWidget);
+      // Notifications permission switch is present and exact alarms warning tile is absent
+      expect(find.byKey(const Key('notifications_permission_switch')), findsOneWidget);
+      expect(find.byKey(const Key('exact_alarms_warning_tile')), findsNothing);
     });
 
     testWidgets('Interacting with segmented button updates reminder minutes', (tester) async {
@@ -347,12 +347,12 @@ void main() {
 
       // Tap 30 min in segmented button
       await tester.tap(find.text('30 min'));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(provider.classReminderMinutes, 30);
     });
 
-    testWidgets('Tapping Fix on exact alarms warning tile grants exact alarms permission', (tester) async {
+    testWidgets('Toggling notifications permission switch updates state', (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(() {
@@ -368,15 +368,11 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('exact_alarms_warning_tile')), findsOneWidget);
+      // Tap notifications switch to toggle off
+      await tester.tap(find.byKey(const Key('notifications_permission_switch')));
+      await tester.pump();
 
-      // Tap Fix button
-      await tester.tap(find.text('Fix'));
-      await tester.pumpAndSettle();
-
-      expect(provider.exactAlarmsGranted, isTrue);
-      // Warning tile should now be gone
-      expect(find.byKey(const Key('exact_alarms_warning_tile')), findsNothing);
+      expect(provider.notificationsEnabled, isFalse);
     });
 
     testWidgets('Tapping Upload new timetable tile triggers ReplaceTimetableDialog', (tester) async {

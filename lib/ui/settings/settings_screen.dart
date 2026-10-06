@@ -190,7 +190,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 currentMinutes: _provider.classReminderMinutes,
                               );
                               if (res != null || res == null) {
-                                _provider.updateClassReminderMinutes(res);
+                                await _provider.updateClassReminderMinutes(res);
+                                if (context.mounted) {
+                                  final label = res == null
+                                      ? 'Class reminders turned off'
+                                      : 'Class reminders set to $res min before class';
+                                  ScaffoldMessenger.of(context).clearSnackBars();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(label),
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
                               }
                             },
                           ),
@@ -234,10 +247,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                             selected: {_provider.classReminderMinutes},
-                            onSelectionChanged: (Set<int?> newSelection) {
-                              _provider.updateClassReminderMinutes(
-                                newSelection.first,
-                              );
+                            onSelectionChanged: (Set<int?> newSelection) async {
+                              final selected = newSelection.first;
+                              await _provider.updateClassReminderMinutes(selected);
+                              if (context.mounted) {
+                                final label = selected == null
+                                    ? 'Class reminders turned off'
+                                    : 'Class reminders set to $selected min before class';
+                                ScaffoldMessenger.of(context).clearSnackBars();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(label),
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
                             },
                           ),
                         ),
@@ -348,52 +373,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _provider.toggleNotifications(granted);
                       if (granted) {
                         await AlarmScheduler().rescheduleAll();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Notifications enabled and scheduled.'),
+                              behavior: SnackBarBehavior.floating,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
                       }
                     } else {
                       _provider.toggleNotifications(false);
                       await NotificationService().cancelAll();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).clearSnackBars();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Notifications turned off.'),
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
                     }
                   },
                 ),
-
-                // Exact Alarms Warning Tile (shown if permission missing)
-                if (!_provider.exactAlarmsGranted) ...[
-                  const Divider(height: 1),
-                  Material(
-                    color: ncColors.warningContainer.withValues(alpha: 0.35),
-                    child: ListTile(
-                      key: const Key('exact_alarms_warning_tile'),
-                      leading: Icon(
-                        Icons.alarm_off_rounded,
-                        color: ncColors.warning,
-                      ),
-                      title: Text(
-                        'Exact alarms are off',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: ncColors.onWarningContainer,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Reminders may arrive late.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: ncColors.onWarningContainer,
-                        ),
-                      ),
-                      trailing: FilledButton.tonal(
-                        style: FilledButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                        ),
-                        onPressed: () {
-                          _provider.setExactAlarmsGranted(true);
-                          NotificationService().requestExactAlarmsPermission();
-                        },
-                        child: const Text('Fix'),
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
             const SizedBox(height: 24),

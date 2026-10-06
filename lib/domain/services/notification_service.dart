@@ -217,25 +217,35 @@ class NotificationService {
     required tz.TZDateTime scheduledDate,
     DateTimeComponents? matchDateTimeComponents,
   }) async {
-    // Collapsed Content
-    final roomSuffix = (room != null && room.isNotEmpty) ? ' · Room $room' : '';
-    final collapsedBody = '$subject in $minutesBefore min$roomSuffix';
+    // Sleek, clean Notification Content: Title shows class & countdown; body shows time, room & teacher
+    final notificationTitle = minutesBefore > 0
+        ? '$subject in $minutesBefore min'
+        : 'Class now: $subject';
 
-    // Expanded Content (BigTextStyle)
-    final teacherSuffix =
-        (teacher != null && teacher.isNotEmpty) ? ' · $teacher' : '';
-    final nextClassSuffix = (nextSubject != null && nextTime != null)
-        ? '\nNext after this: $nextSubject at $nextTime'
-        : '';
-    final bigText =
-        '$startTime – $endTime$teacherSuffix$nextClassSuffix';
+    final roomDisplay = (room != null && room.isNotEmpty)
+        ? (room.toLowerCase().startsWith('room') ? room : 'Room $room')
+        : null;
+
+    final detailsList = <String>['$startTime – $endTime'];
+    if (roomDisplay != null) detailsList.add(roomDisplay);
+    if (teacher != null && teacher.isNotEmpty) detailsList.add(teacher);
+    final collapsedBody = detailsList.join(' · ');
+
+    final bigTextLines = <String>[
+      'Time: $startTime – $endTime',
+      if (roomDisplay != null) roomDisplay,
+      if (teacher != null && teacher.isNotEmpty) 'Teacher: $teacher',
+      if (nextSubject != null && nextTime != null)
+        'Next class: $nextSubject at $nextTime',
+    ];
+    final bigText = bigTextLines.join('\n');
 
     final bigTextStyle = BigTextStyleInformation(
       bigText,
       htmlFormatBigText: false,
-      contentTitle: '$subject in $minutesBefore min$roomSuffix',
+      contentTitle: notificationTitle,
       htmlFormatContentTitle: false,
-      summaryText: 'Class in $minutesBefore min',
+      summaryText: 'Class Reminder',
       htmlFormatSummaryText: false,
     );
 
@@ -272,16 +282,21 @@ class NotificationService {
       'subject': subject,
     });
 
-    // Use alarmClock mode to wake up device through battery optimization / Doze mode without unrestricted battery
-    final bool exactPermitted = await checkExactAlarmPermission();
-    final scheduleMode = exactPermitted
-        ? AndroidScheduleMode.alarmClock
-        : AndroidScheduleMode.inexactAllowWhileIdle;
+    // Standard notification scheduling: prefer exactAllowWhileIdle, gracefully fall back to inexactAllowWhileIdle
+    AndroidScheduleMode scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+    try {
+      final canExact = await checkExactAlarmPermission();
+      if (!canExact) {
+        scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+      }
+    } catch (_) {
+      scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+    }
 
     try {
       await _notificationsPlugin.zonedSchedule(
         id,
-        'Next Class: $subject',
+        notificationTitle,
         collapsedBody,
         scheduledDate,
         notificationDetails,
@@ -292,9 +307,25 @@ class NotificationService {
         payload: payload,
       );
       debugPrint('[NotificationService] Scheduled class reminder: id=$id, subject="$subject", time=$scheduledDate, mode=$scheduleMode');
-    } catch (e, stack) {
-      debugPrint('[NotificationService] CRITICAL: zonedSchedule failed for class ($id - "$subject"): $e\n$stack');
-      rethrow;
+    } catch (e) {
+      if (scheduleMode != AndroidScheduleMode.inexactAllowWhileIdle) {
+        debugPrint('[NotificationService] Exact alarm failed ($e), falling back to inexactAllowWhileIdle for class $id');
+        await _notificationsPlugin.zonedSchedule(
+          id,
+          notificationTitle,
+          collapsedBody,
+          scheduledDate,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: matchDateTimeComponents,
+          payload: payload,
+        );
+      } else {
+        debugPrint('[NotificationService] CRITICAL: zonedSchedule failed for class ($id - "$subject"): $e');
+        rethrow;
+      }
     }
   }
 
@@ -312,22 +343,21 @@ class NotificationService {
     // Collapsed Content
     final collapsedTitle =
         isDayOf ? 'Quiz today: $subject' : 'Quiz tomorrow: $subject';
-    final collapsedBody = isDayOf
-        ? 'Quiz today: $subject — $title'
-        : 'Quiz tomorrow: $subject — $title';
+    final collapsedBody = '$title · $formattedDate${note != null && note.isNotEmpty ? " · $note" : ""}';
 
     // Expanded Content
-    final noteSuffix = (note != null && note.isNotEmpty) ? ' · $note' : '';
-    final bigText = isDayOf
-        ? '$formattedDate$noteSuffix | Best of luck on your quiz!'
-        : '$formattedDate$noteSuffix | Chalo, revise tonight!';
+    final bigTextLines = <String>[
+      isDayOf ? 'Good luck on your $subject quiz today!' : 'Quiz tomorrow: $subject',
+      'Topic: $title',
+      'Date: $formattedDate',
+      if (note != null && note.isNotEmpty) 'Note: $note',
+    ];
+    final bigText = bigTextLines.join('\n');
 
     final bigTextStyle = BigTextStyleInformation(
       bigText,
       htmlFormatBigText: false,
-      contentTitle: isDayOf
-          ? 'Quiz today: $subject — $title'
-          : 'Quiz tomorrow: $subject — $title',
+      contentTitle: collapsedTitle,
       htmlFormatContentTitle: false,
       summaryText: isDayOf ? 'Quiz Today' : 'Quiz Tomorrow',
       htmlFormatSummaryText: false,
@@ -366,11 +396,16 @@ class NotificationService {
       'subject': subject,
     });
 
-    // Use alarmClock mode to wake up device through battery optimization / Doze mode without unrestricted battery
-    final bool exactPermitted = await checkExactAlarmPermission();
-    final scheduleMode = exactPermitted
-        ? AndroidScheduleMode.alarmClock
-        : AndroidScheduleMode.inexactAllowWhileIdle;
+    // Standard notification scheduling: prefer exactAllowWhileIdle, gracefully fall back to inexactAllowWhileIdle
+    AndroidScheduleMode scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+    try {
+      final canExact = await checkExactAlarmPermission();
+      if (!canExact) {
+        scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+      }
+    } catch (_) {
+      scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+    }
 
     try {
       await _notificationsPlugin.zonedSchedule(
@@ -385,9 +420,24 @@ class NotificationService {
         payload: payload,
       );
       debugPrint('[NotificationService] Scheduled quiz reminder: id=$id, subject="$subject", time=$scheduledDate, mode=$scheduleMode');
-    } catch (e, stack) {
-      debugPrint('[NotificationService] CRITICAL: zonedSchedule failed for quiz ($id - "$subject"): $e\n$stack');
-      rethrow;
+    } catch (e) {
+      if (scheduleMode != AndroidScheduleMode.inexactAllowWhileIdle) {
+        debugPrint('[NotificationService] Exact alarm failed ($e), falling back to inexactAllowWhileIdle for quiz $id');
+        await _notificationsPlugin.zonedSchedule(
+          id,
+          collapsedTitle,
+          collapsedBody,
+          scheduledDate,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: payload,
+        );
+      } else {
+        debugPrint('[NotificationService] CRITICAL: zonedSchedule failed for quiz ($id - "$subject"): $e');
+        rethrow;
+      }
     }
   }
 

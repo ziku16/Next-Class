@@ -169,8 +169,8 @@ void main() {
       final call = fakePlugin.scheduledCalls.first;
 
       expect(call['id'], 42);
-      expect(call['title'], 'Next Class: Mathematics');
-      expect(call['body'], 'Mathematics in 15 min · Room Room A-04');
+      expect(call['title'], 'Mathematics in 15 min');
+      expect(call['body'], '08:30 – 10:00 · Room A-04 · Dr. Smith');
       expect(call['matchDateTimeComponents'], DateTimeComponents.dayOfWeekAndTime);
 
       // Verify payload deep link
@@ -187,9 +187,10 @@ void main() {
       expect(androidDetails.priority, Priority.high);
 
       final style = androidDetails.styleInformation as BigTextStyleInformation;
-      expect(style.contentTitle, 'Mathematics in 15 min · Room Room A-04');
-      expect(style.bigText, contains('08:30 – 10:00 · Dr. Smith'));
-      expect(style.bigText, contains('Next after this: Physics at 10:15'));
+      expect(style.contentTitle, 'Mathematics in 15 min');
+      expect(style.bigText, contains('08:30 – 10:00'));
+      expect(style.bigText, contains('Dr. Smith'));
+      expect(style.bigText, contains('Next class: Physics at 10:15'));
     });
 
     test('scheduleQuizReminder builds correct collapsed & expanded content and tap payload', () async {
@@ -213,7 +214,7 @@ void main() {
 
       expect(call['id'], 100042);
       expect(call['title'], 'Quiz tomorrow: Mathematics');
-      expect(call['body'], 'Quiz tomorrow: Mathematics — Calculus Midterm');
+      expect(call['body'], 'Calculus Midterm · Thu, 15 Oct · Bring formula handbook');
 
       // Verify payload
       final payload = jsonDecode(call['payload'] as String);
@@ -228,8 +229,9 @@ void main() {
       expect(androidDetails.importance, Importance.high);
 
       final style = androidDetails.styleInformation as BigTextStyleInformation;
-      expect(style.contentTitle, 'Quiz tomorrow: Mathematics — Calculus Midterm');
-      expect(style.bigText, 'Thu, 15 Oct · Bring formula handbook | Chalo, revise tonight!');
+      expect(style.contentTitle, 'Quiz tomorrow: Mathematics');
+      expect(style.bigText, contains('Calculus Midterm'));
+      expect(style.bigText, contains('Thu, 15 Oct'));
     });
   });
 
