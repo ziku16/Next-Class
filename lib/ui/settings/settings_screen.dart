@@ -1,6 +1,4 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../../core/theme/next_class_colors.dart';
 import '../../data/models/scan_quota.dart';
 import '../../data/models/user_settings.dart';
 import '../../data/repositories/settings_repository.dart';
@@ -123,7 +121,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ncColors = context.ncColors;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6EE),

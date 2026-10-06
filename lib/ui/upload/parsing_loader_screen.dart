@@ -71,7 +71,6 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
 
     return Scaffold(

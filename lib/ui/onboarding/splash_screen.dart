@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../core/theme/next_class_colors.dart';
 import '../../data/repositories/timetable_repository.dart';
 import '../main_navigation_screen.dart';
 import 'welcome_screen.dart';

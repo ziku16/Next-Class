@@ -17,8 +17,6 @@ class ReplaceTimetableDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return AlertDialog(
       backgroundColor: const Color(0xFFFAF6EE),
       shape: RoundedRectangleBorder(

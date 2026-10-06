@@ -50,7 +50,6 @@ class ClassDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final ncColors = context.ncColors;
     final subjectColor =
         ncColors.getSubjectColor(classItem.subjectColorIndex);

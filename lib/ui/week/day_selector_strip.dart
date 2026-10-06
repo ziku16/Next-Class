@@ -127,8 +127,6 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
     final dayNum = date.day.toString();
 
     final Color bgColor;
-    final Color textColor = Colors.black;
-    final Color numColor = Colors.black;
 
     if (isSelected) {
       bgColor = const Color(0xFFFFB74D); // Vibrant orange active
