@@ -534,56 +534,6 @@ CRITICAL RULES:
     return result;
   }
 
-  /// Sends a tiny test request to Gemini API to verify connectivity and key validity.
-  Future<String> pingGemini({String? explicitApiKey}) async {
-    final apiKey = explicitApiKey ?? await getApiKey();
-    if (apiKey == null || apiKey.trim().isEmpty) {
-      throw const AiExtractionException(
-        AiExtractionErrorCode.missingApiKey,
-        'Gemini API key is empty.',
-      );
-    }
-
-    final url = Uri.parse(
-      'https://generativelanguage.googleapis.com/v1beta/models/$geminiModel:generateContent?key=${apiKey.trim()}',
-    );
-
-    final body = jsonEncode({
-      'contents': [
-        {
-          'parts': [
-            {'text': 'Reply with single word: OK'}
-          ]
-        }
-      ],
-      'generationConfig': {
-        'maxOutputTokens': 16,
-        'thinkingConfig': {
-          'thinkingBudget': 0,
-        },
-      }
-    });
-
-    final response = await http
-        .post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: body,
-        )
-        .timeout(const Duration(seconds: 15));
-
-    if (response.statusCode != 200) {
-      debugPrint('[AiExtractionService.ping] HTTP ${response.statusCode}: ${response.body}');
-      throw AiExtractionException(
-        AiExtractionErrorCode.parsingFailed,
-        'HTTP ${response.statusCode}: ${response.body}',
-        statusCode: response.statusCode,
-        responseBody: response.body,
-      );
-    }
-
-    return response.body;
-  }
 
   String _normalizeDayOfWeek(String raw) {
     final lower = raw.trim().toLowerCase();

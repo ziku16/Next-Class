@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/services.dart';
@@ -244,6 +245,10 @@ class NotificationService {
       channelDescription: classChannelDescription,
       importance: Importance.high,
       priority: Priority.high,
+      category: AndroidNotificationCategory.reminder,
+      visibility: NotificationVisibility.public,
+      color: const Color(0xFF0E8A7D), // NextClass brand teal
+      showWhen: true,
       styleInformation: bigTextStyle,
       playSound: true,
       enableVibration: true,
@@ -267,10 +272,10 @@ class NotificationService {
       'subject': subject,
     });
 
-    // Check exact alarm permission; if not granted, fall back to inexactAllowWhileIdle
+    // Use alarmClock mode to wake up device through battery optimization / Doze mode without unrestricted battery
     final bool exactPermitted = await checkExactAlarmPermission();
     final scheduleMode = exactPermitted
-        ? AndroidScheduleMode.exactAllowWhileIdle
+        ? AndroidScheduleMode.alarmClock
         : AndroidScheduleMode.inexactAllowWhileIdle;
 
     try {
@@ -334,6 +339,10 @@ class NotificationService {
       channelDescription: quizChannelDescription,
       importance: Importance.high,
       priority: Priority.high,
+      category: AndroidNotificationCategory.reminder,
+      visibility: NotificationVisibility.public,
+      color: const Color(0xFF5B6BD6), // NextClass quiz indigo
+      showWhen: true,
       styleInformation: bigTextStyle,
       playSound: true,
       enableVibration: true,
@@ -357,9 +366,10 @@ class NotificationService {
       'subject': subject,
     });
 
+    // Use alarmClock mode to wake up device through battery optimization / Doze mode without unrestricted battery
     final bool exactPermitted = await checkExactAlarmPermission();
     final scheduleMode = exactPermitted
-        ? AndroidScheduleMode.exactAllowWhileIdle
+        ? AndroidScheduleMode.alarmClock
         : AndroidScheduleMode.inexactAllowWhileIdle;
 
     try {
