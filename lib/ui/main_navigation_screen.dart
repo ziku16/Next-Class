@@ -94,6 +94,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       try {
                         await AlarmScheduler().rescheduleAll();
                       } catch (_) {}
+                      if (!mounted) return;
                       Navigator.of(context).pop();
                       setState(() {});
                     },
@@ -120,6 +121,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     try {
                       await AlarmScheduler().rescheduleAll();
                     } catch (_) {}
+                    if (!mounted) return;
                     Navigator.of(context).popUntil((route) => route.isFirst);
                     setState(() {});
                   },
@@ -136,6 +138,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     try {
                       await AlarmScheduler().rescheduleAll();
                     } catch (_) {}
+                    if (!mounted) return;
                     Navigator.of(context).popUntil((route) => route.isFirst);
                     setState(() {});
                   },

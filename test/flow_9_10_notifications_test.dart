@@ -529,27 +529,6 @@ void main() {
       expect(idAFirst, isNot(equals(idBFirst)));
     });
 
-    test('scheduleDebugNotification registers a 1-minute one-shot notification in pending requests', () async {
-      final fakePlugin = FakeFlutterLocalNotificationsPlugin();
-      final service = NotificationService.test(fakePlugin);
-
-      final pending = await service.scheduleDebugNotification(
-        delay: const Duration(minutes: 1),
-      );
-
-      expect(fakePlugin.scheduledCalls.length, 1);
-      final debugCall = fakePlugin.scheduledCalls.first;
-
-      expect(debugCall['id'], 999999);
-      expect(debugCall['title'], 'NextClass Scheduled Test');
-      expect(debugCall['body'], 'If you see this, scheduled notifications work.');
-      // One-shot: matchDateTimeComponents must be null
-      expect(debugCall['matchDateTimeComponents'], isNull);
-
-      // Verify pending notification requests list contains the debug notification
-      expect(pending.any((req) => req.id == 999999), isTrue);
-    });
-
     group('Regression Tests A-J: Physical-device and Offset Switching Verification', () {
       late FakeFlutterLocalNotificationsPlugin fakePlugin;
       late NotificationService notifService;
@@ -640,18 +619,6 @@ void main() {
         final idAt15 = AlarmScheduler.getClassNotificationId(classId);
         final idAt5 = AlarmScheduler.getClassNotificationId(classId);
         expect(idAt15, equals(idAt5));
-      });
-
-      // Test E: One-shot one-minute diagnostic
-      test('Test E: One-shot one-minute diagnostic schedules at now + 1 min without recurrence', () async {
-        final pending = await notifService.scheduleDebugNotification(
-          delay: const Duration(minutes: 1),
-        );
-        expect(fakePlugin.scheduledCalls.length, 1);
-        final call = fakePlugin.scheduledCalls.first;
-        expect(call['id'], 999999);
-        expect(call['matchDateTimeComponents'], isNull);
-        expect(pending.any((p) => p.id == 999999), isTrue);
       });
 
       // Test F: Weekly recurrence

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/services.dart';
@@ -249,7 +248,7 @@ class NotificationService {
 
     final bigTextLines = <String>[
       'Time: $startTime – $endTime',
-      if (roomDisplay != null) roomDisplay,
+      ?roomDisplay,
       if (teacher != null && teacher.isNotEmpty) 'Teacher: $teacher',
       if (nextSubject != null && nextTime != null)
         'Next class: $nextSubject at $nextTime',
@@ -485,93 +484,6 @@ class NotificationService {
     } catch (e) {
       debugPrint('[NotificationService] Error cancelling all notifications: $e');
     }
-  }
-
-  /// Diagnostic / debug method to prove that a basic one-shot scheduled notification works.
-  /// Uses a one-shot notification without [DateTimeComponents].
-  /// Logs now time, scheduled time, exact alarm capability, and verifies presence in [pendingNotificationRequests].
-  Future<List<PendingNotificationRequest>> scheduleDebugNotification({
-    Duration delay = const Duration(minutes: 1),
-    AndroidScheduleMode? scheduleMode,
-    String? title,
-    String? body,
-    int id = 999999,
-  }) async {
-    await initialize();
-
-    final canExact = await checkExactAlarmPermission();
-    final effectiveMode = scheduleMode ??
-        (canExact
-            ? AndroidScheduleMode.exactAllowWhileIdle
-            : AndroidScheduleMode.inexactAllowWhileIdle);
-
-    final scheduledDate = tz.TZDateTime.now(tz.local).add(delay);
-
-    debugPrint('[DEBUG] Timezone: ${tz.local.name}');
-    debugPrint('[DEBUG] Exact Alarms Permitted: $canExact');
-    debugPrint('[DEBUG] NOW: ${tz.TZDateTime.now(tz.local)} (local zone: ${tz.local.name})');
-    debugPrint('[DEBUG] SCHEDULED: $scheduledDate (delay: ${delay.inSeconds}s, mode: $effectiveMode)');
-
-    final notifTitle = title ?? 'NextClass Scheduled Test';
-    final notifBody = body ?? 'If you see this, scheduled notifications work.';
-
-    try {
-      await _notificationsPlugin.zonedSchedule(
-        id,
-        notifTitle,
-        notifBody,
-        scheduledDate,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            classChannelId,
-            classChannelName,
-            channelDescription: classChannelDescription,
-            importance: Importance.high,
-            priority: Priority.high,
-            playSound: true,
-            enableVibration: true,
-          ),
-        ),
-        androidScheduleMode: effectiveMode,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-      );
-    } catch (e) {
-      if (effectiveMode != AndroidScheduleMode.inexactAllowWhileIdle) {
-        debugPrint('[DEBUG] Exact alarm failed ($e), falling back to inexactAllowWhileIdle for debug notification');
-        await _notificationsPlugin.zonedSchedule(
-          id,
-          notifTitle,
-          notifBody,
-          scheduledDate,
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              classChannelId,
-              classChannelName,
-              channelDescription: classChannelDescription,
-              importance: Importance.high,
-              priority: Priority.high,
-              playSound: true,
-              enableVibration: true,
-            ),
-          ),
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-        );
-      } else {
-        rethrow;
-      }
-    }
-
-    final pending = await _notificationsPlugin.pendingNotificationRequests();
-
-    debugPrint(
-      '[DEBUG] Pending notifications (${pending.length}): '
-      '${pending.map((e) => '[${e.id}] "${e.title}"').toList()}',
-    );
-
-    return pending;
   }
 
   void dispose() {
