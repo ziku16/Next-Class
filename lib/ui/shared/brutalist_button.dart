@@ -77,30 +77,33 @@ class _BrutalistButtonState extends State<BrutalistButton> {
         ),
         padding: widget.padding,
         child: Center(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (widget.icon != null) ...[
-              Icon(
-                widget.icon,
-                size: 20,
-                color: isEnabled ? widget.foregroundColor : Colors.grey[700],
-              ),
-              if (widget.text != null || widget.child != null)
-                const SizedBox(width: 8),
-            ],
-            if (widget.text != null)
-              Text(
-                widget.text!.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: 'SpaceGrotesk',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.8,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (widget.icon != null) ...[
+                Icon(
+                  widget.icon,
+                  size: 20,
                   color: isEnabled ? widget.foregroundColor : Colors.grey[700],
                 ),
-              ),
-            if (widget.child != null) widget.child!,
-          ],
+                if (widget.text != null || widget.child != null)
+                  const SizedBox(width: 8),
+              ],
+              if (widget.text != null)
+                Text(
+                  widget.text!.toUpperCase(),
+                  style: TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                    color: isEnabled ? widget.foregroundColor : Colors.grey[700],
+                  ),
+                ),
+              if (widget.child != null) widget.child!,
+            ],
+          ),
         ),
       ),
     );

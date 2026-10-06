@@ -132,8 +132,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return ListenableBuilder(
       listenable: _provider,
       builder: (context, _) {
@@ -341,7 +339,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   Widget _buildDaySection(BuildContext context, String day) {
-    final theme = Theme.of(context);
     final dayClasses = _provider.getClassesForDay(day);
 
     if (_provider.hideEmptyDays && dayClasses.isEmpty) {

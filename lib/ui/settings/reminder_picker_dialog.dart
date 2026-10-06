@@ -45,8 +45,6 @@ class _ReminderPickerDialogState extends State<ReminderPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return AlertDialog(
       backgroundColor: const Color(0xFFFAF6EE),
       shape: RoundedRectangleBorder(

@@ -201,7 +201,6 @@ class _EditClassSheetState extends State<EditClassSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final isEditing = widget.initialClass != null;
 
