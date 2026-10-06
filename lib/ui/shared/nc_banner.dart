@@ -162,6 +162,7 @@ class NcBanner extends StatelessWidget {
                   message,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: fg,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],

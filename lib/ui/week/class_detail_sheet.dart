@@ -215,7 +215,7 @@ class ClassDetailSheet extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFF5500),
+                          color: const Color(0xFFFFD180),
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(color: Colors.black, width: 2.0),
                           boxShadow: const [
@@ -232,7 +232,7 @@ class ClassDetailSheet extends StatelessWidget {
                             const Icon(
                               Icons.schedule,
                               size: 14,
-                              color: Colors.white,
+                              color: Colors.black,
                             ),
                             const SizedBox(width: 4),
                             () {
@@ -248,7 +248,7 @@ class ClassDetailSheet extends StatelessWidget {
                                   fontFamily: 'SpaceGrotesk',
                                   fontSize: 12,
                                   fontWeight: FontWeight.w900,
-                                  color: Colors.white,
+                                  color: Colors.black,
                                 ),
                               );
                             }(),
@@ -303,11 +303,13 @@ class ClassDetailSheet extends StatelessWidget {
                           classItem.room != null && classItem.room!.isNotEmpty
                               ? classItem.room!
                               : 'No room assigned',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: classItem.room != null && classItem.room!.isNotEmpty
+                                ? Colors.black
+                                : const Color(0xFF444444),
                           ),
                         ),
                       ),
@@ -340,11 +342,14 @@ class ClassDetailSheet extends StatelessWidget {
                                   classItem.teacher!.isNotEmpty
                               ? classItem.teacher!
                               : 'No teacher assigned',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: classItem.teacher != null &&
+                                    classItem.teacher!.isNotEmpty
+                                ? Colors.black
+                                : const Color(0xFF444444),
                           ),
                         ),
                       ),

@@ -22,18 +22,20 @@ class UndoSnackBar {
         content: Text(
           message,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onInverseSurface,
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
           ),
         ),
         behavior: SnackBarBehavior.floating,
         duration: duration,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.white, width: 1.5),
         ),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         action: SnackBarAction(
           label: actionLabel,
-          textColor: theme.colorScheme.primaryContainer,
+          textColor: const Color(0xFFFFE500),
           onPressed: onUndo,
         ),
       ),
@@ -58,19 +60,21 @@ class UndoSnackBar {
         content: Text(
           message,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onInverseSurface,
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
           ),
         ),
         behavior: SnackBarBehavior.floating,
         duration: duration,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.white, width: 1.5),
         ),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         action: actionLabel != null && onAction != null
             ? SnackBarAction(
                 label: actionLabel,
-                textColor: theme.colorScheme.primaryContainer,
+                textColor: const Color(0xFFFFE500),
                 onPressed: onAction,
               )
             : null,

@@ -419,7 +419,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 'Nothing here yet',
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
-                  color: Colors.black54,
+                  color: Colors.black87,
                   fontWeight: FontWeight.w700,
                   fontStyle: FontStyle.italic,
                 ),

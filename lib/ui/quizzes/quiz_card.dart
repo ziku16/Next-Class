@@ -190,10 +190,10 @@ class QuizCard extends StatelessWidget {
               if (onDelete != null)
                 Center(
                   child: IconButton(
-                    icon: Icon(
+                    icon: const Icon(
                       Icons.delete_outline,
                       size: 20,
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: Colors.black,
                     ),
                     tooltip: 'Delete quiz',
                     onPressed: onDelete,

@@ -156,8 +156,8 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black54,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
                     ),
                   ),
                 ],

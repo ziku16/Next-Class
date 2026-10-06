@@ -193,6 +193,65 @@ class AppTheme {
           );
         }),
       ),
+      listTileTheme: ListTileThemeData(
+        iconColor: Colors.black,
+        textColor: Colors.black,
+        titleTextStyle: textTheme.bodyLarge?.copyWith(
+          fontFamily: 'SpaceGrotesk',
+          fontWeight: FontWeight.w900,
+          color: Colors.black,
+          fontSize: 15,
+        ),
+        subtitleTextStyle: textTheme.bodyMedium?.copyWith(
+          fontFamily: 'SpaceGrotesk',
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF222222),
+          fontSize: 13,
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.black;
+          }
+          return const Color(0xFF555555);
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const Color(0xFFFFE500);
+          }
+          return const Color(0xFFE0E0E0);
+        }),
+        trackOutlineColor: WidgetStateProperty.all(Colors.black),
+        trackOutlineWidth: WidgetStateProperty.all(2.0),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          side: WidgetStateProperty.all(
+            const BorderSide(color: Colors.black, width: 2.0),
+          ),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const Color(0xFFFFE500);
+            }
+            return Colors.white;
+          }),
+          foregroundColor: WidgetStateProperty.all(Colors.black),
+          textStyle: WidgetStateProperty.all(
+            const TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontWeight: FontWeight.w800,
+              fontSize: 12.5,
+              color: Colors.black,
+            ),
+          ),
+        ),
+      ),
       dividerTheme: const DividerThemeData(
         color: Colors.black,
         thickness: 2,

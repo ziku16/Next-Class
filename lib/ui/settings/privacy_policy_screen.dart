@@ -259,10 +259,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
           Text(
             content,
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: 13.5,
               height: 1.5,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF1E1E1E),
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
             ),
           ),
         ],

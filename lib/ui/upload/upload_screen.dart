@@ -598,8 +598,8 @@ class _UploadScreenState extends State<UploadScreen> {
                                         style: const TextStyle(
                                           fontFamily: 'SpaceGrotesk',
                                           fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black54,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.black87,
                                         ),
                                       ),
                                     ],

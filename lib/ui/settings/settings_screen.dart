@@ -191,38 +191,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFE500),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.black, width: 2.0),
-                            ),
-                            child: const Icon(
-                              Icons.school,
-                              size: 18,
-                              color: Colors.black,
-                            ),
-                          ),
+                          _buildLeadingIcon(Icons.school, const Color(0xFFFFE500)),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
+                                const Text(
                                   'Class reminder',
-                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                  style: TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
                                     fontWeight: FontWeight.w900,
+                                    fontSize: 15,
                                     color: Colors.black,
                                   ),
                                 ),
+                                const SizedBox(height: 2),
                                 Text(
                                   UserSettings.classReminderLabel(
                                     _provider.classReminderMinutes,
                                   ),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: Colors.black87,
+                                  style: const TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    color: Color(0xFF222222),
                                     fontWeight: FontWeight.w700,
+                                    fontSize: 13,
                                   ),
                                 ),
                               ],
@@ -276,31 +269,94 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                               ),
+                              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return const Color(0xFFFFE500);
+                                }
+                                return Colors.white;
+                              }),
+                              foregroundColor: WidgetStateProperty.all(Colors.black),
+                              textStyle: WidgetStateProperty.all(
+                                const TextStyle(
+                                  fontFamily: 'SpaceGrotesk',
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12.5,
+                                  color: Colors.black,
+                                ),
+                              ),
                             ),
                             segments: const [
                               ButtonSegment<int?>(
                                 value: null,
-                                label: Text('Off'),
+                                label: Text(
+                                  'Off',
+                                  style: TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
+                                ),
                               ),
                               ButtonSegment<int?>(
                                 value: 5,
-                                label: Text('5 min'),
+                                label: Text(
+                                  '5 min',
+                                  style: TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
+                                ),
                               ),
                               ButtonSegment<int?>(
                                 value: 10,
-                                label: Text('10 min'),
+                                label: Text(
+                                  '10 min',
+                                  style: TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
+                                ),
                               ),
                               ButtonSegment<int?>(
                                 value: 15,
-                                label: Text('15 min'),
+                                label: Text(
+                                  '15 min',
+                                  style: TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
+                                ),
                               ),
                               ButtonSegment<int?>(
                                 value: 30,
-                                label: Text('30 min'),
+                                label: Text(
+                                  '30 min',
+                                  style: TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
+                                ),
                               ),
                               ButtonSegment<int?>(
                                 value: 60,
-                                label: Text('60 min'),
+                                label: Text(
+                                  '60 min',
+                                  style: TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
+                                ),
                               ),
                             ],
                             selected: {_provider.classReminderMinutes},
@@ -327,46 +383,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
 
                 // Quiz Reminder Toggle
                 SwitchListTile(
                   key: const Key('quiz_reminder_switch'),
-                  secondary: Icon(
-                    Icons.quiz_outlined,
-                    color: theme.colorScheme.tertiary,
-                  ),
-                  title: Text(
+                  secondary: _buildLeadingIcon(Icons.quiz_outlined, const Color(0xFF00E676)),
+                  title: const Text(
                     'Quiz reminder',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: Colors.black,
                     ),
                   ),
-                  subtitle: Text(
+                  subtitle: const Text(
                     'The evening before',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      color: Color(0xFF222222),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
                     ),
                   ),
                   value: _provider.quizReminderEnabled,
                   onChanged: (val) => _provider.toggleQuizReminder(val),
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
 
                 // Quiz Reminder Time Picker Tile
                 ListTile(
                   key: const Key('quiz_reminder_time_tile'),
                   enabled: _provider.quizReminderEnabled,
-                  leading: Icon(
+                  leading: _buildLeadingIcon(
                     Icons.schedule_outlined,
-                    color: _provider.quizReminderEnabled
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.outline,
+                    const Color(0xFFFF5500),
+                    enabled: _provider.quizReminderEnabled,
                   ),
                   title: Text(
                     'Quiz reminder time',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: _provider.quizReminderEnabled ? Colors.black : Colors.black54,
                     ),
                   ),
                   trailing: Container(
@@ -376,17 +437,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: _provider.quizReminderEnabled
-                          ? theme.colorScheme.secondaryContainer
-                          : theme.colorScheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(10),
+                          ? const Color(0xFFFFE500)
+                          : const Color(0xFFEEEEEE),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.black, width: 2.0),
                     ),
                     child: Text(
                       _provider.formattedQuizReminderTime,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
+                      style: TextStyle(
+                        fontFamily: 'SpaceGrotesk',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
                         color: _provider.quizReminderEnabled
-                            ? theme.colorScheme.onSecondaryContainer
-                            : theme.colorScheme.outline,
+                            ? Colors.black
+                            : Colors.black54,
                       ),
                     ),
                   ),
@@ -406,20 +470,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // Notification Permission Switch
                 SwitchListTile(
                   key: const Key('notifications_permission_switch'),
-                  secondary: Icon(
+                  secondary: _buildLeadingIcon(
                     Icons.notifications_active_outlined,
-                    color: theme.colorScheme.primary,
+                    const Color(0xFFFFE500),
                   ),
-                  title: Text(
+                  title: const Text(
                     'Allow notifications',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: Colors.black,
                     ),
                   ),
-                  subtitle: Text(
+                  subtitle: const Text(
                     'Required for class and quiz reminders',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      color: Color(0xFF222222),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
                     ),
                   ),
                   value: _provider.notificationsEnabled,
@@ -469,47 +539,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // Edit Timetable Tile
                 ListTile(
                   key: const Key('edit_timetable_tile'),
-                  leading: Icon(
+                  leading: _buildLeadingIcon(
                     Icons.calendar_month_outlined,
-                    color: theme.colorScheme.primary,
+                    const Color(0xFF00E5FF),
                   ),
-                  title: Text(
+                  title: const Text(
                     'Edit timetable',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: Colors.black,
                     ),
                   ),
-                  subtitle: Text(
+                  subtitle: const Text(
                     'Add, modify, or remove classes',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      color: Color(0xFF222222),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
                     ),
                   ),
-                  trailing: const Icon(Icons.chevron_right_rounded),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: Colors.black, size: 24),
                   onTap: widget.onEditTimetable,
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
 
                 // Upload New Timetable Tile with Quota
                 ListTile(
                   key: const Key('upload_timetable_tile'),
-                  leading: Icon(
+                  leading: _buildLeadingIcon(
                     Icons.upload_file_rounded,
-                    color: theme.colorScheme.primary,
+                    const Color(0xFFB388FF),
                   ),
-                  title: Text(
+                  title: const Text(
                     'Upload new timetable',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: Colors.black,
                     ),
                   ),
                   subtitle: Text(
                     _provider.quotaDisplayText,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: const TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      color: Color(0xFF222222),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
                     ),
                   ),
-                  trailing: const Icon(Icons.chevron_right_rounded),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: Colors.black, size: 24),
                   onTap: _handleUploadNewTimetable,
                 ),
               ],
@@ -522,10 +604,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
               theme,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.mail_outline_rounded),
-                  title: const Text('Contact support'),
-                  subtitle: const Text('support@nextclass.app'),
-                  trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                  leading: _buildLeadingIcon(
+                    Icons.mail_outline_rounded,
+                    const Color(0xFFFFE500),
+                  ),
+                  title: const Text(
+                    'Contact support',
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: Colors.black,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'support@nextclass.app',
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      color: Color(0xFF222222),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  trailing: const Icon(Icons.open_in_new_rounded, size: 20, color: Colors.black),
                   onTap: widget.onContactSupport ??
                       () {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -537,11 +638,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         );
                       },
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
                 ListTile(
-                  leading: const Icon(Icons.privacy_tip_outlined),
-                  title: const Text('Privacy Policy'),
-                  trailing: const Icon(Icons.chevron_right_rounded, size: 22),
+                  leading: _buildLeadingIcon(
+                    Icons.privacy_tip_outlined,
+                    const Color(0xFFFF5500),
+                  ),
+                  title: const Text(
+                    'Privacy Policy',
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: Colors.black,
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded, size: 24, color: Colors.black),
                   onTap: widget.onPrivacyPolicy ??
                       () {
                         Navigator.of(context).push(
@@ -551,26 +663,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         );
                       },
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
                 ListTile(
-                  leading: const Icon(Icons.info_outline_rounded),
-                  title: const Text('Version'),
-                  trailing: const Text('1.0.0'),
+                  leading: _buildLeadingIcon(
+                    Icons.info_outline_rounded,
+                    const Color(0xFF00E676),
+                  ),
+                  title: const Text(
+                    'Version',
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: Colors.black,
+                    ),
+                  ),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE500),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.black, width: 1.5),
+                    ),
+                    child: const Text(
+                      '1.0.0',
+                      style: TextStyle(
+                        fontFamily: 'SpaceGrotesk',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12.5,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
                 ),
                 if (widget.onSignOut != null) ...[
-                  const Divider(height: 1),
+                  const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
                   // Sign Out Button (shown only if sign out callback is provided)
                   ListTile(
                     key: const Key('sign_out_tile'),
-                    leading: Icon(
+                    leading: _buildLeadingIcon(
                       Icons.logout_rounded,
-                      color: theme.colorScheme.error,
+                      const Color(0xFFFFCDD2),
                     ),
-                    title: Text(
+                    title: const Text(
                       'Sign out',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.error,
-                        fontWeight: FontWeight.w700,
+                      style: TextStyle(
+                        fontFamily: 'SpaceGrotesk',
+                        color: Color(0xFFFF1744),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
                       ),
                     ),
                     onTap: _handleSignOut,
@@ -585,27 +726,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildLeadingIcon(IconData icon, Color bgColor, {bool enabled = true}) {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: enabled ? bgColor : const Color(0xFFE0E0E0),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.black, width: 2.0),
+      ),
+      child: Icon(
+        icon,
+        size: 18,
+        color: enabled ? Colors.black : Colors.black54,
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(ThemeData theme, String title, {String? stamp}) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8, right: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontWeight: FontWeight.w900,
-              fontSize: 14,
-              letterSpacing: 1.1,
-              color: Colors.black,
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                letterSpacing: 1.1,
+                color: Colors.black,
+              ),
             ),
           ),
-          if (stamp != null)
+          if (stamp != null) ...[
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFFFFE500),
                 borderRadius: BorderRadius.circular(3),
                 border: Border.all(color: Colors.black, width: 1.5),
               ),
@@ -613,13 +773,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 stamp,
                 style: const TextStyle(
                   fontFamily: 'SpaceGrotesk',
-                  fontSize: 9,
+                  fontSize: 9.5,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.0,
                   color: Colors.black,
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

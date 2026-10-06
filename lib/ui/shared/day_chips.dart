@@ -117,8 +117,8 @@ class _DayChipsState extends State<DayChips> {
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: isSelected
                             ? fgColor
-                            : (isToday ? fgColor : theme.colorScheme.onSurfaceVariant),
-                        fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
+                            : (isToday ? fgColor : Colors.black),
+                        fontWeight: isSelected || isToday ? FontWeight.w800 : FontWeight.w700,
                       ),
                     ),
                     if (dayNumber != null) ...[

@@ -257,7 +257,7 @@ class NotificationExplainerScreen extends StatelessWidget {
                   fontFamily: 'SpaceGrotesk',
                   fontWeight: FontWeight.w700,
                   fontSize: 11,
-                  color: Colors.black54,
+                  color: Colors.black87,
                 ),
               ),
             ],
