@@ -244,7 +244,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                         ),
                         Switch(
                           value: _provider.hideEmptyDays,
-                          activeColor: Colors.black,
+                          activeThumbColor: Colors.black,
                           activeTrackColor: const Color(0xFFFF5500),
                           inactiveThumbColor: Colors.black,
                           inactiveTrackColor: const Color(0xFFDCE2E6),

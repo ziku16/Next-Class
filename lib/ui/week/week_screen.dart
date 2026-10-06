@@ -371,25 +371,26 @@ class _WeekScreenState extends State<WeekScreen> {
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
+                  : SingleChildScrollView(
                       controller: _scrollController,
-                      cacheExtent: 5000,
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-                      itemCount: 7,
-                      itemBuilder: (context, index) {
-                        final dayName = _dayNames[index];
-                        final dayDate = _weekDays[index];
-                        final classes = _classesForDay(dayName);
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: List.generate(7, (index) {
+                          final dayName = _dayNames[index];
+                          final dayDate = _weekDays[index];
+                          final classes = _classesForDay(dayName);
 
-                        return _buildDaySection(
-                          context: context,
-                          theme: theme,
-                          index: index,
-                          dayName: dayName,
-                          dayDate: dayDate,
-                          classes: classes,
-                        );
-                      },
+                          return _buildDaySection(
+                            context: context,
+                            theme: theme,
+                            index: index,
+                            dayName: dayName,
+                            dayDate: dayDate,
+                            classes: classes,
+                          );
+                        }),
+                      ),
                     ),
             ),
           ],
