@@ -48,16 +48,16 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
     required this.subjects,
   });
 
-  /// 8 Subject colors assigned modulo 8 (all hold >= 3:1 contrast on cards)
+  /// 8 Subject colors assigned modulo 8 (high-energy brutalist palette)
   static const List<Color> defaultSubjects = [
-    Color(0xFF0E8A7D), // 0: Teal
-    Color(0xFF5B6BD6), // 1: Indigo
-    Color(0xFF9A5BC8), // 2: Violet
-    Color(0xFFD0478A), // 3: Rose
-    Color(0xFF6E8B1E), // 4: Olive
-    Color(0xFF2F80D8), // 5: Blue
-    Color(0xFF2E9A4F), // 6: Green
-    Color(0xFFA0703A), // 7: Sand
+    Color(0xFFFFE500), // 0: Safety Yellow
+    Color(0xFFFF5500), // 1: Vivid Orange
+    Color(0xFF00E676), // 2: Electric Green
+    Color(0xFF2979FF), // 3: Bright Blue
+    Color(0xFFFF4081), // 4: Hot Pink
+    Color(0xFF00E5FF), // 5: Electric Cyan
+    Color(0xFFFF9100), // 6: Deep Amber
+    Color(0xFF7C4DFF), // 7: Vivid Purple
   ];
 
   /// Returns the subject color corresponding to the given index (index % 8).
@@ -68,49 +68,49 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
 
   /// Light theme extension instance
   static const light = NextClassColors(
-    classCurrent: Color(0xFF0B6E85),
-    classCurrentBorder: Color(0xFF0B6E85),
-    classNext: Color(0xFF70797C),
-    classPastBorder: Color(0xFFC0C8CB),
-    quiz: Color(0xFFB5451B),
-    onQuiz: Color(0xFFFFFFFF),
-    quizContainer: Color(0xFFFFE0D3),
-    onQuizContainer: Color(0xFF3B0D00),
-    quizUrgent: Color(0xFFA63A12),
+    classCurrent: Color(0xFFFFE500), // Safety yellow active
+    classCurrentBorder: Color(0xFF000000), // Solid black border
+    classNext: Color(0xFFFF5500), // Vivid orange next
+    classPastBorder: Color(0xFF000000),
+    quiz: Color(0xFFFF5500),
+    onQuiz: Color(0xFF000000),
+    quizContainer: Color(0xFFFFD180),
+    onQuizContainer: Color(0xFF000000),
+    quizUrgent: Color(0xFFFF1744),
     onQuizUrgent: Color(0xFFFFFFFF),
-    success: Color(0xFF1B6C3A),
-    successContainer: Color(0xFFBDF0CB),
-    onSuccessContainer: Color(0xFF0B3A1D),
-    warning: Color(0xFF7A4A00),
-    warningContainer: Color(0xFFFFDDB0),
-    onWarningContainer: Color(0xFF4A2D00),
-    info: Color(0xFF2F5FA8),
-    infoContainer: Color(0xFFD7E3FF),
-    onInfoContainer: Color(0xFF1B3A6E),
+    success: Color(0xFF00C853),
+    successContainer: Color(0xFFB9F6CA),
+    onSuccessContainer: Color(0xFF000000),
+    warning: Color(0xFFFFE500),
+    warningContainer: Color(0xFFFFF59D),
+    onWarningContainer: Color(0xFF000000),
+    info: Color(0xFF2979FF),
+    infoContainer: Color(0xFFBBDEFB),
+    onInfoContainer: Color(0xFF000000),
     subjects: defaultSubjects,
   );
 
   /// Dark theme extension instance
   static const dark = NextClassColors(
-    classCurrent: Color(0xFF7DD3E8),
-    classCurrentBorder: Color(0xFF7DD3E8),
-    classNext: Color(0xFF899295),
-    classPastBorder: Color(0xFF40484B),
-    quiz: Color(0xFFFFB59B),
-    onQuiz: Color(0xFF5A1A00),
-    quizContainer: Color(0xFF5C2410),
-    onQuizContainer: Color(0xFFFFDBCF),
-    quizUrgent: Color(0xFFFF8A65),
-    onQuizUrgent: Color(0xFF3B0D00),
-    success: Color(0xFF7EDB9B),
-    successContainer: Color(0xFF0B3A1D),
-    onSuccessContainer: Color(0xFFBDF0CB),
-    warning: Color(0xFFFFB95A),
-    warningContainer: Color(0xFF4A2D00),
-    onWarningContainer: Color(0xFFFFDDB0),
-    info: Color(0xFFAAC7FF),
-    infoContainer: Color(0xFF1B3A6E),
-    onInfoContainer: Color(0xFFD7E3FF),
+    classCurrent: Color(0xFFFFEE58),
+    classCurrentBorder: Color(0xFFFFFFFF),
+    classNext: Color(0xFFFF7043),
+    classPastBorder: Color(0xFFFFFFFF),
+    quiz: Color(0xFFFF7043),
+    onQuiz: Color(0xFF000000),
+    quizContainer: Color(0xFFD84315),
+    onQuizContainer: Color(0xFFFFFFFF),
+    quizUrgent: Color(0xFFFF5252),
+    onQuizUrgent: Color(0xFF000000),
+    success: Color(0xFF69F0AE),
+    successContainer: Color(0xFF00C853),
+    onSuccessContainer: Color(0xFF000000),
+    warning: Color(0xFFFFEE58),
+    warningContainer: Color(0xFFFBC02D),
+    onWarningContainer: Color(0xFF000000),
+    info: Color(0xFF448AFF),
+    infoContainer: Color(0xFF1565C0),
+    onInfoContainer: Color(0xFFFFFFFF),
     subjects: defaultSubjects,
   );
 

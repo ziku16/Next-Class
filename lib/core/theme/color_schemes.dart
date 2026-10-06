@@ -1,65 +1,66 @@
 import 'package:flutter/material.dart';
 
 /// NextClass Material 3 Light Color Scheme
-/// Explicitly constructed to match the NextClass Design System V1 tokens.
+/// Revo-Brutalist design language:
+/// Warm textured paper background (#FAF6EE), stark black (#000000) outlines,
+/// electric saturated orange (#FF5500), safety yellow (#FFE500), electric green (#00E676).
 const lightColorScheme = ColorScheme(
   brightness: Brightness.light,
-  primary: Color(0xFF0B6E85),
+  primary: Color(0xFFFF5500), // Vivid orange
   onPrimary: Color(0xFFFFFFFF),
-  primaryContainer: Color(0xFFC3EBF5),
-  onPrimaryContainer: Color(0xFF001F27),
-  secondary: Color(0xFF4B6269),
-  onSecondary: Color(0xFFFFFFFF),
-  secondaryContainer: Color(0xFFCEE7EE),
-  onSecondaryContainer: Color(0xFF061F25),
-  tertiary: Color(0xFFB5451B), // Quiz coral
-  onTertiary: Color(0xFFFFFFFF),
-  tertiaryContainer: Color(0xFFFFE0D3),
-  onTertiaryContainer: Color(0xFF3B0D00),
-  error: Color(0xFFBA1A1A),
+  primaryContainer: Color(0xFFFFD180), // Orange tint
+  onPrimaryContainer: Color(0xFF000000),
+  secondary: Color(0xFFFFE500), // Safety yellow
+  onSecondary: Color(0xFF000000),
+  secondaryContainer: Color(0xFFFFF59D), // Yellow tint
+  onSecondaryContainer: Color(0xFF000000),
+  tertiary: Color(0xFF00E676), // Electric green
+  onTertiary: Color(0xFF000000),
+  tertiaryContainer: Color(0xFFB9F6CA),
+  onTertiaryContainer: Color(0xFF000000),
+  error: Color(0xFFFF1744), // Vivid red
   onError: Color(0xFFFFFFFF),
-  errorContainer: Color(0xFFFFDAD6),
-  onErrorContainer: Color(0xFF410002),
-  surface: Color(0xFFF6FAFB),
-  onSurface: Color(0xFF171D1F),
-  onSurfaceVariant: Color(0xFF40484B),
-  outline: Color(0xFF70797C),
-  outlineVariant: Color(0xFFC0C8CB),
-  surfaceContainerLow: Color(0xFFEFF4F6),
-  surfaceContainer: Color(0xFFE9EFF1),
-  surfaceContainerHigh: Color(0xFFE0E7E9),
-  inverseSurface: Color(0xFF2C3133),
-  onInverseSurface: Color(0xFFEEF1F3),
+  errorContainer: Color(0xFFFFCDD2),
+  onErrorContainer: Color(0xFF000000),
+  surface: Color(0xFFFAF6EE), // Warm off-white paper
+  onSurface: Color(0xFF000000), // Stark solid black
+  onSurfaceVariant: Color(0xFF262626), // Dark neutral
+  outline: Color(0xFF000000), // Heavy black outline
+  outlineVariant: Color(0xFF000000),
+  surfaceContainerLow: Color(0xFFFFFFFF), // Crisp card white
+  surfaceContainer: Color(0xFFF3ECE0),
+  surfaceContainerHigh: Color(0xFFEBE3D3),
+  inverseSurface: Color(0xFF000000),
+  onInverseSurface: Color(0xFFFAF6EE),
 );
 
-/// NextClass Material 3 Dark Color Scheme
-/// Explicitly constructed to match the NextClass Design System V1 tokens.
+/// NextClass Material 3 Dark Color Scheme (high contrast fallback)
 const darkColorScheme = ColorScheme(
   brightness: Brightness.dark,
-  primary: Color(0xFF7DD3E8),
-  onPrimary: Color(0xFF00363F),
-  primaryContainer: Color(0xFF004E5E),
-  onPrimaryContainer: Color(0xFFC3EBF5),
-  secondary: Color(0xFFB1CBD3),
-  onSecondary: Color(0xFF1C343A),
-  secondaryContainer: Color(0xFF334B52),
-  onSecondaryContainer: Color(0xFFCEE7EE),
-  tertiary: Color(0xFFFFB59B), // Quiz coral (dark)
-  onTertiary: Color(0xFF5A1A00),
-  tertiaryContainer: Color(0xFF5C2410),
-  onTertiaryContainer: Color(0xFFFFDBCF),
-  error: Color(0xFFFFB4AB),
-  onError: Color(0xFF93000A),
-  errorContainer: Color(0xFF93000A),
-  onErrorContainer: Color(0xFFFFDAD6),
-  surface: Color(0xFF0F1416),
-  onSurface: Color(0xFFDEE3E5),
-  onSurfaceVariant: Color(0xFFBFC8CB),
-  outline: Color(0xFF899295),
-  outlineVariant: Color(0xFF40484B),
-  surfaceContainerLow: Color(0xFF171C1E),
-  surfaceContainer: Color(0xFF1B2022),
-  surfaceContainerHigh: Color(0xFF262B2D),
-  inverseSurface: Color(0xFFDEE3E5),
-  onInverseSurface: Color(0xFF171D1F),
+  primary: Color(0xFFFF7043),
+  onPrimary: Color(0xFF000000),
+  primaryContainer: Color(0xFFD84315),
+  onPrimaryContainer: Color(0xFFFFFFFF),
+  secondary: Color(0xFFFFEE58),
+  onSecondary: Color(0xFF000000),
+  secondaryContainer: Color(0xFFFBC02D),
+  onSecondaryContainer: Color(0xFF000000),
+  tertiary: Color(0xFF69F0AE),
+  onTertiary: Color(0xFF000000),
+  tertiaryContainer: Color(0xFF00C853),
+  onTertiaryContainer: Color(0xFF000000),
+  error: Color(0xFFFF5252),
+  onError: Color(0xFF000000),
+  errorContainer: Color(0xFFD50000),
+  onErrorContainer: Color(0xFFFFFFFF),
+  surface: Color(0xFF1E1E1E),
+  onSurface: Color(0xFFFAF6EE),
+  onSurfaceVariant: Color(0xFFE0E0E0),
+  outline: Color(0xFFFFFFFF),
+  outlineVariant: Color(0xFFCCCCCC),
+  surfaceContainerLow: Color(0xFF2A2A2A),
+  surfaceContainer: Color(0xFF333333),
+  surfaceContainerHigh: Color(0xFF3D3D3D),
+  inverseSurface: Color(0xFFFAF6EE),
+  onInverseSurface: Color(0xFF1E1E1E),
 );

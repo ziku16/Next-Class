@@ -44,25 +44,37 @@ class QuizCard extends StatelessWidget {
 
     final cardWidget = Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        color: isUrgent ? const Color(0xFFFFF8E1) : Colors.white,
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-          width: 1.0,
+          color: Colors.black,
+          width: 3.0,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(3.5, 3.5),
+            blurRadius: 0,
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(3),
         child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 6 dp Left Accent Stripe
+              // 10 dp Left Accent Stripe with solid black divider
               Container(
-                width: 6,
-                color: stripeColor,
+                width: 10,
+                decoration: BoxDecoration(
+                  color: stripeColor,
+                  border: const Border(
+                    right: BorderSide(color: Colors.black, width: 2.5),
+                  ),
+                ),
               ),
 
               // Content Area
@@ -196,23 +208,24 @@ class QuizCard extends StatelessWidget {
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 24),
           decoration: BoxDecoration(
-            color: theme.colorScheme.error,
-            borderRadius: BorderRadius.circular(16),
+            color: const Color(0xFFFF1744),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: Colors.black, width: 3.0),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.delete_outline,
-                color: theme.colorScheme.onError,
+              const Icon(
+                Icons.delete,
+                color: Colors.white,
                 size: 24,
               ),
               const SizedBox(width: 8),
               Text(
                 'Delete',
                 style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.onError,
-                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
@@ -239,21 +252,21 @@ class QuizCard extends StatelessWidget {
 
     switch (urgency) {
       case QuizUrgency.today:
-        bg = ncColors.quizUrgent.withValues(alpha: 0.15);
-        fg = ncColors.quizUrgent;
+        bg = const Color(0xFFFF1744); // Vivid red
+        fg = Colors.white;
         icon = Icons.alarm_rounded;
         label = 'Today';
         break;
       case QuizUrgency.tomorrow:
-        bg = ncColors.warningContainer;
-        fg = ncColors.onWarningContainer;
+        bg = const Color(0xFFFFE500); // Safety yellow
+        fg = Colors.black;
         icon = Icons.alarm_rounded;
         label = 'Tomorrow';
         break;
       case QuizUrgency.thisWeek:
       case QuizUrgency.later:
-        bg = theme.colorScheme.secondaryContainer;
-        fg = theme.colorScheme.onSecondaryContainer;
+        bg = const Color(0xFF2979FF); // Bright blue
+        fg = Colors.white;
         icon = Icons.schedule_rounded;
         label = quiz.urgencyBadgeText(referenceDate);
         break;
@@ -263,7 +276,15 @@ class QuizCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.black, width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(1.5, 1.5),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

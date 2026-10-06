@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// NextClass Typography System based on Manrope with tabular figures.
+/// NextClass Typography System based on Space Grotesk with tabular figures.
+/// Revo-Brutalist: Ultra-bold, condensed, architectural rhythm.
 class NextClassTypography {
   NextClassTypography._();
 
@@ -12,7 +13,7 @@ class NextClassTypography {
     required double letterSpacing,
     Color? color,
   }) {
-    return GoogleFonts.manrope(
+    return GoogleFonts.spaceGrotesk(
       fontSize: fontSize,
       height: lineHeight / fontSize,
       fontWeight: fontWeight,

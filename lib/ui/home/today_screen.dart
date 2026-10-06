@@ -256,19 +256,47 @@ class _TodayScreenState extends State<TodayScreen> {
     final hasTimetable = _allClasses.isNotEmpty;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6EE),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFFAF6EE),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
         title: Text(
           'NextClass',
           style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.w900,
+            color: Colors.black,
+            letterSpacing: 0.5,
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
-            onPressed: widget.onOpenSettings,
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: widget.onOpenSettings,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.black, width: 2.0),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(2, 2),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.settings,
+                  color: Colors.black,
+                  size: 20,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -391,12 +419,38 @@ class _TodayScreenState extends State<TodayScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Today',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: theme.colorScheme.onSurface,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Today',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: Colors.black,
+                fontSize: 20,
+                letterSpacing: 0.5,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(color: Colors.black, width: 1.5),
+              ),
+              child: const Text(
+                'OCT0221 / CLASSIFY',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         ListView.separated(
@@ -440,24 +494,33 @@ class _TodayScreenState extends State<TodayScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: Colors.black,
+          width: 3.0,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(4, 4),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
+              color: const Color(0xFFFFE500),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.black, width: 2.5),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.calendar_month_rounded,
               size: 36,
-              color: theme.colorScheme.primary,
+              color: Colors.black,
             ),
           ),
           const SizedBox(height: 16),
@@ -466,8 +529,8 @@ class _TodayScreenState extends State<TodayScreen> {
                 ? 'Welcome to NextClass. Nothing scheduled yet.'
                 : 'Welcome, ${widget.userName}. Nothing scheduled yet.',
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w900,
+              color: Colors.black,
             ),
             textAlign: TextAlign.center,
           ),
@@ -475,7 +538,8 @@ class _TodayScreenState extends State<TodayScreen> {
           Text(
             'Upload a photo of your timetable to automatically extract every class and get reminded right on time.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
           ),
@@ -487,7 +551,8 @@ class _TodayScreenState extends State<TodayScreen> {
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: Colors.black, width: 2.5),
               ),
             ),
           ),
@@ -501,32 +566,41 @@ class _TodayScreenState extends State<TodayScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: Colors.black,
+          width: 3.0,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(4, 4),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
+              color: const Color(0xFFFFE500),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.black, width: 2.5),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.weekend_rounded,
               size: 36,
-              color: theme.colorScheme.primary,
+              color: Colors.black,
             ),
           ),
           const SizedBox(height: 16),
           Text(
             'No classes today. Enjoy the break!',
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w900,
+              color: Colors.black,
             ),
             textAlign: TextAlign.center,
           ),
@@ -534,7 +608,8 @@ class _TodayScreenState extends State<TodayScreen> {
           Text(
             'Take a breather or get ahead on upcoming quizzes.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
           ),

@@ -147,27 +147,119 @@ class TodayHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Greeting
-        Text(
-          _getGreeting(),
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: theme.colorScheme.onSurface,
+        // 1. Playful slanted sticker tag: NEXTCLASS ↗
+        Transform.rotate(
+          angle: -0.04,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFE500), // Safety yellow
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.black, width: 3.0),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black,
+                  offset: Offset(3.5, 3.5),
+                  blurRadius: 0,
+                ),
+              ],
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'NEXTCLASS',
+                  style: TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                    color: Colors.black,
+                    height: 1.0,
+                  ),
+                ),
+                SizedBox(width: 4),
+                Icon(
+                  Icons.north_east_rounded,
+                  size: 16,
+                  color: Colors.black,
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 4),
 
-        // Formatted Date
+        // 2. Ultra-bold greeting
         Text(
-          _formatDate(),
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
+          _getGreeting(),
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: Colors.black,
+            letterSpacing: -0.5,
           ),
+        ),
+        const SizedBox(height: 8),
+
+        // 3. Date & Daily metadata badge row
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            // Date pill
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.black, width: 2.0),
+              ),
+              child: Text(
+                _formatDate(),
+                style: const TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+
+            // Daily metadata count stamp
+            if (hasTimetable && classesToday.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.black, width: 2.0),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(2, 2),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  '${classesToday.length} ${classesToday.length == 1 ? "CLASS" : "CLASSES"} TODAY',
+                  style: const TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 12),
 
-        // Dynamic Schedule Pill
+        // 4. Dynamic Schedule Summary Pill (ticket style)
         _buildSummaryPill(context, theme, ncColors, summary),
       ],
     );
@@ -184,27 +276,35 @@ class TodayHeader extends StatelessWidget {
     final Color textColor;
 
     if (summary.isCelebratory) {
-      bgColor = ncColors.successContainer.withValues(alpha: 0.7);
-      iconColor = ncColors.onSuccessContainer;
-      textColor = ncColors.onSuccessContainer;
+      bgColor = const Color(0xFF00E676); // Electric green celebration
+      iconColor = Colors.black;
+      textColor = Colors.black;
     } else if (!hasTimetable || classesToday.isEmpty) {
-      bgColor = theme.colorScheme.surfaceContainerHigh;
-      iconColor = theme.colorScheme.primary;
-      textColor = theme.colorScheme.onSurface;
+      bgColor = Colors.white;
+      iconColor = Colors.black;
+      textColor = Colors.black;
     } else {
-      bgColor = theme.colorScheme.surfaceContainerHigh;
-      iconColor = theme.colorScheme.primary;
-      textColor = theme.colorScheme.onSurface;
+      bgColor = const Color(0xFFFFF9C4); // Pale yellow ticket
+      iconColor = Colors.black;
+      textColor = Colors.black;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+          color: Colors.black,
+          width: 2.5,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(2.5, 2.5),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -219,7 +319,7 @@ class TodayHeader extends StatelessWidget {
             child: Text(
               summary.text,
               style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
                 color: textColor,
               ),
               maxLines: 2,

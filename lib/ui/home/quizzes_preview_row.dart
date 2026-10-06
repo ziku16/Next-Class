@@ -94,24 +94,30 @@ class QuizzesPreviewRow extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.black, width: 2.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(3.0, 3.0),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.4),
-              shape: BoxShape.circle,
+              color: const Color(0xFFFFE500),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.black, width: 2.0),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.task_alt_rounded,
               size: 22,
-              color: theme.colorScheme.tertiary,
+              color: Colors.black,
             ),
           ),
           const SizedBox(width: 14),
@@ -122,15 +128,16 @@ class QuizzesPreviewRow extends StatelessWidget {
                 Text(
                   'No quizzes coming up.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Add one when your teacher announces it.',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -138,9 +145,8 @@ class QuizzesPreviewRow extends StatelessWidget {
           ),
           if (onAddQuiz != null)
             IconButton(
-              icon: const Icon(Icons.add_circle_outline_rounded),
+              icon: const Icon(Icons.add_circle, color: Colors.black),
               tooltip: 'Add quiz',
-              color: theme.colorScheme.primary,
               onPressed: onAddQuiz,
             ),
         ],
@@ -164,17 +170,17 @@ class QuizzesPreviewRow extends StatelessWidget {
 
     switch (urgency) {
       case QuizUrgency.today:
-        badgeBg = theme.colorScheme.errorContainer;
-        badgeTextCol = theme.colorScheme.onErrorContainer;
+        badgeBg = const Color(0xFFFF1744); // Vivid red
+        badgeTextCol = Colors.white;
         break;
       case QuizUrgency.tomorrow:
-        badgeBg = ncColors.warningContainer;
-        badgeTextCol = ncColors.onWarningContainer;
+        badgeBg = const Color(0xFFFFE500); // Safety yellow
+        badgeTextCol = Colors.black;
         break;
       case QuizUrgency.thisWeek:
       case QuizUrgency.later:
-        badgeBg = theme.colorScheme.secondaryContainer;
-        badgeTextCol = theme.colorScheme.onSecondaryContainer;
+        badgeBg = const Color(0xFF2979FF); // Bright blue
+        badgeTextCol = Colors.white;
         break;
     }
 
@@ -182,16 +188,21 @@ class QuizzesPreviewRow extends StatelessWidget {
 
     return InkWell(
       onTap: onQuizTap != null ? () => onQuizTap!(quiz) : null,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(6),
       child: Container(
         width: 230,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-          ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Colors.black, width: 2.5),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black,
+              offset: Offset(3.0, 3.0),
+              blurRadius: 0,
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,13 +211,15 @@ class QuizzesPreviewRow extends StatelessWidget {
             // Top row: Subject + Urgency Pill
             Row(
               children: [
-                // Subject dot
+                // Subject square indicator
                 Container(
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
                     color: subjectColor,
-                    shape: BoxShape.circle,
+                    shape: BoxShape.rectangle,
+                    borderRadius: BorderRadius.circular(1),
+                    border: Border.all(color: Colors.black, width: 1.0),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -214,25 +227,26 @@ class QuizzesPreviewRow extends StatelessWidget {
                   child: Text(
                     quiz.subject,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                // Urgency Pill
+                // Urgency Pill with brutalist border
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: badgeBg,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.black, width: 1.5),
                   ),
                   child: Text(
                     badgeText,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w900,
                       color: badgeTextCol,
                     ),
                   ),
@@ -244,8 +258,8 @@ class QuizzesPreviewRow extends StatelessWidget {
             Text(
               quiz.title,
               style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w900,
+                color: Colors.black,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -254,17 +268,17 @@ class QuizzesPreviewRow extends StatelessWidget {
             // Bottom line: formatted due date
             Row(
               children: [
-                Icon(
-                  Icons.event_outlined,
+                const Icon(
+                  Icons.event,
                   size: 14,
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: Colors.black,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   formattedDue,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],

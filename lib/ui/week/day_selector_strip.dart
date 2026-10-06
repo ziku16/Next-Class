@@ -127,77 +127,76 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
     final dayNum = date.day.toString();
 
     final Color bgColor;
-    final Color textColor;
-    final Color numColor;
-    final Border? border;
+    final Color textColor = Colors.black;
+    final Color numColor = Colors.black;
 
     if (isSelected) {
-      bgColor = theme.colorScheme.primaryContainer;
-      textColor = theme.colorScheme.onPrimaryContainer;
-      numColor = theme.colorScheme.onPrimaryContainer;
-      border = Border.all(
-        color: theme.colorScheme.primary,
-        width: 1.5,
-      );
+      bgColor = const Color(0xFFFFB74D); // Vibrant orange active
     } else if (isToday) {
-      bgColor = theme.colorScheme.surfaceContainerHigh;
-      textColor = theme.colorScheme.primary;
-      numColor = theme.colorScheme.primary;
-      border = Border.all(
-        color: theme.colorScheme.primary.withValues(alpha: 0.6),
-        width: 1.0,
-      );
+      bgColor = const Color(0xFFFFE500); // Safety yellow
     } else {
-      bgColor = theme.colorScheme.surfaceContainerLow;
-      textColor = theme.colorScheme.onSurfaceVariant;
-      numColor = theme.colorScheme.onSurface;
-      border = Border.all(
-        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        width: 1.0,
-      );
+      bgColor = Colors.white;
     }
 
-    return InkWell(
+    return Container(
       key: Key('day_chip_$index'),
-      onTap: () => widget.onDaySelected(index),
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: chipWidth,
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(16),
-          border: border,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Day Abbreviation
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                dayName,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: textColor,
-                  fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
+      child: GestureDetector(
+        onTap: () => widget.onDaySelected(index),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: chipWidth,
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: Colors.black, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black,
+                offset: isSelected ? const Offset(1.5, 1.5) : const Offset(2.5, 2.5),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Day Abbreviation
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  dayName.toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                    color: Colors.black,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 2),
+              const SizedBox(height: 2),
 
-            // Day Number
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                dayNum,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: numColor,
-                  fontWeight: FontWeight.w800,
+              // Day Number
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  dayNum,
+                  style: const TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                  ),
                 ),
               ),
-            ),
+            ],
+          ),
+        ),
+      ),
+    );
 
             // Small indicator dot if today and not selected
             if (isToday && !isSelected) ...[

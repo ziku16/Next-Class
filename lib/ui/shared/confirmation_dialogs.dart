@@ -17,31 +17,47 @@ class ConfirmationDialogs {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFFAF6EE),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(6),
+          side: const BorderSide(color: Colors.black, width: 3.5),
         ),
         title: Text(
           'Sign out?',
           style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
+            color: Colors.black,
           ),
         ),
         content: Text(
           'Reminders stop until you sign in again. Your timetable stays saved to your account.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
             height: 1.4,
           ),
         ),
         actions: [
-          TextButton(
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: Colors.black, width: 2.5),
+              ),
+            ),
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Stay signed in'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
+              backgroundColor: const Color(0xFFFF1744),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: Colors.black, width: 2.5),
+              ),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Sign out'),
@@ -64,31 +80,47 @@ class ConfirmationDialogs {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFFAF6EE),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(6),
+          side: const BorderSide(color: Colors.black, width: 3.5),
         ),
         title: Text(
           'Delete $subject?',
           style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
+            color: Colors.black,
           ),
         ),
         content: Text(
           'This removes it from $dayOfWeek and cancels its reminders. Any quiz linked to this class will go too.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
             height: 1.4,
           ),
         ),
         actions: [
-          TextButton(
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: Colors.black, width: 2.5),
+              ),
+            ),
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Keep it'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
+              backgroundColor: const Color(0xFFFF1744),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: Colors.black, width: 2.5),
+              ),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Delete'),
@@ -111,31 +143,47 @@ class ConfirmationDialogs {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFFAF6EE),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(6),
+          side: const BorderSide(color: Colors.black, width: 3.5),
         ),
         title: Text(
           'Delete this quiz?',
           style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
+            color: Colors.black,
           ),
         ),
         content: Text(
           '$subject · $formattedDate. Its reminder will be cancelled.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
             height: 1.4,
           ),
         ),
         actions: [
-          TextButton(
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: Colors.black, width: 2.5),
+              ),
+            ),
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Keep it'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
+              backgroundColor: const Color(0xFFFF1744),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: Colors.black, width: 2.5),
+              ),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Delete'),

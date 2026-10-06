@@ -203,20 +203,54 @@ class _WeekScreenState extends State<WeekScreen> {
     final theme = Theme.of(context);
     final hasTimetable = _allClasses.isNotEmpty;
 
+    final selectedDate = _weekDays[_selectedDayIndex];
+    final dayNumStr = DateFormat('dd').format(selectedDate);
+    final dayNameStr = DateFormat('EEE').format(selectedDate).toUpperCase();
+    final monthStr = DateFormat('MMMM').format(selectedDate).toUpperCase();
+    final yearStr = selectedDate.year.toString();
+
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6EE),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFFAF6EE),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
         title: Text(
           'Week',
           style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.w900,
+            color: Colors.black,
+            letterSpacing: 0.5,
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
-            onPressed: widget.onOpenSettings,
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: widget.onOpenSettings,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.black, width: 2.0),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(2, 2),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.settings,
+                  color: Colors.black,
+                  size: 20,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -246,13 +280,92 @@ class _WeekScreenState extends State<WeekScreen> {
             // Slim offline bar below status bar
             OfflineBanner(isOffline: widget.isOffline),
 
+            // Reference Image Massive Date Header: [ 06 MON ] OCTOBER 2026
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.black, width: 2.5),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black,
+                          offset: Offset(3, 3),
+                          blurRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          dayNumStr,
+                          style: const TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            height: 1.0,
+                          ),
+                        ),
+                        Text(
+                          dayNameStr,
+                          style: const TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                            color: Colors.white,
+                            height: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        monthStr,
+                        style: const TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0,
+                          color: Colors.black,
+                          height: 1.0,
+                        ),
+                      ),
+                      Text(
+                        yearStr,
+                        style: const TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0,
+                          color: Colors.black,
+                          height: 1.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
             // Horizontal Day Selector Strip
             DaySelectorStrip(
               referenceDate: _referenceDate,
               selectedDayIndex: _selectedDayIndex,
               onDaySelected: _scrollToDay,
             ),
-            const Divider(height: 1),
+            const Divider(height: 2, thickness: 2, color: Colors.black),
 
             // Grouped Day Stream
             Expanded(
@@ -324,8 +437,8 @@ class _WeekScreenState extends State<WeekScreen> {
                 child: Text(
                   headerText,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
                   ),
                 ),
               ),
@@ -333,16 +446,26 @@ class _WeekScreenState extends State<WeekScreen> {
                 const SizedBox(width: 8),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(8),
+                    color: const Color(0xFFFFE500),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.black, width: 2.0),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black,
+                        offset: Offset(2, 2),
+                        blurRadius: 0,
+                      ),
+                    ],
                   ),
-                  child: Text(
+                  child: const Text(
                     'Today',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w700,
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
                     ),
                   ),
                 ),
@@ -359,7 +482,7 @@ class _WeekScreenState extends State<WeekScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: classes.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, cIndex) {
                 final classItem = classes[cIndex];
                 final currentMinutes = today.hour * 60 + today.minute;
@@ -390,26 +513,34 @@ class _WeekScreenState extends State<WeekScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+          color: Colors.black,
+          width: 2.5,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(3, 3),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.weekend_outlined,
+          const Icon(
+            Icons.weekend,
             size: 20,
-            color: theme.colorScheme.onSurfaceVariant,
+            color: Colors.black,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'No classes scheduled for $dayName',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),

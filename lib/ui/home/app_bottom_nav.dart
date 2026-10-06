@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Persistent Material 3 NavigationBar for NextClass with 3 primary tabs:
-/// - Today
-/// - Week
-/// - Quizzes
+/// Revo-Brutalist Bottom Navigation Bar for NextClass:
+/// - Solid off-white bar with 3px black top border
+/// - Chunky rectangular tab segments with 2.5px solid black borders and hard offset drop shadows
+/// - High-contrast vibrant orange active tab highlighting
+/// - Bold black icons and ultra-bold condensed typography
 class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onDestinationSelected;
@@ -16,53 +17,146 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFFAF6EE),
+        border: Border(
+          top: BorderSide(color: Colors.black, width: 3.0),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            _buildTabItem(
+              index: 0,
+              icon: currentIndex == 0 ? Icons.home_rounded : Icons.home_outlined,
+              label: 'Today',
+            ),
+            const SizedBox(width: 8),
+            _buildTabItem(
+              index: 1,
+              icon: currentIndex == 1
+                  ? Icons.calendar_month_rounded
+                  : Icons.calendar_month_outlined,
+              label: 'Week',
+            ),
+            const SizedBox(width: 8),
+            _buildTabItem(
+              index: 2,
+              icon: currentIndex == 2
+                  ? Icons.assignment_turned_in_rounded
+                  : Icons.assignment_outlined,
+              label: 'Quizzes',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: onDestinationSelected,
-      backgroundColor: theme.colorScheme.surface,
-      indicatorColor: theme.colorScheme.secondaryContainer,
-      elevation: 3,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.today_outlined),
-          selectedIcon: Icon(Icons.today_rounded),
-          label: 'Today',
+  Widget _buildTabItem({
+    required int index,
+    required IconData icon,
+    required String label,
+  }) {
+    final isSelected = currentIndex == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onDestinationSelected(index),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          height: 52,
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFFFB74D) : Colors.white,
+            borderRadius: BorderRadius.circular(6.0),
+            border: Border.all(color: Colors.black, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black,
+                offset: isSelected ? const Offset(1.5, 1.5) : const Offset(3.0, 3.0),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: Colors.black,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                  color: Colors.black,
+                  height: 1.0,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
-        NavigationDestination(
-          icon: Icon(Icons.calendar_view_week_outlined),
-          selectedIcon: Icon(Icons.calendar_view_week_rounded),
-          label: 'Week',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.quiz_outlined),
-          selectedIcon: Icon(Icons.quiz_rounded),
-          label: 'Quizzes',
-        ),
-      ],
+      ),
     );
   }
 
   /// Helper factory to build the contextual NextClass FloatingActionButton.
-  /// Shows "Upload timetable" when no timetable exists, or "+ Add quiz" when active.
+  /// Chunky brutalist button with 3px black border, hard offset drop shadow,
+  /// and vivid orange / safety yellow background.
   static Widget buildFab({
     required BuildContext context,
     required bool hasTimetable,
     required VoidCallback onPressed,
   }) {
-    if (!hasTimetable) {
-      return FloatingActionButton.extended(
-        onPressed: onPressed,
-        icon: const Icon(Icons.upload_file_rounded),
-        label: const Text('Upload timetable'),
-      );
-    }
+    final label = hasTimetable ? 'Add quiz' : 'Upload timetable';
+    final icon = hasTimetable ? Icons.add_rounded : Icons.upload_file_rounded;
+    final bgColor = hasTimetable ? const Color(0xFFFF5500) : const Color(0xFFFFE500);
+    final fgColor = hasTimetable ? Colors.white : Colors.black;
 
-    return FloatingActionButton.extended(
-      onPressed: onPressed,
-      icon: const Icon(Icons.add_rounded),
-      label: const Text('Add quiz'),
+    return Container(
+      decoration: const BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(3.5, 3.5),
+            blurRadius: 0,
+          ),
+        ],
+      ),
+      child: FloatingActionButton.extended(
+        onPressed: onPressed,
+        backgroundColor: bgColor,
+        foregroundColor: fgColor,
+        elevation: 0,
+        focusElevation: 0,
+        hoverElevation: 0,
+        highlightElevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6),
+          side: const BorderSide(color: Colors.black, width: 3.0),
+        ),
+        icon: Icon(icon, color: fgColor, size: 22),
+        label: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.5,
+            color: fgColor,
+          ),
+        ),
+      ),
     );
   }
 }

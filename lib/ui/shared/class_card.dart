@@ -89,56 +89,79 @@ class ClassCard extends StatelessWidget {
     NextClassColors ncColors,
     Color subjectColor,
   ) {
-    return Material(
-      color: theme.colorScheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: IntrinsicHeight(
-            child: Row(
-              children: [
-                // 6 dp Subject color stripe
-                Container(
-                  width: 6,
-                  color: subjectColor,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          classItem.subject,
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${classItem.startTime} – ${classItem.endTime}${classItem.room != null ? ' · ${classItem.room}' : ''}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.black, width: 2.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(3.0, 3.0),
+            blurRadius: 0,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(6),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: onTap,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: IntrinsicHeight(
+              child: Row(
+                children: [
+                  // 8 dp Subject color stripe with black divider
+                  Container(
+                    width: 8,
+                    decoration: BoxDecoration(
+                      color: subjectColor,
+                      border: const Border(
+                        right: BorderSide(color: Colors.black, width: 2.0),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            classItem.subject,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            '${classItem.startTime} – ${classItem.endTime}${classItem.room != null ? ' · ${classItem.room}' : ''}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                if (state == ClassCardState.past) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: Icon(
-                      Icons.check_circle_outline,
-                      size: 20,
-                      color: ncColors.success,
+                  if (state == ClassCardState.past) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(right: 16),
+                      child: Icon(
+                        Icons.check_circle,
+                        size: 20,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
+                  ],
+                  const SizedBox(width: 12),
                 ],
-                const SizedBox(width: 16),
-              ],
+              ),
             ),
           ),
         ),
@@ -153,43 +176,55 @@ class ClassCard extends StatelessWidget {
     NextClassColors ncColors,
     Color subjectColor,
   ) {
-    Border border;
+    final Color cardBg;
     switch (state) {
       case ClassCardState.current:
-        border = Border.all(color: ncColors.classCurrentBorder, width: 2.0);
+        cardBg = const Color(0xFFFFF9C4); // Pale safety yellow tint
         break;
       case ClassCardState.next:
-        border = Border.all(color: theme.colorScheme.outline, width: 1.0);
+        cardBg = const Color(0xFFFFE0B2); // Pale vivid orange tint
         break;
       case ClassCardState.past:
-        border = Border.all(color: theme.colorScheme.outlineVariant, width: 1.0);
+        cardBg = const Color(0xFFECEFF1); // Muted ticket grey
         break;
       default:
-        border = Border.all(color: Colors.transparent, width: 0.0);
+        cardBg = Colors.white;
     }
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: border,
+        color: cardBg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.black, width: 3.0),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(3.5, 3.5),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(6),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(6),
           onTap: onTap,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(3),
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 6 dp Subject color stripe
+                  // Subject color block with black border
                   Container(
-                    width: 6,
-                    color: subjectColor,
+                    width: 10,
+                    decoration: BoxDecoration(
+                      color: subjectColor,
+                      border: const Border(
+                        right: BorderSide(color: Colors.black, width: 2.5),
+                      ),
+                    ),
                   ),
                   Expanded(
                     child: Padding(
@@ -197,7 +232,7 @@ class ClassCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Header: Subject and optional Status Badge (drops below title under large type)
+                          // Header: Subject and optional Status Badge
                           Builder(
                             builder: (context) {
                               final textScale = MediaQuery.textScalerOf(context).scale(1.0);
@@ -209,7 +244,11 @@ class ClassCard extends StatelessWidget {
                               if (!hasStatusBadge) {
                                 return Text(
                                   classItem.subject,
-                                  style: theme.textTheme.titleMedium,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.black,
+                                    fontSize: 17,
+                                  ),
                                 );
                               }
 
@@ -219,7 +258,11 @@ class ClassCard extends StatelessWidget {
                                   children: [
                                     Text(
                                       classItem.subject,
-                                      style: theme.textTheme.titleMedium,
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black,
+                                        fontSize: 17,
+                                      ),
                                     ),
                                     const SizedBox(height: 6),
                                     _buildStatusBadge(context, theme, ncColors),
@@ -233,7 +276,11 @@ class ClassCard extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       classItem.subject,
-                                      style: theme.textTheme.titleMedium,
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black,
+                                        fontSize: 17,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -247,8 +294,9 @@ class ClassCard extends StatelessWidget {
                           Text(
                             '${classItem.startTime} – ${classItem.endTime}',
                             style: theme.textTheme.labelLarge?.copyWith(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w900,
+                              fontFeatures: const [FontFeature.tabularFigures()],
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -350,8 +398,16 @@ class ClassCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
+            color: const Color(0xFFFFE500), // Safety yellow
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.black, width: 2.0),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black,
+                offset: Offset(2, 2),
+                blurRadius: 0,
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -359,8 +415,8 @@ class ClassCard extends StatelessWidget {
               Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFF1744), // Live red indicator
                   shape: BoxShape.circle,
                 ),
               ),
@@ -368,8 +424,8 @@ class ClassCard extends StatelessWidget {
               Text(
                 'Now',
                 style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
@@ -393,23 +449,31 @@ class ClassCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: theme.colorScheme.secondaryContainer,
-            borderRadius: BorderRadius.circular(12),
+            color: const Color(0xFFFFD180), // Orange tint
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.black, width: 2.0),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black,
+                offset: Offset(2, 2),
+                blurRadius: 0,
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.schedule,
                 size: 14,
-                color: theme.colorScheme.onSecondaryContainer,
+                color: Colors.black,
               ),
               const SizedBox(width: 4),
               Text(
                 timeText,
                 style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSecondaryContainer,
-                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
@@ -420,23 +484,31 @@ class ClassCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(12),
+            color: const Color(0xFFDCE2E6), // Ticket grey
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.black, width: 2.0),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black,
+                offset: Offset(2, 2),
+                blurRadius: 0,
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.check_circle_outline,
                 size: 14,
-                color: ncColors.success,
+                color: Colors.black,
               ),
               const SizedBox(width: 4),
               Text(
                 'Done',
                 style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
@@ -448,23 +520,31 @@ class ClassCard extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: ncColors.warningContainer,
-              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xFFFFE500),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.black, width: 2.0),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black,
+                  offset: Offset(2, 2),
+                  blurRadius: 0,
+                ),
+              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.help_outline,
                   size: 14,
-                  color: ncColors.onWarningContainer,
+                  color: Colors.black,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   'Check',
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: ncColors.onWarningContainer,
-                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
