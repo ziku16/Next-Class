@@ -72,12 +72,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildSectionCard(
-            title: '4. AI TIMETABLE SCANNING',
+            title: '4. 100% ON-DEVICE TIMETABLE SCANNING',
             content:
-                'NextClass offers an optional feature allowing you to scan or upload an image of your printed or digital timetable. If you choose to use this feature:\n\n'
-                '• The selected schedule image is transmitted securely via HTTPS directly to Google Gemini API solely to parse class details into structured schedule entries.\n'
-                '• NextClass does not retain, view, share, or sell your schedule photos.\n'
-                '• Image processing is strictly on-demand when initiated by you.',
+                'NextClass offers a timetable scanning feature allowing you to scan or upload a photo of your printed or digital schedule:\n\n'
+                '• All image preprocessing, OCR text recognition, and schedule parsing run 100% locally and offline on your device.\n'
+                '• Your timetable photos and schedule data are NEVER uploaded to any cloud server, third-party AI model, or external service.\n'
+                '• NextClass does not transmit, retain, view, share, or sell your schedule photos. All data remains exclusively on your phone.',
           ),
           const SizedBox(height: 14),
 

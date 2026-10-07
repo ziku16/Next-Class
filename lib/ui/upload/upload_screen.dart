@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/class_item.dart';
-import '../../domain/services/ai_extraction_service.dart';
 import '../../domain/services/alarm_scheduler.dart';
 import '../../domain/services/connectivity_service.dart';
+import '../../domain/services/timetable_scanner_service.dart';
 import '../../state/upload_provider.dart';
 import '../main_navigation_screen.dart';
 import '../review/review_screen.dart';
@@ -221,11 +221,9 @@ class _UploadScreenState extends State<UploadScreen> {
     );
   }
 
-  void _showExtractionErrorDialog(AiExtractionErrorCode? code, String message) {
+  void _showExtractionErrorDialog(TimetableScanErrorCode? code, String message) {
     String title = "That didn't work";
-    if (code == AiExtractionErrorCode.noInternet) {
-      title = 'No internet';
-    } else if (code == AiExtractionErrorCode.noClassesFound) {
+    if (code == TimetableScanErrorCode.noClassesFound) {
       title = 'No classes found';
     }
 

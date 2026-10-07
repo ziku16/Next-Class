@@ -105,7 +105,7 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
                       border: Border.all(color: Colors.black, width: 2),
                     ),
                     child: const Text(
-                      'AI OCR SCANNER',
+                      'LOCAL OCR SCANNER',
                       style: TextStyle(
                         fontFamily: 'SpaceGrotesk',
                         fontWeight: FontWeight.w900,
@@ -152,7 +152,7 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
 
                   // Subtitle
                   const Text(
-                    'Usually 5 to 15 seconds',
+                    '100% on-device • No internet needed',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 13,

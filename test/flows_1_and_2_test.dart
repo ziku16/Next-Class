@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:nextclass/core/theme/app_theme.dart';
 import 'package:nextclass/data/database/app_database.dart';
 import 'package:nextclass/data/repositories/settings_repository.dart';
-import 'package:nextclass/domain/services/ai_extraction_service.dart';
+import 'package:nextclass/domain/services/timetable_scanner_service.dart';
 import 'package:nextclass/state/upload_provider.dart';
 import 'package:nextclass/ui/onboarding/notification_explainer_screen.dart';
 import 'package:nextclass/ui/onboarding/splash_screen.dart';
@@ -180,7 +180,7 @@ void main() {
       // Test 1: Simulated failure must NOT deduct quota
       final failResult = await provider.extractClasses(simulateError: true);
       expect(failResult, isNull);
-      expect(provider.errorCode, AiExtractionErrorCode.parsingFailed);
+      expect(provider.errorCode, TimetableScanErrorCode.parsingFailed);
       expect(provider.quota.dailyScansLeft, 2); // Quota untouched!
 
       // Test 2: Successful extraction DOES deduct quota

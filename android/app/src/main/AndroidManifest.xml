@@ -46,6 +46,11 @@
             </intent-filter>
         </receiver>
 
+        <!-- Auto-download ML Kit OCR model on app install -->
+        <meta-data
+            android:name="com.google.ml.vision.DEPENDENCIES"
+            android:value="ocr" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

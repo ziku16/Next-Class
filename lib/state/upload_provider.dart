@@ -3,25 +3,25 @@ import 'package:image_picker/image_picker.dart';
 import '../data/models/class_item.dart';
 import '../data/models/scan_quota.dart';
 import '../data/repositories/settings_repository.dart';
-import '../domain/services/ai_extraction_service.dart';
+import '../domain/services/timetable_scanner_service.dart';
 
-/// State management for timetable upload and AI extraction pipeline.
+/// State management for timetable upload and local on-device parsing pipeline.
 class UploadProvider extends ChangeNotifier {
   final SettingsRepository _settingsRepository;
-  final AiExtractionService _aiExtractionService;
+  final TimetableScannerService _scannerService;
 
   XFile? _selectedImage;
   ScanQuota _quota = ScanQuota.initial();
   bool _isLoading = false;
   String? _errorMessage;
-  AiExtractionErrorCode? _errorCode;
+  TimetableScanErrorCode? _errorCode;
   List<ClassItem>? _extractedClasses;
 
   UploadProvider({
     SettingsRepository? settingsRepository,
-    AiExtractionService? aiExtractionService,
+    TimetableScannerService? scannerService,
   })  : _settingsRepository = settingsRepository ?? SettingsRepository(),
-        _aiExtractionService = aiExtractionService ?? const AiExtractionService() {
+        _scannerService = scannerService ?? const TimetableScannerService() {
     refreshQuota();
   }
 
@@ -30,7 +30,7 @@ class UploadProvider extends ChangeNotifier {
   ScanQuota get quota => _quota;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  AiExtractionErrorCode? get errorCode => _errorCode;
+  TimetableScanErrorCode? get errorCode => _errorCode;
   List<ClassItem>? get extractedClasses => _extractedClasses;
 
   bool get canExtract => _selectedImage != null && _quota.canScan() && !_isLoading;
@@ -57,7 +57,7 @@ class UploadProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Executes AI extraction. Quota is consumed ONLY upon success!
+  /// Executes on-device timetable scanning. Quota is consumed ONLY upon success!
   Future<List<ClassItem>?> extractClasses({
     bool isOnline = true,
     bool simulateError = false,
@@ -85,9 +85,8 @@ class UploadProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final classes = await _aiExtractionService.extractClassesFromImage(
+      final classes = await _scannerService.scanTimetable(
         _selectedImage!.path,
-        isOnline: isOnline,
         simulateError: simulateError,
         simulateEmpty: simulateEmpty,
       );
@@ -98,7 +97,7 @@ class UploadProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return classes;
-    } on AiExtractionException catch (e) {
+    } on TimetableScanException catch (e) {
       _isLoading = false;
       _errorCode = e.code;
       _errorMessage = e.message;
@@ -106,7 +105,7 @@ class UploadProvider extends ChangeNotifier {
       return null;
     } catch (e) {
       _isLoading = false;
-      _errorCode = AiExtractionErrorCode.parsingFailed;
+      _errorCode = TimetableScanErrorCode.parsingFailed;
       _errorMessage = e.toString();
       notifyListeners();
       return null;
