@@ -105,7 +105,7 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
                       border: Border.all(color: Colors.black, width: 2),
                     ),
                     child: const Text(
-                      'LOCAL OCR SCANNER',
+                      'READING TIMETABLE',
                       style: TextStyle(
                         fontFamily: 'SpaceGrotesk',
                         fontWeight: FontWeight.w900,

@@ -149,24 +149,47 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
     final grouped = _provider.groupedQuizzes;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6EE),
       appBar: AppBar(
-        title: const Text(
-          'Quizzes',
-          style: TextStyle(
-            fontFamily: 'SpaceGrotesk',
-            fontWeight: FontWeight.w900,
-            fontSize: 22,
-            letterSpacing: -0.5,
-            color: Colors.black,
+        backgroundColor: const Color(0xFFFAF6EE),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleSpacing: 16,
+        shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
+        title: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFE500),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.black, width: 2.5),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black,
+                offset: Offset(2.5, 2.5),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: const Text(
+            'Quizzes',
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              letterSpacing: 0.5,
+              color: Colors.black,
+            ),
           ),
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
               onTap: widget.onOpenSettings,
               child: Container(
-                padding: const EdgeInsets.all(8),
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(6),
@@ -179,7 +202,7 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(Icons.settings_outlined, size: 20, color: Colors.black),
+                child: const Icon(Icons.settings, size: 20, color: Colors.black),
               ),
             ),
           ),
@@ -255,6 +278,86 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                           child: ListView(
                             padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
                             children: [
+                              // Top REVO Action: Create a Quiz
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 18),
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black,
+                                        offset: Offset(3.5, 3.5),
+                                        blurRadius: 0,
+                                      ),
+                                    ],
+                                  ),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    height: 52,
+                                    child: FilledButton.icon(
+                                      onPressed: () => _openAddQuizSheet(),
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: const Color(0xFFFF5500),
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(6),
+                                          side: const BorderSide(color: Colors.black, width: 2.5),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.add_rounded, size: 22, color: Colors.white),
+                                      label: const Text(
+                                        'Create a Quiz',
+                                        style: TextStyle(
+                                          fontFamily: 'SpaceGrotesk',
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 16,
+                                          letterSpacing: 0.5,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // Section Header: Your quizzes
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 14),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Your quizzes',
+                                      style: TextStyle(
+                                        fontFamily: 'SpaceGrotesk',
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 20,
+                                        color: Colors.black,
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFE500),
+                                        borderRadius: BorderRadius.circular(3),
+                                        border: Border.all(color: Colors.black, width: 1.5),
+                                      ),
+                                      child: Text(
+                                        '${_provider.activeQuizzes.length} UPCOMING',
+                                        style: const TextStyle(
+                                          fontFamily: 'SpaceGrotesk',
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 0.8,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                               // Group: TODAY
                               if (grouped[QuizUrgency.today]!.isNotEmpty)
                                 _buildGroupSection(

@@ -53,7 +53,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           _buildSectionCard(
             title: '2. DATA STORED LOCALLY',
             content:
-                'NextClass stores information you enter or import directly on your mobile device using an encrypted/sandboxed SQLite database:\n\n'
+                'NextClass stores information you enter or import directly on your phone in private, secure app storage:\n\n'
                 '• Course & Subject Names: The names of your enrolled courses.\n'
                 '• Schedule Times: Class days of the week, start times, and end times.\n'
                 '• Classrooms & Halls: Physical room, hall, or building designations.\n'
@@ -75,8 +75,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
             title: '4. 100% ON-DEVICE TIMETABLE SCANNING',
             content:
                 'NextClass offers a timetable scanning feature allowing you to scan or upload a photo of your printed or digital schedule:\n\n'
-                '• All image preprocessing, OCR text recognition, and schedule parsing run 100% locally and offline on your device.\n'
-                '• Your timetable photos and schedule data are NEVER uploaded to any cloud server, third-party AI model, or external service.\n'
+                '• All timetable image scanning and schedule reading runs 100% locally and offline on your device.\n'
+                '• Your timetable photos and schedule data are NEVER uploaded to any cloud server, external server, or third-party service.\n'
                 '• NextClass does not transmit, retain, view, share, or sell your schedule photos. All data remains exclusively on your phone.',
           ),
           const SizedBox(height: 14),
@@ -107,7 +107,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 'Because your data is stored locally on your device, you maintain full control:\n\n'
                 '• You can edit or delete individual classes, schedule items, or quizzes at any time in the app.\n'
                 '• You can reset all timetable data through the app settings or via Android Settings > Apps > NextClass > Storage > Clear Data.\n'
-                '• Uninstalling NextClass permanently erases all local database records and app preferences from your device.',
+                '• Uninstalling NextClass permanently erases all saved classes, quizzes, and app preferences from your device.',
           ),
           const SizedBox(height: 14),
 
@@ -121,7 +121,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           _buildSectionCard(
             title: '9. SECURITY',
             content:
-                'Your timetable data is protected by the Android operating system\'s application sandbox, which prevents other installed applications from reading NextClass\'s private local database.',
+                'Your timetable data is protected by the Android operating system\'s application sandbox, which prevents other installed applications from accessing NextClass\'s private app data.',
           ),
           const SizedBox(height: 14),
 

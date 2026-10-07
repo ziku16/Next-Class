@@ -106,7 +106,8 @@ class UploadProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _errorCode = TimetableScanErrorCode.parsingFailed;
-      _errorMessage = e.toString();
+      _errorMessage =
+          "We couldn't read your timetable this time. Please try again with a clearer photo.";
       notifyListeners();
       return null;
     }

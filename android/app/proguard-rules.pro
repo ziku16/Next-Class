@@ -34,8 +34,18 @@
 -keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken
 
 # Google ML Kit Text Recognition keep & dontwarn rules
--keep class com.google.mlkit.vision.text.** { *; }
+-keep class com.google.mlkit.vision.** { *; }
+-keep class com.google.mlkit.common.** { *; }
+-keep class com.google_mlkit_commons.** { *; }
+-keep class com.google_mlkit_text_recognition.** { *; }
 -dontwarn com.google.mlkit.vision.text.chinese.**
 -dontwarn com.google.mlkit.vision.text.devanagari.**
 -dontwarn com.google.mlkit.vision.text.japanese.**
 -dontwarn com.google.mlkit.vision.text.korean.**
+
+# NextClass app keep rules
+-keep class com.nextclass.app.nextclass.** { *; }
+
+# SQLite plugin keep rules
+-keep class com.tekartik.sqflite.** { *; }
+

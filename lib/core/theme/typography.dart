@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// NextClass Typography System based on Space Grotesk with tabular figures.
 /// Revo-Brutalist: Ultra-bold, condensed, architectural rhythm.
@@ -13,7 +12,8 @@ class NextClassTypography {
     required double letterSpacing,
     Color? color,
   }) {
-    return GoogleFonts.spaceGrotesk(
+    return TextStyle(
+      fontFamily: 'SpaceGrotesk',
       fontSize: fontSize,
       height: lineHeight / fontSize,
       fontWeight: fontWeight,

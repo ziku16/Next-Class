@@ -261,10 +261,49 @@ class _TodayScreenState extends State<TodayScreen> {
         backgroundColor: const Color(0xFFFAF6EE),
         elevation: 0,
         scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleSpacing: 16,
         shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
+        title: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFE500), // Safety yellow
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.black, width: 2.5),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black,
+                offset: Offset(2.5, 2.5),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'NextClass',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                  color: Colors.black,
+                  height: 1.0,
+                ),
+              ),
+              SizedBox(width: 4),
+              Icon(
+                Icons.north_east_rounded,
+                size: 16,
+                color: Colors.black,
+              ),
+            ],
+          ),
+        ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
               onTap: widget.onOpenSettings,
               child: Container(
@@ -518,7 +557,7 @@ class _TodayScreenState extends State<TodayScreen> {
           const SizedBox(height: 16),
           Text(
             widget.userName.trim().isEmpty
-                ? 'Welcome to NextClass. Nothing scheduled yet.'
+                ? 'Welcome. Nothing scheduled yet.'
                 : 'Welcome, ${widget.userName}. Nothing scheduled yet.',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w900,

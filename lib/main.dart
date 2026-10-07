@@ -8,13 +8,34 @@ import 'domain/services/alarm_scheduler.dart';
 import 'domain/services/notification_service.dart';
 import 'ui/onboarding/splash_screen.dart';
 
+/// Application entry point.
+///
+/// Ensures immediate UI rendering on cold boot while deferring background service
+/// initialization (notifications, native timezone sync, alarm synchronization)
+/// asynchronously to prevent startup stalls or crashes.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Initialize timezone database
-  tz.initializeTimeZones();
+  // Initialize the baseline timezone database for date/time computations.
+  try {
+    tz.initializeTimeZones();
+  } catch (_) {
+    // Falls back gracefully to default UTC/system representation if database is absent.
+  }
 
-  // 2. Set tz.local via native Android MethodChannel
+  // Render the application interface immediately to ensure the fastest time-to-first-frame.
+  runApp(const NextClassApp());
+
+  // Non-critical background services are initialized asynchronously without blocking the UI.
+  _initNonCriticalServices();
+}
+
+/// Asynchronously bootstraps platform services (Timezone detection, notifications, alarms).
+///
+/// Handled defensively with isolated try-catch blocks so a transient failure in one
+/// service does not impact core application availability or usability.
+Future<void> _initNonCriticalServices() async {
+  // 1. Synchronize device timezone via platform channel
   try {
     const channel = MethodChannel('com.nextclass.app/device_info');
     final String? timeZoneName =
@@ -22,9 +43,8 @@ void main() async {
     if (timeZoneName != null && timeZoneName.isNotEmpty) {
       try {
         tz.setLocalLocation(tz.getLocation(timeZoneName));
-        debugPrint('[main] Timezone initialized to: ${tz.local.name} ($timeZoneName)');
-      } catch (tzErr) {
-        debugPrint('[main] Location not found for $timeZoneName ($tzErr). Attempting offset match...');
+      } catch (_) {
+        // Fallback: match by current UTC offset if exact Olson ID isn't in tz database
         final offset = DateTime.now().timeZoneOffset;
         tz.Location? matched;
         for (final loc in tz.timeZoneDatabase.locations.values) {
@@ -35,33 +55,26 @@ void main() async {
         }
         if (matched != null) {
           tz.setLocalLocation(matched);
-          debugPrint('[main] Fallback matched timezone: ${tz.local.name} (offset ${offset.inHours}h)');
         }
       }
-    } else {
-      debugPrint(
-        '[main] WARNING: Native getTimeZone returned null or empty. Fallback tz: ${tz.local.name}',
-      );
     }
-  } catch (e, stack) {
-    debugPrint('[main] CRITICAL: Failed to get/set native timezone: $e\n$stack');
+  } catch (_) {
+    // Native method channel unavailable (e.g. during certain test environments).
   }
 
-  // 3. Initialize notifications plugin & create notification channels
+  // 2. Initialize notification channels and permissions
   try {
     await NotificationService().initialize();
-  } catch (e, stack) {
-    debugPrint('[main] CRITICAL: Failed to initialize NotificationService: $e\n$stack');
+  } catch (_) {
+    // Handled safely; notification service will retry upon user settings interaction.
   }
 
-  // 4. ONLY THEN reschedule alarms from database
+  // 3. Reschedule upcoming class and quiz alarms against current database
   try {
     await AlarmScheduler().rescheduleAll();
-  } catch (e, stack) {
-    debugPrint('[main] CRITICAL: Failed to reschedule alarms at startup: $e\n$stack');
+  } catch (_) {
+    // Background alarm rescheduling failure does not block user interaction.
   }
-
-  runApp(const NextClassApp());
 }
 
 /// Root Application Widget for NextClass.

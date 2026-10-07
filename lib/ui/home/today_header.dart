@@ -115,7 +115,7 @@ class TodayHeader extends StatelessWidget {
 
   String _getGreeting() {
     if (!hasTimetable) {
-      return userName.trim().isEmpty ? 'Welcome to NextClass' : 'Welcome, $userName';
+      return userName.trim().isEmpty ? 'Welcome' : 'Welcome, $userName';
     }
     final hour = currentTime.hour;
     final prefix = hour < 12
@@ -147,51 +147,7 @@ class TodayHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. Playful slanted sticker tag: NEXTCLASS ↗
-        Transform.rotate(
-          angle: -0.04,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFE500), // Safety yellow
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.black, width: 3.0),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black,
-                  offset: Offset(3.5, 3.5),
-                  blurRadius: 0,
-                ),
-              ],
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'NEXTCLASS',
-                  style: TextStyle(
-                    fontFamily: 'SpaceGrotesk',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
-                    color: Colors.black,
-                    height: 1.0,
-                  ),
-                ),
-                SizedBox(width: 4),
-                Icon(
-                  Icons.north_east_rounded,
-                  size: 16,
-                  color: Colors.black,
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-
-        // 2. Ultra-bold greeting
+        // Ultra-bold greeting
         Text(
           _getGreeting(),
           style: theme.textTheme.headlineMedium?.copyWith(

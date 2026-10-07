@@ -118,9 +118,9 @@ class TimetableScannerService {
     } catch (e) {
       if (e is TimetableScanException) rethrow;
       debugPrint('[TimetableScannerService] Error during local scan: $e');
-      throw TimetableScanException(
+      throw const TimetableScanException(
         TimetableScanErrorCode.parsingFailed,
-        "Could not parse timetable: ${e.toString()}",
+        "We couldn't read your timetable this time. Please try again with a clearer photo.",
       );
     } finally {
       await preprocessed?.cleanup();
