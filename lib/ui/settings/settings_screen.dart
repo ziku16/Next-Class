@@ -129,35 +129,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: const Color(0xFFFAF6EE),
         elevation: 0,
         scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleSpacing: 16,
         shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
         title: Row(
           children: [
-            Transform.rotate(
-              angle: -0.04,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF5500), // Saturated orange
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.black, width: 3.0),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(3.0, 3.0),
-                      blurRadius: 0,
-                    ),
-                  ],
-                ),
-                child: const Text(
-                  'SETTINGS',
-                  style: TextStyle(
-                    fontFamily: 'SpaceGrotesk',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.0,
-                    color: Colors.white,
-                    height: 1.0,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF5500), // Saturated orange
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.black, width: 2.5),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black,
+                    offset: Offset(2.5, 2.5),
+                    blurRadius: 0,
                   ),
+                ],
+              ),
+              child: const Text(
+                'SETTINGS',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                  color: Colors.white,
+                  height: 1.0,
                 ),
               ),
             ),
@@ -582,9 +581,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: Colors.black,
                     ),
                   ),
-                  subtitle: Text(
-                    _provider.quotaDisplayText,
-                    style: const TextStyle(
+                  subtitle: const Text(
+                    'Scan or upload a new schedule',
+                    style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       color: Color(0xFF222222),
                       fontWeight: FontWeight.w700,

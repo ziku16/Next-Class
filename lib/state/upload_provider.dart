@@ -33,7 +33,7 @@ class UploadProvider extends ChangeNotifier {
   TimetableScanErrorCode? get errorCode => _errorCode;
   List<ClassItem>? get extractedClasses => _extractedClasses;
 
-  bool get canExtract => _selectedImage != null && _quota.canScan() && !_isLoading;
+  bool get canExtract => _selectedImage != null && !_isLoading;
 
   /// Refreshes quota from repository
   Future<void> refreshQuota() async {
@@ -57,7 +57,7 @@ class UploadProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Executes on-device timetable scanning. Quota is consumed ONLY upon success!
+  /// Executes on-device timetable scanning. Fully offline and unlimited.
   Future<List<ClassItem>?> extractClasses({
     bool isOnline = true,
     bool simulateError = false,
@@ -65,16 +65,6 @@ class UploadProvider extends ChangeNotifier {
   }) async {
     if (_selectedImage == null) {
       _errorMessage = 'Please select a photo first.';
-      notifyListeners();
-      return null;
-    }
-
-    // Check quota before extracting
-    await refreshQuota();
-    if (!_quota.canScan()) {
-      _errorMessage = _quota.isDailyLimitReached
-          ? "You've used today's 2 scans. Try again tomorrow, or edit your timetable by hand."
-          : "You've used this week's 3 scans. Need help? Contact support.";
       notifyListeners();
       return null;
     }

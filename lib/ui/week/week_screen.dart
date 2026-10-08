@@ -215,18 +215,37 @@ class _WeekScreenState extends State<WeekScreen> {
         backgroundColor: const Color(0xFFFAF6EE),
         elevation: 0,
         scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleSpacing: 16,
         shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
-        title: Text(
-          'Week',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: Colors.black,
-            letterSpacing: 0.5,
+        title: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFE500),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.black, width: 2.5),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black,
+                offset: Offset(2.5, 2.5),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: const Text(
+            'Week',
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              letterSpacing: 0.5,
+              color: Colors.black,
+            ),
           ),
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
               onTap: widget.onOpenSettings,
               child: Container(

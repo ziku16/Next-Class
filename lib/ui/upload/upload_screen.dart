@@ -112,12 +112,6 @@ class _UploadScreenState extends State<UploadScreen> {
     bool simulateError = false,
     bool simulateEmpty = false,
   }) async {
-    // Check quota before extracting
-    if (!_provider.quota.canScan()) {
-      _showLimitReachedDialog();
-      return;
-    }
-
     // Launch full-screen parsing loader
     final result = await Navigator.of(context).push<List<ClassItem>?>(
       MaterialPageRoute(
@@ -150,75 +144,6 @@ class _UploadScreenState extends State<UploadScreen> {
     } else if (_provider.errorMessage != null) {
       _showExtractionErrorDialog(_provider.errorCode, _provider.errorMessage!);
     }
-  }
-
-  void _showLimitReachedDialog() {
-    final isDaily = _provider.quota.isDailyLimitReached;
-    final message = isDaily
-        ? "You've used today's 2 scans. Try again tomorrow, or edit your timetable by hand."
-        : "You've used this week's 3 scans. Need help? Contact support.";
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFAF6EE),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: Colors.black, width: 3.5),
-        ),
-        title: const Text(
-          'Scan limit reached',
-          style: TextStyle(
-            fontFamily: 'SpaceGrotesk',
-            fontWeight: FontWeight.w900,
-            color: Colors.black,
-          ),
-        ),
-        content: Text(
-          message,
-          style: const TextStyle(
-            fontFamily: 'SpaceGrotesk',
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
-              'Close',
-              style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
-                fontWeight: FontWeight.w800,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              _handleManualEdit();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFF5500),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: Colors.black, width: 2),
-              ),
-            ),
-            child: const Text(
-              'Edit manually',
-              style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showExtractionErrorDialog(TimetableScanErrorCode? code, String message) {
@@ -313,8 +238,6 @@ class _UploadScreenState extends State<UploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final quota = _provider.quota;
-
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6EE),
       appBar: AppBar(
@@ -437,9 +360,9 @@ class _UploadScreenState extends State<UploadScreen> {
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Text(
-                              quota.quotaLabel,
-                              style: const TextStyle(
+                            child: const Text(
+                              '100% on-device & private · Unlimited scans',
+                              style: TextStyle(
                                 fontFamily: 'SpaceGrotesk',
                                 color: Colors.black,
                                 fontWeight: FontWeight.w900,
