@@ -4,7 +4,6 @@ import '../data/models/class_item.dart';
 import '../data/repositories/quiz_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/timetable_repository.dart';
-import '../domain/services/alarm_scheduler.dart';
 import '../domain/services/notification_service.dart';
 import '../state/quiz_provider.dart';
 import 'home/today_screen.dart';
@@ -67,7 +66,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
       await NotificationService().initialize();
       await NotificationService().requestPermissions();
-      await AlarmScheduler().rescheduleAll();
+      await NotificationService().rescheduleAll();
     } catch (_) {}
   }
 
@@ -92,7 +91,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     initialClasses: classes,
                     onSaved: () async {
                       try {
-                        await AlarmScheduler().rescheduleAll();
+                        await NotificationService().rescheduleAll();
                       } catch (_) {}
                       if (!mounted) return;
                       Navigator.of(context).pop();
@@ -119,7 +118,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   initialClasses: classes,
                   onSaved: () async {
                     try {
-                      await AlarmScheduler().rescheduleAll();
+                      await NotificationService().rescheduleAll();
                     } catch (_) {}
                     if (!mounted) return;
                     Navigator.of(context).popUntil((route) => route.isFirst);
@@ -136,7 +135,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   initialClasses: const [],
                   onSaved: () async {
                     try {
-                      await AlarmScheduler().rescheduleAll();
+                      await NotificationService().rescheduleAll();
                     } catch (_) {}
                     if (!mounted) return;
                     Navigator.of(context).popUntil((route) => route.isFirst);

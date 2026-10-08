@@ -9,6 +9,7 @@ class TimetableCell {
   final String endTime;
   final int columnIndex;
   final int rowIndex;
+  final int timeSlotIndex; // Index along the time axis (for merging multi-period classes)
   final List<OcrTextLine> lines;
   final Rect boundingBox;
 
@@ -18,6 +19,7 @@ class TimetableCell {
     required this.endTime,
     required this.columnIndex,
     required this.rowIndex,
+    required this.timeSlotIndex,
     required this.lines,
     required this.boundingBox,
   });
@@ -31,7 +33,7 @@ class TimetableCell {
   String toString() => 'Cell($dayOfWeek $startTime-$endTime, lines: ${lines.length})';
 }
 
-/// Assigns OCR text elements and lines into spatial timetable grid cells.
+/// Assigns OCR text elements and lines into spatial timetable grid cells using 2D coordinates.
 class GridCellAssigner {
   const GridCellAssigner();
 
@@ -54,62 +56,66 @@ class GridCellAssigner {
       }
     }
 
-    // Assign each line to the best cell
+    // Assign each line to the best cell based on its center coordinates
     for (final line in ocrResult.lines) {
       final cleanText = line.text.trim();
       if (cleanText.isEmpty) continue;
 
-      // Skip lines in header area or left time column
+      // 1. Skip lines in the header area across the top
       if (line.bottom <= grid.headerBottomY && grid.headerBottomY > 0) {
         continue;
       }
-      if (line.right <= grid.timeColumnRightX + 15 && grid.timeColumnRightX > 0) {
+
+      // If Days-as-Rows, also skip explicit Lecture header tokens
+      if (grid.isDaysAsRows) {
+        if (RegExp(r'^(?:Lecture|Lec)\s*[1-5]$', caseSensitive: false).hasMatch(cleanText)) {
+          continue;
+        }
+        if (RegExp(r'^\d{1,2}[:.]\d{2}\s*[-–]\s*\d{1,2}[:.]\d{2}$').hasMatch(cleanText) &&
+            line.top < (grid.rows.isNotEmpty ? grid.rows.first.top + 30 : 150)) {
+          continue;
+        }
+      }
+
+      // 2. Skip lines in the day column on the left
+      if (line.right <= grid.dayColumnRightX && grid.dayColumnRightX > 0) {
+        continue;
+      }
+      if (grid.isDaysAsRows && line.center.dx < grid.columns.first.left) {
         continue;
       }
 
-      // Check center point of line
+      // 3. Find target Column index using centerX coordinate
       final centerX = line.center.dx;
-      final centerY = line.center.dy;
-
-      // Find column
-      int? matchedCol;
+      int? matchedColIdx;
       for (int c = 0; c < cols.length; c++) {
         if (cols[c].containsX(centerX)) {
-          matchedCol = c;
+          matchedColIdx = c;
           break;
         }
       }
-      // Fallback column by overlap
-      if (matchedCol == null) {
-        for (int c = 0; c < cols.length; c++) {
-          if (line.left < cols[c].right && line.right > cols[c].left) {
-            matchedCol = c;
-            break;
-          }
-        }
+      if (matchedColIdx == null) {
+        final col = grid.findColumn(centerX);
+        if (col != null) matchedColIdx = cols.indexOf(col);
       }
+      if (matchedColIdx == null || matchedColIdx < 0) continue;
 
-      // Find row
-      int? matchedRow;
+      // 4. Find target Row index using centerY coordinate
+      final centerY = line.center.dy;
+      int? matchedRowIdx;
       for (int r = 0; r < rows.length; r++) {
         if (rows[r].containsY(centerY)) {
-          matchedRow = r;
+          matchedRowIdx = r;
           break;
         }
       }
-      // Fallback row by overlap
-      if (matchedRow == null) {
-        for (int r = 0; r < rows.length; r++) {
-          if (line.top < rows[r].bottom && line.bottom > rows[r].top) {
-            matchedRow = r;
-            break;
-          }
-        }
+      if (matchedRowIdx == null) {
+        final row = grid.findRow(centerY);
+        if (row != null) matchedRowIdx = rows.indexOf(row);
       }
+      if (matchedRowIdx == null || matchedRowIdx < 0) continue;
 
-      if (matchedCol != null && matchedRow != null) {
-        cellBuckets[matchedCol]![matchedRow]!.add(line);
-      }
+      cellBuckets[matchedColIdx]![matchedRowIdx]!.add(line);
     }
 
     // Build list of TimetableCell objects
@@ -117,7 +123,7 @@ class GridCellAssigner {
     for (int c = 0; c < cols.length; c++) {
       for (int r = 0; r < rows.length; r++) {
         final lines = cellBuckets[c]![r]!;
-        // Sort cell lines top-to-bottom
+        // Sort cell lines strictly top-to-bottom
         lines.sort((a, b) => a.top.compareTo(b.top));
 
         Rect bounds = Rect.fromLTRB(cols[c].left, rows[r].top, cols[c].right, rows[r].bottom);
@@ -129,12 +135,31 @@ class GridCellAssigner {
           bounds = Rect.fromLTRB(l, t, ri, bo);
         }
 
+        // Determine day and times based on grid orientation
+        final String cellDay;
+        final String cellStart;
+        final String cellEnd;
+        final int timeSlotIdx;
+
+        if (grid.isDaysAsRows) {
+          cellDay = rows[r].dayName ?? rows[r].label;
+          cellStart = cols[c].startTime;
+          cellEnd = cols[c].endTime;
+          timeSlotIdx = c; // Column is the time slot in university grid
+        } else {
+          cellDay = cols[c].dayName ?? cols[c].label;
+          cellStart = rows[r].startTime;
+          cellEnd = rows[r].endTime;
+          timeSlotIdx = r; // Row is the time slot in transposed grid
+        }
+
         cells.add(TimetableCell(
-          dayOfWeek: cols[c].dayName,
-          startTime: rows[r].startTime,
-          endTime: rows[r].endTime,
+          dayOfWeek: cellDay,
+          startTime: cellStart,
+          endTime: cellEnd,
           columnIndex: c,
           rowIndex: r,
+          timeSlotIndex: timeSlotIdx,
           lines: lines,
           boundingBox: bounds,
         ));

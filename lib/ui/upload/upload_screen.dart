@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/class_item.dart';
-import '../../domain/services/alarm_scheduler.dart';
 import '../../domain/services/connectivity_service.dart';
+import '../../domain/services/notification_service.dart';
 import '../../domain/services/timetable_scanner_service.dart';
 import '../../state/upload_provider.dart';
 import '../main_navigation_screen.dart';
@@ -76,7 +76,7 @@ class _UploadScreenState extends State<UploadScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('has_seen_onboarding', true);
-      await AlarmScheduler().rescheduleAll();
+      await NotificationService().rescheduleAll();
     } catch (_) {}
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(

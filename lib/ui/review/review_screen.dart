@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/class_item.dart';
-import '../../domain/services/alarm_scheduler.dart';
+import '../../domain/services/notification_service.dart';
 import '../../state/timetable_provider.dart';
 import '../main_navigation_screen.dart';
 import '../shared/class_card.dart';
@@ -68,7 +68,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         SharedPreferences.getInstance().then((prefs) {
           prefs.setBool('has_seen_onboarding', true);
         });
-        AlarmScheduler().rescheduleAll();
+        NotificationService().rescheduleAll();
       } catch (_) {}
 
       UndoSnackBar.showMessage(

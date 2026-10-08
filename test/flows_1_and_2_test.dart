@@ -154,15 +154,15 @@ void main() {
         ),
       ));
 
-      expect(find.text('Reading your timetable…'), findsOneWidget);
+      expect(find.text('Reading timetable...'), findsOneWidget);
 
       // Advance by 3 seconds
       await tester.pump(const Duration(seconds: 3));
-      expect(find.text('Finding your classes…'), findsOneWidget);
+      expect(find.text('Finding classes...'), findsOneWidget);
 
       // Advance by another 3 seconds
       await tester.pump(const Duration(seconds: 3));
-      expect(find.text('Almost there!'), findsOneWidget);
+      expect(find.text('Almost done...'), findsOneWidget);
 
       // Unmount the widget so its periodic timer is cancelled cleanly
       await tester.pumpWidget(const SizedBox.shrink());

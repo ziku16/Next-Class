@@ -3,8 +3,16 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+
+import '../../data/models/class_item.dart';
+import '../../data/models/quiz_item.dart';
+import '../../data/models/user_settings.dart';
+import '../../data/repositories/quiz_repository.dart';
+import '../../data/repositories/settings_repository.dart';
+import '../../data/repositories/timetable_repository.dart';
 
 /// Notification management service for NextClass (Flow 9 / Phase 10).
 /// Handles:
@@ -484,6 +492,307 @@ class NotificationService {
     } catch (e) {
       debugPrint('[NotificationService] Error cancelling all notifications: $e');
     }
+  }
+
+  /// Deterministic ID generator for class notification (0 - 99,999).
+  static int getClassNotificationId(String classId, [int? index]) {
+    int hash = 0x811c9dc5;
+    for (int i = 0; i < classId.length; i++) {
+      hash ^= classId.codeUnitAt(i);
+      hash = (hash * 0x01000193) & 0x7FFFFFFF;
+    }
+    return hash % 100000;
+  }
+
+  /// Deterministic ID generator for quiz notification (100,000 - 199,999).
+  static int getQuizNotificationId(String quizId, [int? index]) {
+    int hash = 0x811c9dc5;
+    for (int i = 0; i < quizId.length; i++) {
+      hash ^= quizId.codeUnitAt(i);
+      hash = (hash * 0x01000193) & 0x7FFFFFFF;
+    }
+    return 100000 + (hash % 100000);
+  }
+
+  /// Cancels reminder for a specific class
+  Future<void> cancelClassReminder(String classId) async {
+    final id = getClassNotificationId(classId);
+    await cancel(id);
+  }
+
+  /// Cancels reminder for a specific quiz
+  Future<void> cancelQuizReminder(String quizId) async {
+    final id = getQuizNotificationId(quizId);
+    await cancel(id);
+  }
+
+  /// Alias for cancelling a notification by ID
+  Future<void> cancelNotification(int id) async => cancel(id);
+
+  /// Alias for cancelling all scheduled notifications
+  Future<void> cancelAllNotifications() async => cancelAll();
+
+  static bool _isRescheduling = false;
+  static bool _rescheduleQueued = false;
+
+  /// Reschedules all class and quiz reminders according to current database state and settings.
+  Future<void> rescheduleAll({
+    DateTime? now,
+    List<ClassItem>? classes,
+    List<QuizItem>? quizzes,
+    UserSettings? settings,
+    TimetableRepository? timetableRepo,
+    QuizRepository? quizRepo,
+    SettingsRepository? settingsRepo,
+  }) async {
+    if (_isRescheduling) {
+      _rescheduleQueued = true;
+      debugPrint('[NotificationService] Reschedule already in progress. Queued next run.');
+      return;
+    }
+    _isRescheduling = true;
+
+    final currentTime = now ?? DateTime.now();
+    try {
+      tz.local;
+    } catch (_) {
+      tz.initializeTimeZones();
+    }
+    debugPrint('[NotificationService] Starting rescheduleAll at $currentTime. Active timezone: ${tz.local.name}');
+
+    try {
+      await initialize();
+
+      // Retrieve latest state if not provided
+      final userSettings = settings ?? await (settingsRepo ?? SettingsRepository()).getUserSettings();
+      final classList = classes ?? await (timetableRepo ?? TimetableRepository()).getAllClasses();
+      final quizList = quizzes ?? await (quizRepo ?? QuizRepository()).getUpcomingQuizzes(referenceDate: currentTime);
+
+      // Cancel all existing scheduled notifications first to prevent stale alarms
+      await cancelAll();
+
+      int scheduledCount = 0;
+      int failedCount = 0;
+
+      // 1. Schedule class reminders
+      final offsetMinutes = userSettings.classReminderMinutes;
+      if (offsetMinutes != null && offsetMinutes > 0) {
+        // Group classes by day to compute "Next class after this"
+        final Map<String, List<ClassItem>> dayGroups = {};
+        for (final c in classList) {
+          dayGroups.putIfAbsent(c.dayOfWeek, () => []).add(c);
+        }
+        for (final dayList in dayGroups.values) {
+          dayList.sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
+        }
+
+        for (final classItem in classList) {
+          try {
+            final sameDayClasses = dayGroups[classItem.dayOfWeek] ?? [];
+            final currentIndex = sameDayClasses.indexWhere((c) => c.id == classItem.id);
+            final ClassItem? nextClass = (currentIndex != -1 && currentIndex + 1 < sameDayClasses.length)
+                ? sameDayClasses[currentIndex + 1]
+                : null;
+
+            final notificationId = getClassNotificationId(classItem.id);
+            final scheduledTZ = calculateNextClassReminderTZ(
+              dayIndex: classItem.dayIndex,
+              startTime: classItem.startTime,
+              offsetMinutes: offsetMinutes,
+              now: currentTime,
+            );
+
+            await scheduleClassReminder(
+              id: notificationId,
+              subject: classItem.subject,
+              minutesBefore: offsetMinutes,
+              startTime: classItem.startTime,
+              endTime: classItem.endTime,
+              room: classItem.room,
+              teacher: classItem.teacher,
+              nextSubject: nextClass?.subject,
+              nextTime: nextClass?.startTime,
+              scheduledDate: scheduledTZ,
+              matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+            );
+            scheduledCount++;
+          } catch (e) {
+            failedCount++;
+            debugPrint('[NotificationService] Error scheduling class "${classItem.subject}": $e');
+          }
+        }
+      }
+
+      // 2. Schedule quiz reminders
+      if (userSettings.quizReminderEnabled) {
+        final parts = userSettings.quizReminderTime.split(':');
+        final defaultHour = int.tryParse(parts[0]) ?? 20;
+        final defaultMinute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+
+        for (final quiz in quizList) {
+          if (quiz.isCompleted) continue;
+          try {
+            int targetHour = defaultHour;
+            int targetMinute = defaultMinute;
+            if (quiz.reminderTime != null && quiz.reminderTime!.isNotEmpty) {
+              final p = quiz.reminderTime!.split(':');
+              targetHour = int.tryParse(p[0]) ?? defaultHour;
+              targetMinute = p.length > 1 ? (int.tryParse(p[1]) ?? 0) : 0;
+            } else if (quiz.reminderType == 'morning_of') {
+              targetHour = 8;
+              targetMinute = 0;
+            }
+
+            final reminderDateTime = calculateQuizReminderDateTime(
+              dueDate: quiz.dueDate,
+              reminderHour: targetHour,
+              reminderMinute: targetMinute,
+              reminderType: quiz.reminderType,
+            );
+
+            if (reminderDateTime.isAfter(currentTime)) {
+              final notificationId = getQuizNotificationId(quiz.id);
+              final scheduledTZ = _toTZDateTime(reminderDateTime);
+              final formattedDue = DateFormat('EEE, d MMM').format(quiz.dueDate);
+
+              await scheduleQuizReminder(
+                id: notificationId,
+                quizId: quiz.id,
+                subject: quiz.subject,
+                title: quiz.title,
+                formattedDate: formattedDue,
+                note: quiz.note,
+                scheduledDate: scheduledTZ,
+                isDayOf: quiz.reminderType == 'morning_of' || quiz.reminderType == 'day_of',
+              );
+              scheduledCount++;
+            }
+          } catch (e) {
+            failedCount++;
+            debugPrint('[NotificationService] Error scheduling quiz "${quiz.title}": $e');
+          }
+        }
+      }
+
+      debugPrint('[NotificationService] rescheduleAll completed: scheduled=$scheduledCount, failed=$failedCount');
+    } catch (e, stack) {
+      debugPrint('[NotificationService] Error during rescheduleAll: $e\n$stack');
+    } finally {
+      _isRescheduling = false;
+      if (_rescheduleQueued) {
+        _rescheduleQueued = false;
+        await rescheduleAll(now: now);
+      }
+    }
+  }
+
+  /// Computes reminder date and time for a quiz (morning-of or evening-before)
+  DateTime calculateQuizReminderDateTime({
+    required DateTime dueDate,
+    required int reminderHour,
+    required int reminderMinute,
+    String? reminderType,
+  }) {
+    if (reminderType == 'morning_of' || reminderType == 'day_of') {
+      return DateTime(
+        dueDate.year,
+        dueDate.month,
+        dueDate.day,
+        reminderHour,
+        reminderMinute,
+      );
+    }
+    // Default to 1 day before due date (evening-before)
+    return DateTime(
+      dueDate.year,
+      dueDate.month,
+      dueDate.day - 1,
+      reminderHour,
+      reminderMinute,
+    );
+  }
+
+  /// Computes the next occurrence of a class reminder as a TZDateTime
+  tz.TZDateTime calculateNextClassReminderTZ({
+    required int dayIndex, // 0 = Mon, 6 = Sun
+    required String startTime, // 'HH:mm'
+    required int offsetMinutes,
+    DateTime? now,
+  }) {
+    final parts = startTime.split(':');
+    final classHour = int.tryParse(parts[0]) ?? 8;
+    final classMinute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+
+    final classTotalMinutes = classHour * 60 + classMinute;
+    var reminderTotalMinutes = classTotalMinutes - offsetMinutes;
+    var dayOffsetAdjustment = 0;
+
+    if (reminderTotalMinutes < 0) {
+      reminderTotalMinutes += 24 * 60;
+      dayOffsetAdjustment = -1;
+    }
+
+    final reminderHour = reminderTotalMinutes ~/ 60;
+    final reminderMinute = reminderTotalMinutes % 60;
+
+    var targetWeekday = (dayIndex + 1) + dayOffsetAdjustment;
+    if (targetWeekday < 1) targetWeekday += 7;
+    if (targetWeekday > 7) targetWeekday -= 7;
+
+    try {
+      tz.local;
+    } catch (_) {
+      tz.initializeTimeZones();
+    }
+
+    final ref = now != null
+        ? (now is tz.TZDateTime
+            ? now
+            : tz.TZDateTime(
+                tz.local,
+                now.year,
+                now.month,
+                now.day,
+                now.hour,
+                now.minute,
+                now.second,
+                now.millisecond,
+              ))
+        : tz.TZDateTime.now(tz.local);
+
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      ref.year,
+      ref.month,
+      ref.day,
+      reminderHour,
+      reminderMinute,
+      0,
+    );
+
+    while (scheduled.weekday != targetWeekday || !scheduled.isAfter(ref)) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+
+    return scheduled;
+  }
+
+  tz.TZDateTime _toTZDateTime(DateTime dt) {
+    if (dt is tz.TZDateTime) return dt;
+    try {
+      tz.local;
+    } catch (_) {
+      tz.initializeTimeZones();
+    }
+    return tz.TZDateTime(
+      tz.local,
+      dt.year,
+      dt.month,
+      dt.day,
+      dt.hour,
+      dt.minute,
+      dt.second,
+    );
   }
 
   void dispose() {

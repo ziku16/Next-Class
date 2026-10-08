@@ -5,7 +5,7 @@ import '../../data/models/class_item.dart';
 import '../../data/models/quiz_item.dart';
 import '../../data/repositories/quiz_repository.dart';
 import '../../data/repositories/timetable_repository.dart';
-import '../../domain/services/alarm_scheduler.dart';
+import '../../domain/services/notification_service.dart';
 import '../../state/quiz_provider.dart';
 import '../shared/nc_banner.dart';
 
@@ -265,7 +265,7 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
           } else {
             await repo.insertQuiz(quiz);
           }
-          await AlarmScheduler().rescheduleAll();
+          await NotificationService().rescheduleAll();
         } catch (_) {}
       }
 

@@ -4,7 +4,6 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'core/theme/app_theme.dart';
-import 'domain/services/alarm_scheduler.dart';
 import 'domain/services/notification_service.dart';
 import 'ui/onboarding/splash_screen.dart';
 
@@ -69,11 +68,11 @@ Future<void> _initNonCriticalServices() async {
     // Handled safely; notification service will retry upon user settings interaction.
   }
 
-  // 3. Reschedule upcoming class and quiz alarms against current database
+  // 3. Reschedule upcoming class and quiz reminders against current database
   try {
-    await AlarmScheduler().rescheduleAll();
+    await NotificationService().rescheduleAll();
   } catch (_) {
-    // Background alarm rescheduling failure does not block user interaction.
+    // Background reminder rescheduling failure does not block user interaction.
   }
 }
 

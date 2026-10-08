@@ -24,9 +24,9 @@ class ParsingLoaderScreen extends StatefulWidget {
 
 class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
   static const List<String> _rotatingCopy = [
-    'Reading your timetable…',
-    'Finding your classes…',
-    'Almost there!',
+    'Reading timetable...',
+    'Finding classes...',
+    'Almost done...',
   ];
 
   int _currentCopyIndex = 0;

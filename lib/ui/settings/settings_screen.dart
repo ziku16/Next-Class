@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../data/models/scan_quota.dart';
 import '../../data/models/user_settings.dart';
 import '../../data/repositories/settings_repository.dart';
-import '../../domain/services/alarm_scheduler.dart';
 import '../../domain/services/notification_service.dart';
 import '../../state/settings_provider.dart';
 import '../shared/confirmation_dialogs.dart';
@@ -498,7 +497,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           await NotificationService().requestPermissions();
                       _provider.toggleNotifications(granted);
                       if (granted) {
-                        await AlarmScheduler().rescheduleAll();
+                        await NotificationService().rescheduleAll();
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).clearSnackBars();
                           ScaffoldMessenger.of(context).showSnackBar(
