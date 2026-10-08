@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 
 /// Tactile, heavy-bordered card embodying the Revo-Brutalist aesthetic:
-/// - Thick black outlines (3px - 3.5px)
-/// - Hard-edged offset black drop shadows with zero blur
+/// - Thick outlines (3px - 3.5px)
+/// - Hard-edged offset drop shadows with zero blur
 /// - Subtle or minimal corner rounding (4px - 6px)
 /// - Optional physical press interaction (0px shadow translation on press)
 /// - Optional playful tilt rotation
 class BrutalistCard extends StatefulWidget {
   final Widget child;
-  final Color backgroundColor;
-  final Color borderColor;
+  final Color? backgroundColor;
+  final Color? borderColor;
   final double borderWidth;
   final double borderRadius;
   final Offset shadowOffset;
-  final Color shadowColor;
+  final Color? shadowColor;
   final double tiltAngle; // in radians
   final VoidCallback? onTap;
   final EdgeInsetsGeometry padding;
@@ -23,12 +24,12 @@ class BrutalistCard extends StatefulWidget {
   const BrutalistCard({
     super.key,
     required this.child,
-    this.backgroundColor = Colors.white,
-    this.borderColor = Colors.black,
+    this.backgroundColor,
+    this.borderColor,
     this.borderWidth = 3.0,
     this.borderRadius = 6.0,
     this.shadowOffset = const Offset(4, 4),
-    this.shadowColor = Colors.black,
+    this.shadowColor,
     this.tiltAngle = 0.0,
     this.onTap,
     this.padding = const EdgeInsets.all(16.0),
@@ -45,6 +46,11 @@ class _BrutalistCardState extends State<BrutalistCard> {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
+    final effectiveBg = widget.backgroundColor ?? nc.surface;
+    final effectiveBorder = widget.borderColor ?? nc.border;
+    final effectiveShadow = widget.shadowColor ?? nc.shadow;
+
     final isInteractive = widget.onTap != null;
     final currentShadow = (_isPressed && widget.animatePress)
         ? Offset.zero
@@ -63,17 +69,17 @@ class _BrutalistCardState extends State<BrutalistCard> {
       ),
       margin: widget.margin,
       decoration: BoxDecoration(
-        color: widget.backgroundColor,
+        color: effectiveBg,
         borderRadius: BorderRadius.circular(widget.borderRadius),
         border: Border.all(
-          color: widget.borderColor,
+          color: effectiveBorder,
           width: widget.borderWidth,
         ),
         boxShadow: currentShadow == Offset.zero
             ? null
             : [
                 BoxShadow(
-                  color: widget.shadowColor,
+                  color: effectiveShadow,
                   offset: currentShadow,
                   blurRadius: 0,
                   spreadRadius: 0,

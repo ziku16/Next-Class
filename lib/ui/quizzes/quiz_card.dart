@@ -42,18 +42,22 @@ class QuizCard extends StatelessWidget {
     final subjectColor =
         ncColors.getSubjectColor(quiz.subject.hashCode.abs() % 8);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final cardWidget = Container(
       decoration: BoxDecoration(
-        color: isUrgent ? const Color(0xFFFFF8E1) : Colors.white,
+        color: isUrgent
+            ? (isDark ? const Color(0xFF332010) : const Color(0xFFFFF8E1))
+            : ncColors.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: Colors.black,
+          color: ncColors.border,
           width: 3.0,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(3.5, 3.5),
+            color: ncColors.shadow,
+            offset: const Offset(3.5, 3.5),
             blurRadius: 0,
           ),
         ],
@@ -66,13 +70,13 @@ class QuizCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 10 dp Left Accent Stripe with solid black divider
+              // 10 dp Left Accent Stripe with solid divider
               Container(
                 width: 10,
                 decoration: BoxDecoration(
                   color: stripeColor,
-                  border: const Border(
-                    right: BorderSide(color: Colors.black, width: 2.5),
+                  border: Border(
+                    right: BorderSide(color: ncColors.border, width: 2.5),
                   ),
                 ),
               ),
@@ -105,7 +109,7 @@ class QuizCard extends StatelessWidget {
                               quiz.subject,
                               style: theme.textTheme.labelLarge?.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: Colors.black,
+                                color: ncColors.textPrimary,
                               ),
                             ),
                           ),
@@ -122,7 +126,7 @@ class QuizCard extends StatelessWidget {
                         quiz.title,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
-                          color: Colors.black,
+                          color: ncColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -136,17 +140,17 @@ class QuizCard extends StatelessWidget {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.calendar_today_outlined,
                                 size: 14,
-                                color: Colors.black,
+                                color: ncColors.icon,
                               ),
                               const SizedBox(width: 5),
                               Text(
                                 DateFormat('EEE, d MMM').format(quiz.dueDate),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'SpaceGrotesk',
-                                  color: Colors.black,
+                                  color: ncColors.textPrimary,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 12.5,
                                 ),
@@ -157,19 +161,19 @@ class QuizCard extends StatelessWidget {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.notes_rounded,
                                   size: 14,
-                                  color: Colors.black,
+                                  color: ncColors.icon,
                                 ),
                                 const SizedBox(width: 5),
                                 ConstrainedBox(
                                   constraints: const BoxConstraints(maxWidth: 160),
                                   child: Text(
                                     quiz.note!,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'SpaceGrotesk',
-                                      color: Color(0xFF222222),
+                                      color: ncColors.textSecondary,
                                       fontWeight: FontWeight.w700,
                                       fontSize: 12.5,
                                     ),
@@ -190,10 +194,10 @@ class QuizCard extends StatelessWidget {
               if (onDelete != null)
                 Center(
                   child: IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.delete_outline,
                       size: 20,
-                      color: Colors.black,
+                      color: ncColors.icon,
                     ),
                     tooltip: 'Delete quiz',
                     onPressed: onDelete,

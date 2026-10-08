@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 import '../../data/repositories/timetable_repository.dart';
 import '../home/app_bottom_nav.dart';
@@ -201,6 +202,7 @@ class _WeekScreenState extends State<WeekScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final nc = context.ncColors;
     final hasTimetable = _allClasses.isNotEmpty;
 
     final selectedDate = _weekDays[_selectedDayIndex];
@@ -210,24 +212,24 @@ class _WeekScreenState extends State<WeekScreen> {
     final yearStr = selectedDate.year.toString();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF6EE),
+        backgroundColor: nc.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleSpacing: 16,
-        shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
+        shape: Border(bottom: BorderSide(color: nc.border, width: 3.0)),
         title: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color: const Color(0xFFFFE500),
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.black, width: 2.5),
-            boxShadow: const [
+            border: Border.all(color: nc.border, width: 2.5),
+            boxShadow: [
               BoxShadow(
-                color: Colors.black,
-                offset: Offset(2.5, 2.5),
+                color: nc.shadow,
+                offset: const Offset(2.5, 2.5),
                 blurRadius: 0,
               ),
             ],
@@ -252,20 +254,20 @@ class _WeekScreenState extends State<WeekScreen> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: nc.surface,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.black, width: 2.0),
-                  boxShadow: const [
+                  border: Border.all(color: nc.border, width: 2.0),
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(2, 2),
+                      color: nc.shadow,
+                      offset: const Offset(2, 2),
                       blurRadius: 0,
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.settings,
-                  color: Colors.black,
+                  color: nc.icon,
                   size: 20,
                 ),
               ),
@@ -307,13 +309,13 @@ class _WeekScreenState extends State<WeekScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black,
+                      color: nc.border,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.black, width: 2.5),
-                      boxShadow: const [
+                      border: Border.all(color: nc.border, width: 2.5),
+                      boxShadow: [
                         BoxShadow(
-                          color: Colors.black,
-                          offset: Offset(3, 3),
+                          color: nc.shadow,
+                          offset: const Offset(3, 3),
                           blurRadius: 0,
                         ),
                       ],
@@ -323,22 +325,22 @@ class _WeekScreenState extends State<WeekScreen> {
                       children: [
                         Text(
                           dayNumStr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
                             fontSize: 26,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                            color: nc.background,
                             height: 1.0,
                           ),
                         ),
                         Text(
                           dayNameStr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.0,
-                            color: Colors.white,
+                            color: nc.background,
                             height: 1.0,
                           ),
                         ),
@@ -352,23 +354,23 @@ class _WeekScreenState extends State<WeekScreen> {
                     children: [
                       Text(
                         monthStr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'SpaceGrotesk',
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.0,
-                          color: Colors.black,
+                          color: nc.textPrimary,
                           height: 1.0,
                         ),
                       ),
                       Text(
                         yearStr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'SpaceGrotesk',
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.0,
-                          color: Colors.black,
+                          color: nc.textPrimary,
                           height: 1.0,
                         ),
                       ),
@@ -384,7 +386,7 @@ class _WeekScreenState extends State<WeekScreen> {
               selectedDayIndex: _selectedDayIndex,
               onDaySelected: _scrollToDay,
             ),
-            const Divider(height: 2, thickness: 2, color: Colors.black),
+            Divider(height: 2, thickness: 2, color: nc.border),
 
             // Grouped Day Stream
             Expanded(
@@ -459,7 +461,7 @@ class _WeekScreenState extends State<WeekScreen> {
                   headerText,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
-                    color: Colors.black,
+                    color: context.ncColors.textPrimary,
                   ),
                 ),
               ),
@@ -471,11 +473,11 @@ class _WeekScreenState extends State<WeekScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFE500),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Colors.black, width: 2.0),
-                    boxShadow: const [
+                    border: Border.all(color: context.ncColors.border, width: 2.0),
+                    boxShadow: [
                       BoxShadow(
-                        color: Colors.black,
-                        offset: Offset(2, 2),
+                        color: context.ncColors.shadow,
+                        offset: const Offset(2, 2),
                         blurRadius: 0,
                       ),
                     ],
@@ -530,37 +532,38 @@ class _WeekScreenState extends State<WeekScreen> {
     ThemeData theme,
     String dayName,
   ) {
+    final nc = context.ncColors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: nc.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: Colors.black,
+          color: nc.border,
           width: 2.5,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(3, 3),
+            color: nc.shadow,
+            offset: const Offset(3, 3),
             blurRadius: 0,
           ),
         ],
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.weekend,
             size: 20,
-            color: Colors.black,
+            color: nc.icon,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'No classes scheduled for $dayName',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.black87,
+                color: nc.textSecondary,
                 fontWeight: FontWeight.w700,
               ),
             ),

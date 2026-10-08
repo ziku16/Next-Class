@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 
 /// Confirmation dialog shown when the user attempts to leave the review screen with unsaved edits.
 class DiscardDialog extends StatelessWidget {
@@ -16,26 +17,28 @@ class DiscardDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
+
     return AlertDialog(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: Colors.black, width: 3.5),
+        side: BorderSide(color: nc.border, width: 3.5),
       ),
-      title: const Text(
+      title: Text(
         'Discard changes?',
         style: TextStyle(
           fontFamily: 'SpaceGrotesk',
           fontWeight: FontWeight.w900,
           fontSize: 22,
-          color: Colors.black,
+          color: nc.textPrimary,
         ),
       ),
-      content: const Text(
+      content: Text(
         "You've edited your classes but haven't saved. If you leave now, those changes will be lost.",
         style: TextStyle(
           fontFamily: 'SpaceGrotesk',
-          color: Colors.black87,
+          color: nc.textSecondary,
           fontSize: 14,
           fontWeight: FontWeight.w600,
           height: 1.4,
@@ -45,21 +48,21 @@ class DiscardDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text(
+          child: Text(
             'Keep editing',
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
               fontWeight: FontWeight.w900,
-              color: Colors.black,
+              color: nc.textPrimary,
             ),
           ),
         ),
         Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: Colors.black,
-                offset: Offset(2.5, 2.5),
+                color: nc.shadow,
+                offset: const Offset(2.5, 2.5),
                 blurRadius: 0,
               ),
             ],
@@ -71,7 +74,7 @@ class DiscardDialog extends StatelessWidget {
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: Colors.black, width: 2.0),
+                side: BorderSide(color: nc.border, width: 2.0),
               ),
             ),
             onPressed: () => Navigator.of(context).pop(true),

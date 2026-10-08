@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 import '../../domain/services/notification_service.dart';
 import '../../state/timetable_provider.dart';
@@ -132,6 +133,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
     return ListenableBuilder(
       listenable: _provider,
       builder: (context, _) {
@@ -142,24 +144,24 @@ class _ReviewScreenState extends State<ReviewScreen> {
             _handleBack();
           },
           child: Scaffold(
-            backgroundColor: const Color(0xFFFAF6EE),
+            backgroundColor: nc.background,
             appBar: AppBar(
-              backgroundColor: const Color(0xFFFAF6EE),
+              backgroundColor: nc.background,
               elevation: 0,
               scrolledUnderElevation: 0,
-              shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
+              shape: Border(bottom: BorderSide(color: nc.border, width: 3.0)),
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                icon: Icon(Icons.arrow_back, color: nc.icon),
                 tooltip: 'Back',
                 onPressed: _handleBack,
               ),
-              title: const Text(
+              title: Text(
                 'Check your classes',
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontWeight: FontWeight.w900,
                   fontSize: 20,
-                  color: Colors.black,
+                  color: nc.textPrimary,
                 ),
               ),
               centerTitle: false,
@@ -167,11 +169,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                   child: Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black,
-                          offset: Offset(2, 2),
+                          color: nc.shadow,
+                          offset: const Offset(2, 2),
                           blurRadius: 0,
                         ),
                       ],
@@ -182,7 +184,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                         foregroundColor: Colors.black,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4),
-                          side: const BorderSide(color: Colors.black, width: 2.0),
+                          side: BorderSide(color: nc.border, width: 2.0),
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                       ),
@@ -219,13 +221,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: nc.surface,
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.black, width: 2.5),
-                      boxShadow: const [
+                      border: Border.all(color: nc.border, width: 2.5),
+                      boxShadow: [
                         BoxShadow(
-                          color: Colors.black,
-                          offset: Offset(2.5, 2.5),
+                          color: nc.shadow,
+                          offset: const Offset(2.5, 2.5),
                           blurRadius: 0,
                         ),
                       ],
@@ -233,13 +235,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Hide empty days',
                           style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
-                            color: Colors.black,
+                            color: nc.textPrimary,
                           ),
                         ),
                         Switch(
@@ -247,8 +249,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                           activeThumbColor: Colors.black,
                           activeTrackColor: const Color(0xFFFF5500),
                           inactiveThumbColor: Colors.black,
-                          inactiveTrackColor: const Color(0xFFDCE2E6),
-                          trackOutlineColor: WidgetStateProperty.all(Colors.black),
+                          inactiveTrackColor: nc.isDark ? const Color(0xFF333333) : const Color(0xFFDCE2E6),
+                          trackOutlineColor: WidgetStateProperty.all(nc.border),
                           trackOutlineWidth: WidgetStateProperty.all(2.0),
                           onChanged: (val) => _provider.setHideEmptyDays(val),
                         ),
@@ -256,7 +258,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     ),
                   ),
                 ),
-                const Divider(height: 2, thickness: 2, color: Colors.black),
+                Divider(height: 2, thickness: 2, color: nc.border),
 
                 // Grouped Day-by-Day List
                 Expanded(
@@ -272,11 +274,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
             ),
             bottomNavigationBar: Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              decoration: const BoxDecoration(
-                color: Color(0xFFFAF6EE),
+              decoration: BoxDecoration(
+                color: nc.surface,
                 border: Border(
                   top: BorderSide(
-                    color: Colors.black,
+                    color: nc.border,
                     width: 3.0,
                   ),
                 ),
@@ -284,11 +286,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
               child: SafeArea(
                 top: false,
                 child: Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black,
-                        offset: Offset(3.5, 3.5),
+                        color: nc.shadow,
+                        offset: const Offset(3.5, 3.5),
                         blurRadius: 0,
                       ),
                     ],
@@ -305,7 +307,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6),
-                          side: const BorderSide(color: Colors.black, width: 2.5),
+                          side: BorderSide(color: nc.border, width: 2.5),
                         ),
                       ),
                       child: _provider.isSaving
@@ -339,6 +341,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   Widget _buildDaySection(BuildContext context, String day) {
+    final nc = context.ncColors;
     final dayClasses = _provider.getClassesForDay(day);
 
     if (_provider.hideEmptyDays && dayClasses.isEmpty) {
@@ -360,11 +363,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
             children: [
               Text(
                 '$day · $countLabel',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontWeight: FontWeight.w900,
                   fontSize: 16,
-                  color: Colors.black,
+                  color: nc.textPrimary,
                 ),
               ),
               GestureDetector(
@@ -375,11 +378,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFE500),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Colors.black, width: 2.0),
-                    boxShadow: const [
+                    border: Border.all(color: nc.border, width: 2.0),
+                    boxShadow: [
                       BoxShadow(
-                        color: Colors.black,
-                        offset: Offset(2, 2),
+                        color: nc.shadow,
+                        offset: const Offset(2, 2),
                         blurRadius: 0,
                       ),
                     ],
@@ -401,25 +404,25 @@ class _ReviewScreenState extends State<ReviewScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: nc.surface,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: Colors.black,
+                  color: nc.border,
                   width: 2.0,
                 ),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(2.5, 2.5),
+                    color: nc.shadow,
+                    offset: const Offset(2.5, 2.5),
                     blurRadius: 0,
                   ),
                 ],
               ),
-              child: const Text(
+              child: Text(
                 'Nothing here yet',
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
-                  color: Colors.black87,
+                  color: nc.textSecondary,
                   fontWeight: FontWeight.w700,
                   fontStyle: FontStyle.italic,
                 ),

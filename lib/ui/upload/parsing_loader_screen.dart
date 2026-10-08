@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 import '../../state/upload_provider.dart';
 
@@ -72,9 +73,10 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
   @override
   Widget build(BuildContext context) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
+    final nc = context.ncColors;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.background,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -82,13 +84,13 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: nc.surface,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.black, width: 3.5),
-                boxShadow: const [
+                border: Border.all(color: nc.border, width: 3.5),
+                boxShadow: [
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(4.5, 4.5),
+                    color: nc.shadow,
+                    offset: const Offset(4.5, 4.5),
                     blurRadius: 0,
                   ),
                 ],
@@ -102,7 +104,7 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFE500),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.black, width: 2),
+                      border: Border.all(color: nc.border, width: 2),
                     ),
                     child: const Text(
                       'READING TIMETABLE',
@@ -139,11 +141,11 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
                       _rotatingCopy[_currentCopyIndex],
                       key: ValueKey<int>(_currentCopyIndex),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'SpaceGrotesk',
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        color: Colors.black,
+                        color: nc.textPrimary,
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -151,13 +153,13 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
                   const SizedBox(height: 8),
 
                   // Subtitle
-                  const Text(
+                  Text(
                     '100% on-device • No internet needed',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Colors.black87,
+                      color: nc.textSecondary,
                     ),
                   ),
                 ],

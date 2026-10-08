@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../core/theme/next_class_colors.dart';
 
 /// Horizontal selector strip of 7 day chips (Monday through Sunday) for the Week view.
 /// Shows short day abbreviation and day-of-month number.
@@ -78,6 +79,7 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final nc = context.ncColors;
     final today = DateTime.now();
 
     final textScale = MediaQuery.textScalerOf(context).scale(1.0);
@@ -85,7 +87,7 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
 
     return Container(
       height: stripHeight,
-      color: theme.colorScheme.surface,
+      color: nc.surface,
       child: ListView.separated(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
@@ -120,6 +122,7 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
     required bool isSelected,
     required bool isToday,
   }) {
+    final nc = context.ncColors;
     final textScale = MediaQuery.textScalerOf(context).scale(1.0);
     final chipWidth = (54.0 * textScale).clamp(52.0, 72.0);
 
@@ -127,13 +130,17 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
     final dayNum = date.day.toString();
 
     final Color bgColor;
+    final Color fgColor;
 
     if (isSelected) {
       bgColor = const Color(0xFFFFB74D); // Vibrant orange active
+      fgColor = Colors.black;
     } else if (isToday) {
       bgColor = const Color(0xFFFFE500); // Safety yellow
+      fgColor = Colors.black;
     } else {
-      bgColor = Colors.white;
+      bgColor = nc.surface;
+      fgColor = nc.textPrimary;
     }
 
     return Container(
@@ -148,10 +155,10 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Colors.black, width: 2.5),
+            border: Border.all(color: nc.border, width: 2.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black,
+                color: nc.shadow,
                 offset: isSelected ? const Offset(1.5, 1.5) : const Offset(2.5, 2.5),
                 blurRadius: 0,
               ),
@@ -166,12 +173,12 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   dayName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'SpaceGrotesk',
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.5,
-                    color: Colors.black,
+                    color: fgColor,
                   ),
                 ),
               ),
@@ -182,11 +189,11 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   dayNum,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'SpaceGrotesk',
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
-                    color: Colors.black,
+                    color: fgColor,
                   ),
                 ),
               ),

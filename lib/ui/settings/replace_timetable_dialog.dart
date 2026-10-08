@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 
 /// Modal dialog warning before replacing existing timetable data (Flows 7 & 8).
 /// Enforces:
@@ -17,11 +18,13 @@ class ReplaceTimetableDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
+
     return AlertDialog(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: Colors.black, width: 3.5),
+        side: BorderSide(color: nc.border, width: 3.5),
       ),
       icon: Container(
         width: 44,
@@ -29,11 +32,11 @@ class ReplaceTimetableDialog extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFFFE500),
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Colors.black, width: 2.0),
-          boxShadow: const [
+          border: Border.all(color: nc.border, width: 2.0),
+          boxShadow: [
             BoxShadow(
-              color: Colors.black,
-              offset: Offset(2, 2),
+              color: nc.shadow,
+              offset: const Offset(2, 2),
               blurRadius: 0,
             ),
           ],
@@ -44,20 +47,20 @@ class ReplaceTimetableDialog extends StatelessWidget {
           color: Colors.black,
         ),
       ),
-      title: const Text(
+      title: Text(
         'Replace timetable?',
         style: TextStyle(
           fontFamily: 'SpaceGrotesk',
           fontWeight: FontWeight.w900,
           fontSize: 22,
-          color: Colors.black,
+          color: nc.textPrimary,
         ),
       ),
-      content: const Text(
+      content: Text(
         'Replacing your timetable will re-align all recurring classes. Continue?',
         style: TextStyle(
           fontFamily: 'SpaceGrotesk',
-          color: Colors.black87,
+          color: nc.textSecondary,
           fontSize: 14,
           fontWeight: FontWeight.w600,
           height: 1.4,
@@ -67,21 +70,21 @@ class ReplaceTimetableDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text(
+          child: Text(
             'Cancel',
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
               fontWeight: FontWeight.w900,
-              color: Colors.black,
+              color: nc.textPrimary,
             ),
           ),
         ),
         Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: Colors.black,
-                offset: Offset(2.5, 2.5),
+                color: nc.shadow,
+                offset: const Offset(2.5, 2.5),
                 blurRadius: 0,
               ),
             ],
@@ -93,7 +96,7 @@ class ReplaceTimetableDialog extends StatelessWidget {
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: Colors.black, width: 2.0),
+                side: BorderSide(color: nc.border, width: 2.0),
               ),
             ),
             onPressed: () => Navigator.of(context).pop(true),

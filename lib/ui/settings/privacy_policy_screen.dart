@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 
 /// Privacy Policy Screen for NextClass.
 /// Outlines local-only data architecture, permissions, and zero-tracking commitment.
@@ -7,31 +8,33 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF6EE),
+        backgroundColor: nc.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 26),
+          icon: Icon(Icons.arrow_back_rounded, color: nc.icon, size: 26),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'PRIVACY POLICY',
           style: TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontWeight: FontWeight.w900,
             fontSize: 20,
             letterSpacing: 1.2,
-            color: Colors.black,
+            color: nc.textPrimary,
           ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(3.0),
           child: Container(
-            color: Colors.black,
+            color: nc.border,
             height: 3.0,
           ),
         ),
@@ -40,10 +43,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         children: [
           // Header summary badge
-          _buildHeroBadge(),
+          _buildHeroBadge(context),
           const SizedBox(height: 16),
 
           _buildSectionCard(
+            context,
             title: '1. OVERVIEW',
             content:
                 'NextClass is an offline-first university timetable and schedule companion designed to help students keep track of their lectures, laboratories, and quizzes. We respect your personal privacy. NextClass does not track you, does not require an account, and stores your timetable data locally on your device.',
@@ -51,6 +55,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildSectionCard(
+            context,
             title: '2. DATA STORED LOCALLY',
             content:
                 'NextClass stores information you enter or import directly on your phone in private, secure app storage:\n\n'
@@ -65,6 +70,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildSectionCard(
+            context,
             title: '3. NO USER ACCOUNTS',
             content:
                 'NextClass does not require registration, login, email addresses, phone numbers, social logins, or student ID credentials. You can use all core features anonymously without providing any personally identifiable information.',
@@ -72,6 +78,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildSectionCard(
+            context,
             title: '4. 100% ON-DEVICE TIMETABLE SCANNING',
             content:
                 'NextClass offers a timetable scanning feature allowing you to scan or upload a photo of your printed or digital schedule:\n\n'
@@ -82,6 +89,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildSectionCard(
+            context,
             title: '5. DEVICE PERMISSIONS',
             content:
                 'NextClass requests the following Android device permissions only to perform essential functions:\n\n'
@@ -93,6 +101,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildSectionCard(
+            context,
             title: '6. ADVERTISING & ANALYTICS',
             content:
                 '• Zero Advertising: NextClass contains no advertisements, sponsored content, or ad-network trackers.\n'
@@ -102,6 +111,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildSectionCard(
+            context,
             title: '7. DATA RETENTION & DELETION',
             content:
                 'Because your data is stored locally on your device, you maintain full control:\n\n'
@@ -112,6 +122,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildSectionCard(
+            context,
             title: '8. CHILDREN\'S PRIVACY',
             content:
                 'NextClass is designed for university and college students. We do not knowingly collect personal information from children under 13. Because NextClass does not collect personal identity information from any user, no children\'s personal data is gathered.',
@@ -119,6 +130,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildSectionCard(
+            context,
             title: '9. SECURITY',
             content:
                 'Your timetable data is protected by the Android operating system\'s application sandbox, which prevents other installed applications from accessing NextClass\'s private app data.',
@@ -126,6 +138,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildSectionCard(
+            context,
             title: '10. POLICY UPDATES',
             content:
                 'We may update this Privacy Policy from time to time. Any changes will be published directly within the app and on our official release page with an updated effective date.',
@@ -133,6 +146,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildSectionCard(
+            context,
             title: '11. CONTACT US',
             content:
                 'If you have questions, feedback, or concerns regarding this Privacy Policy or your data, please contact:\n\n'
@@ -147,24 +161,24 @@ class PrivacyPolicyScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: nc.surface,
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: Colors.black, width: 2),
-                boxShadow: const [
+                border: Border.all(color: nc.border, width: 2),
+                boxShadow: [
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(2, 2),
+                    color: nc.shadow,
+                    offset: const Offset(2, 2),
                     blurRadius: 0,
                   ),
                 ],
               ),
-              child: const Text(
+              child: Text(
                 'Effective Date: October 2026 • Version 1.0.0',
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontWeight: FontWeight.w700,
                   fontSize: 11,
-                  color: Colors.black,
+                  color: nc.textSecondary,
                 ),
               ),
             ),
@@ -175,17 +189,18 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeroBadge() {
+  Widget _buildHeroBadge(BuildContext context) {
+    final nc = context.ncColors;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFFFE500), // Vibrant safety yellow
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.black, width: 3.0),
-        boxShadow: const [
+        border: Border.all(color: nc.border, width: 3.0),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(4.0, 4.0),
+            color: nc.shadow,
+            offset: const Offset(4.0, 4.0),
             blurRadius: 0,
           ),
         ],
@@ -224,19 +239,21 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionCard({
+  Widget _buildSectionCard(
+    BuildContext context, {
     required String title,
     required String content,
   }) {
+    final nc = context.ncColors;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: nc.surface,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.black, width: 3.0),
-        boxShadow: const [
+        border: Border.all(color: nc.border, width: 3.0),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(3.5, 3.5),
+            color: nc.shadow,
+            offset: const Offset(3.5, 3.5),
             blurRadius: 0,
           ),
         ],
@@ -247,22 +264,22 @@ class PrivacyPolicyScreen extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'SpaceGrotesk',
               fontWeight: FontWeight.w900,
               fontSize: 14,
               letterSpacing: 1.0,
-              color: Colors.black,
+              color: nc.textPrimary,
             ),
           ),
           const SizedBox(height: 10),
           Text(
             content,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.5,
               height: 1.5,
               fontWeight: FontWeight.w600,
-              color: Colors.black,
+              color: nc.textSecondary,
             ),
           ),
         ],

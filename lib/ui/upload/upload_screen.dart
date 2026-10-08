@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 import '../../domain/services/connectivity_service.dart';
 import '../../domain/services/notification_service.dart';
@@ -152,28 +153,30 @@ class _UploadScreenState extends State<UploadScreen> {
       title = 'No classes found';
     }
 
+    final nc = context.ncColors;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFAF6EE),
+        backgroundColor: nc.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: Colors.black, width: 3.5),
+          side: BorderSide(color: nc.border, width: 3.5),
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontWeight: FontWeight.w900,
-            color: Colors.black,
+            color: nc.textPrimary,
           ),
         ),
         content: Text(
           message,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: nc.textSecondary,
           ),
         ),
         actions: [
@@ -182,12 +185,12 @@ class _UploadScreenState extends State<UploadScreen> {
               Navigator.of(ctx).pop();
               _handleManualEdit();
             },
-            child: const Text(
+            child: Text(
               'Edit manually',
               style: TextStyle(
                 fontFamily: 'SpaceGrotesk',
                 fontWeight: FontWeight.w800,
-                color: Colors.black,
+                color: nc.textPrimary,
               ),
             ),
           ),
@@ -201,7 +204,7 @@ class _UploadScreenState extends State<UploadScreen> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: Colors.black, width: 2),
+                side: BorderSide(color: nc.border, width: 2),
               ),
             ),
             child: const Text(
@@ -238,9 +241,12 @@ class _UploadScreenState extends State<UploadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.background,
       appBar: AppBar(
+        backgroundColor: nc.background,
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
           child: Center(
@@ -256,30 +262,30 @@ class _UploadScreenState extends State<UploadScreen> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: nc.surface,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.black, width: 2),
-                  boxShadow: const [
+                  border: Border.all(color: nc.border, width: 2),
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(2, 2),
+                      color: nc.shadow,
+                      offset: const Offset(2, 2),
                       blurRadius: 0,
                     ),
                   ],
                 ),
-                child: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
+                child: Icon(Icons.arrow_back, size: 20, color: nc.icon),
               ),
             ),
           ),
         ),
-        title: const Text(
+        title: Text(
           'Upload timetable',
           style: TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontWeight: FontWeight.w900,
             fontSize: 20,
             letterSpacing: -0.5,
-            color: Colors.black,
+            color: nc.textPrimary,
           ),
         ),
         actions: [
@@ -290,29 +296,29 @@ class _UploadScreenState extends State<UploadScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: nc.surface,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.black, width: 2),
-                  boxShadow: const [
+                  border: Border.all(color: nc.border, width: 2),
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(2, 2),
+                      color: nc.shadow,
+                      offset: const Offset(2, 2),
                       blurRadius: 0,
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.home_outlined, size: 18, color: Colors.black),
-                    SizedBox(width: 4),
+                    Icon(Icons.home_outlined, size: 18, color: nc.icon),
+                    const SizedBox(width: 4),
                     Text(
                       'Home',
                       style: TextStyle(
                         fontFamily: 'SpaceGrotesk',
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
-                        color: Colors.black,
+                        color: nc.textPrimary,
                       ),
                     ),
                   ],
@@ -342,25 +348,25 @@ class _UploadScreenState extends State<UploadScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFE500),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.black, width: 2.5),
-                        boxShadow: const [
+                        border: Border.all(color: nc.border, width: 2.5),
+                        boxShadow: [
                           BoxShadow(
-                            color: Colors.black,
-                            offset: Offset(2.5, 2.5),
+                            color: nc.shadow,
+                            offset: const Offset(2.5, 2.5),
                             blurRadius: 0,
                           ),
                         ],
                       ),
                       child: Row(
-                        children: [
-                          const Icon(
+                        children: const [
+                          Icon(
                             Icons.photo_camera_rounded,
                             size: 20,
                             color: Colors.black,
                           ),
-                          const SizedBox(width: 10),
+                          SizedBox(width: 10),
                           Expanded(
-                            child: const Text(
+                            child: Text(
                               '100% on-device & private · Unlimited scans',
                               style: TextStyle(
                                 fontFamily: 'SpaceGrotesk',
@@ -375,24 +381,24 @@ class _UploadScreenState extends State<UploadScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    const Text(
+                    Text(
                       'Add your timetable',
                       style: TextStyle(
                         fontFamily: 'SpaceGrotesk',
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -0.5,
-                        color: Colors.black,
+                        color: nc.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       "Take a clear photo of your class timetable. We'll read every class for you.",
                       style: TextStyle(
                         fontFamily: 'SpaceGrotesk',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: nc.textSecondary,
                         height: 1.3,
                       ),
                     ),
@@ -407,16 +413,16 @@ class _UploadScreenState extends State<UploadScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: nc.surface,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: Colors.black,
+                              color: nc.border,
                               width: 3.0,
                             ),
-                            boxShadow: const [
+                            boxShadow: [
                               BoxShadow(
-                                color: Colors.black,
-                                offset: Offset(4, 4),
+                                color: nc.shadow,
+                                offset: const Offset(4, 4),
                                 blurRadius: 0,
                               ),
                             ],
@@ -430,11 +436,11 @@ class _UploadScreenState extends State<UploadScreen> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFF5500),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.black, width: 2.5),
-                                  boxShadow: const [
+                                  border: Border.all(color: nc.border, width: 2.5),
+                                  boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black,
-                                      offset: Offset(2.5, 2.5),
+                                      color: nc.shadow,
+                                      offset: const Offset(2.5, 2.5),
                                       blurRadius: 0,
                                     ),
                                   ],
@@ -446,11 +452,11 @@ class _UploadScreenState extends State<UploadScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              const Text(
+                              Text(
                                 'Take or choose a photo',
                                 style: TextStyle(
                                   fontFamily: 'SpaceGrotesk',
-                                  color: Colors.black,
+                                  color: nc.textPrimary,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -0.2,
@@ -466,16 +472,16 @@ class _UploadScreenState extends State<UploadScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: nc.surface,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: Colors.black,
+                            color: nc.border,
                             width: 3.0,
                           ),
-                          boxShadow: const [
+                          boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(4, 4),
+                              color: nc.shadow,
+                              offset: const Offset(4, 4),
                               blurRadius: 0,
                             ),
                           ],
@@ -490,7 +496,7 @@ class _UploadScreenState extends State<UploadScreen> {
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF00E676),
                                     borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: Colors.black, width: 2),
+                                    border: Border.all(color: nc.border, width: 2),
                                   ),
                                   child: const Icon(
                                     Icons.image_outlined,
@@ -503,24 +509,24 @@ class _UploadScreenState extends State<UploadScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'Photo selected',
                                         style: TextStyle(
                                           fontFamily: 'SpaceGrotesk',
                                           fontSize: 16,
                                           fontWeight: FontWeight.w900,
-                                          color: Colors.black,
+                                          color: nc.textPrimary,
                                         ),
                                       ),
                                       Text(
                                         _provider.selectedImage!.name,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontFamily: 'SpaceGrotesk',
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
-                                          color: Colors.black87,
+                                          color: nc.textSecondary,
                                         ),
                                       ),
                                     ],
@@ -532,11 +538,11 @@ class _UploadScreenState extends State<UploadScreen> {
                                     width: 32,
                                     height: 32,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFDCE2E6),
+                                      color: nc.surface,
                                       borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: Colors.black, width: 2),
+                                      border: Border.all(color: nc.border, width: 2),
                                     ),
-                                    child: const Icon(Icons.close, size: 18, color: Colors.black),
+                                    child: Icon(Icons.close, size: 18, color: nc.icon),
                                   ),
                                 ),
                               ],
@@ -548,20 +554,20 @@ class _UploadScreenState extends State<UploadScreen> {
                                   child: OutlinedButton.icon(
                                     onPressed: () => _pickImage(ImageSource.camera),
                                     style: OutlinedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      foregroundColor: Colors.black,
+                                      backgroundColor: nc.surface,
+                                      foregroundColor: nc.textPrimary,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(6),
-                                        side: const BorderSide(color: Colors.black, width: 2),
+                                        side: BorderSide(color: nc.border, width: 2),
                                       ),
                                     ),
-                                    icon: const Icon(Icons.refresh, size: 18, color: Colors.black),
-                                    label: const Text(
+                                    icon: Icon(Icons.refresh, size: 18, color: nc.icon),
+                                    label: Text(
                                       'Retake',
                                       style: TextStyle(
                                         fontFamily: 'SpaceGrotesk',
                                         fontWeight: FontWeight.w800,
-                                        color: Colors.black,
+                                        color: nc.textPrimary,
                                       ),
                                     ),
                                   ),
@@ -571,20 +577,20 @@ class _UploadScreenState extends State<UploadScreen> {
                                   child: OutlinedButton.icon(
                                     onPressed: () => _pickImage(ImageSource.gallery),
                                     style: OutlinedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      foregroundColor: Colors.black,
+                                      backgroundColor: nc.surface,
+                                      foregroundColor: nc.textPrimary,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(6),
-                                        side: const BorderSide(color: Colors.black, width: 2),
+                                        side: BorderSide(color: nc.border, width: 2),
                                       ),
                                     ),
-                                    icon: const Icon(Icons.image, size: 18, color: Colors.black),
-                                    label: const Text(
+                                    icon: Icon(Icons.image, size: 18, color: nc.icon),
+                                    label: Text(
                                       'Choose another',
                                       style: TextStyle(
                                         fontFamily: 'SpaceGrotesk',
                                         fontWeight: FontWeight.w800,
-                                        color: Colors.black,
+                                        color: nc.textPrimary,
                                       ),
                                     ),
                                   ),
@@ -603,13 +609,13 @@ class _UploadScreenState extends State<UploadScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: nc.surface,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.black, width: 2.5),
-                        boxShadow: const [
+                        border: Border.all(color: nc.border, width: 2.5),
+                        boxShadow: [
                           BoxShadow(
-                            color: Colors.black,
-                            offset: Offset(3, 3),
+                            color: nc.shadow,
+                            offset: const Offset(3, 3),
                             blurRadius: 0,
                           ),
                         ],
@@ -624,7 +630,7 @@ class _UploadScreenState extends State<UploadScreen> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF00E676),
                                   borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: Colors.black, width: 1.5),
+                                  border: Border.all(color: nc.border, width: 1.5),
                                 ),
                                 child: const Text(
                                   'TIPS',
@@ -638,14 +644,14 @@ class _UploadScreenState extends State<UploadScreen> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              const Text(
+                              Text(
                                 'PHOTO GUIDELINES',
                                 style: TextStyle(
                                   fontFamily: 'SpaceGrotesk',
                                   fontWeight: FontWeight.w900,
                                   fontSize: 12,
                                   letterSpacing: 0.5,
-                                  color: Colors.black,
+                                  color: nc.textPrimary,
                                 ),
                               ),
                             ],
@@ -672,10 +678,10 @@ class _UploadScreenState extends State<UploadScreen> {
                     Container(
                       decoration: BoxDecoration(
                         boxShadow: (_provider.selectedImage != null && !_isOffline)
-                            ? const [
+                            ? [
                                 BoxShadow(
-                                  color: Colors.black,
-                                  offset: Offset(3.5, 3.5),
+                                  color: nc.shadow,
+                                  offset: const Offset(3.5, 3.5),
                                   blurRadius: 0,
                                 ),
                               ]
@@ -702,16 +708,16 @@ class _UploadScreenState extends State<UploadScreen> {
                           ),
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFFFF5500),
-                            disabledBackgroundColor: const Color(0xFFDCE2E6),
+                            disabledBackgroundColor: nc.isDark ? const Color(0xFF333333) : const Color(0xFFDCE2E6),
                             foregroundColor: Colors.white,
-                            disabledForegroundColor: Colors.black38,
+                            disabledForegroundColor: nc.textSecondary,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
                               side: BorderSide(
                                 color: (_provider.selectedImage != null && !_isOffline)
-                                    ? Colors.black
-                                    : Colors.black26,
+                                    ? nc.border
+                                    : nc.border.withValues(alpha: 0.3),
                                 width: 2.5,
                               ),
                             ),
@@ -724,11 +730,11 @@ class _UploadScreenState extends State<UploadScreen> {
 
                     // Secondary Fallback: Add classes manually
                     Container(
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black,
-                            offset: Offset(2.5, 2.5),
+                            color: nc.shadow,
+                            offset: const Offset(2.5, 2.5),
                             blurRadius: 0,
                           ),
                         ],
@@ -738,23 +744,23 @@ class _UploadScreenState extends State<UploadScreen> {
                         height: 48,
                         child: OutlinedButton.icon(
                           onPressed: _handleManualEdit,
-                          icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.black),
-                          label: const Text(
+                          icon: Icon(Icons.edit_outlined, size: 18, color: nc.icon),
+                          label: Text(
                             'Add classes manually',
                             style: TextStyle(
                               fontFamily: 'SpaceGrotesk',
                               fontWeight: FontWeight.w900,
                               fontSize: 14,
-                              color: Colors.black,
+                              color: nc.textPrimary,
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
+                            backgroundColor: nc.surface,
+                            foregroundColor: nc.textPrimary,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
-                              side: const BorderSide(color: Colors.black, width: 2.5),
+                              side: BorderSide(color: nc.border, width: 2.5),
                             ),
                           ),
                         ),
@@ -767,14 +773,14 @@ class _UploadScreenState extends State<UploadScreen> {
                       width: double.infinity,
                       child: TextButton.icon(
                         onPressed: _navigateToHome,
-                        icon: const Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.black87),
-                        label: const Text(
+                        icon: Icon(Icons.arrow_forward_rounded, size: 18, color: nc.textSecondary),
+                        label: Text(
                           'Skip and go to Home',
                           style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
-                            color: Colors.black87,
+                            color: nc.textSecondary,
                           ),
                         ),
                       ),
@@ -795,6 +801,7 @@ class _UploadScreenState extends State<UploadScreen> {
     required IconData icon,
     required String text,
   }) {
+    final nc = context.ncColors;
     return Row(
       children: [
         Container(
@@ -802,7 +809,7 @@ class _UploadScreenState extends State<UploadScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFFFFE500),
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.black, width: 1.5),
+            border: Border.all(color: nc.border, width: 1.5),
           ),
           child: Icon(icon, size: 16, color: Colors.black),
         ),
@@ -810,9 +817,9 @@ class _UploadScreenState extends State<UploadScreen> {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'SpaceGrotesk',
-              color: Colors.black,
+              color: nc.textPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 13,
             ),

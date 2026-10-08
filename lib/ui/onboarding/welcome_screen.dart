@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 import 'notification_explainer_screen.dart';
 
 /// Welcome onboarding screen presenting value proposition and direct "Get started" entry.
@@ -33,8 +34,10 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.background,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -56,11 +59,11 @@ class WelcomeScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFE500),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.black, width: 2.5),
-                            boxShadow: const [
+                            border: Border.all(color: nc.border, width: 2.5),
+                            boxShadow: [
                               BoxShadow(
-                                color: Colors.black,
-                                offset: Offset(2.5, 2.5),
+                                color: nc.shadow,
+                                offset: const Offset(2.5, 2.5),
                                 blurRadius: 0,
                               ),
                             ],
@@ -80,14 +83,14 @@ class WelcomeScreen extends StatelessWidget {
                       const SizedBox(height: 14),
 
                       // Main Headline
-                      const Text(
+                      Text(
                         'Never miss a class\nor a quiz.',
                         style: TextStyle(
                           fontFamily: 'SpaceGrotesk',
                           fontWeight: FontWeight.w900,
                           fontSize: 34,
                           height: 1.1,
-                          color: Colors.black,
+                          color: nc.textPrimary,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -123,11 +126,11 @@ class WelcomeScreen extends StatelessWidget {
 
                       // Direct "Get started" Action Button (No login/signup required)
                       Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(4, 4),
+                              color: nc.shadow,
+                              offset: const Offset(4, 4),
                               blurRadius: 0,
                             ),
                           ],
@@ -144,7 +147,7 @@ class WelcomeScreen extends StatelessWidget {
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(6),
-                                side: const BorderSide(color: Colors.black, width: 2.5),
+                                side: BorderSide(color: nc.border, width: 2.5),
                               ),
                             ),
                             child: const Row(
@@ -178,16 +181,16 @@ class WelcomeScreen extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: nc.surface,
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.black, width: 1.5),
+                            border: Border.all(color: nc.border, width: 1.5),
                           ),
-                          child: const Text(
+                          child: Text(
                             "Chalo, let's get organised.",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'SpaceGrotesk',
-                              color: Colors.black,
+                              color: nc.textPrimary,
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
                             ),
@@ -213,16 +216,18 @@ class WelcomeScreen extends StatelessWidget {
     required String title,
     required String subtitle,
   }) {
+    final nc = context.ncColors;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: nc.surface,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.black, width: 2.5),
-        boxShadow: const [
+        border: Border.all(color: nc.border, width: 2.5),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(3, 3),
+            color: nc.shadow,
+            offset: const Offset(3, 3),
             blurRadius: 0,
           ),
         ],
@@ -236,7 +241,7 @@ class WelcomeScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: iconColor,
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.black, width: 2.0),
+              border: Border.all(color: nc.border, width: 2.0),
             ),
             child: Icon(
               icon,
@@ -251,21 +256,21 @@ class WelcomeScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'SpaceGrotesk',
                     fontWeight: FontWeight.w900,
                     fontSize: 15,
-                    color: Colors.black,
+                    color: nc.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'SpaceGrotesk',
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
-                    color: Colors.black87,
+                    color: nc.textSecondary,
                     height: 1.3,
                   ),
                 ),

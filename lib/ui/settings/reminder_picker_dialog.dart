@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 import '../../data/models/user_settings.dart';
 
 /// Modal dialog for selecting class reminder pre-notification lead time (Flow 7).
@@ -45,11 +46,13 @@ class _ReminderPickerDialogState extends State<ReminderPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
+
     return AlertDialog(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: Colors.black, width: 3.5),
+        side: BorderSide(color: nc.border, width: 3.5),
       ),
       title: Row(
         children: [
@@ -58,7 +61,7 @@ class _ReminderPickerDialogState extends State<ReminderPickerDialog> {
             decoration: BoxDecoration(
               color: const Color(0xFFFF5500),
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.black, width: 1.5),
+              border: Border.all(color: nc.border, width: 1.5),
             ),
             child: const Icon(
               Icons.school_outlined,
@@ -67,13 +70,13 @@ class _ReminderPickerDialogState extends State<ReminderPickerDialog> {
             ),
           ),
           const SizedBox(width: 12),
-          const Text(
+          Text(
             'Class reminder',
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
               fontWeight: FontWeight.w900,
               fontSize: 20,
-              color: Colors.black,
+              color: nc.textPrimary,
             ),
           ),
         ],
@@ -90,15 +93,15 @@ class _ReminderPickerDialogState extends State<ReminderPickerDialog> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               child: Container(
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFFFE500) : Colors.white,
+                  color: isSelected ? const Color(0xFFFFE500) : nc.background,
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                    color: Colors.black,
+                    color: nc.border,
                     width: isSelected ? 2.5 : 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
+                      color: nc.shadow,
                       offset: isSelected ? const Offset(2, 2) : const Offset(1.5, 1.5),
                       blurRadius: 0,
                     ),
@@ -112,14 +115,14 @@ class _ReminderPickerDialogState extends State<ReminderPickerDialog> {
                       isSelected
                           ? Icons.radio_button_checked_rounded
                           : Icons.radio_button_unchecked_rounded,
-                      color: Colors.black,
+                      color: isSelected ? Colors.black : nc.icon,
                     ),
                     title: Text(
                       label,
                       style: TextStyle(
                         fontFamily: 'SpaceGrotesk',
                         fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                        color: Colors.black,
+                        color: isSelected ? Colors.black : nc.textPrimary,
                       ),
                     ),
                     onTap: () {
@@ -137,12 +140,12 @@ class _ReminderPickerDialogState extends State<ReminderPickerDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
+          child: Text(
             'Cancel',
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
               fontWeight: FontWeight.w900,
-              color: Colors.black,
+              color: nc.textPrimary,
             ),
           ),
         ),

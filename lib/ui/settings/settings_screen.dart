@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/theme/next_class_colors.dart';
 import '../../data/models/scan_quota.dart';
 import '../../data/models/user_settings.dart';
 import '../../data/repositories/settings_repository.dart';
@@ -121,16 +123,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final nc = context.ncColors;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF6EE),
+        backgroundColor: nc.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleSpacing: 16,
-        shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
+        shape: Border(bottom: BorderSide(color: nc.border, width: 3.0)),
         title: Row(
           children: [
             Container(
@@ -138,11 +141,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFFFF5500), // Saturated orange
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: Colors.black, width: 2.5),
-                boxShadow: const [
+                border: Border.all(color: nc.border, width: 2.5),
+                boxShadow: [
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(2.5, 2.5),
+                    color: nc.shadow,
+                    offset: const Offset(2.5, 2.5),
                     blurRadius: 0,
                   ),
                 ],
@@ -195,13 +198,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Class reminder',
                                   style: TextStyle(
                                     fontFamily: 'SpaceGrotesk',
                                     fontWeight: FontWeight.w900,
                                     fontSize: 15,
-                                    color: Colors.black,
+                                    color: nc.textPrimary,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -209,9 +212,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   UserSettings.classReminderLabel(
                                     _provider.classReminderMinutes,
                                   ),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'SpaceGrotesk',
-                                    color: Color(0xFF222222),
+                                    color: nc.textSecondary,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
                                   ),
@@ -220,7 +223,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.tune, color: Colors.black, size: 20),
+                            icon: Icon(Icons.tune, color: nc.icon, size: 20),
                             tooltip: 'Select reminder time',
                             onPressed: () async {
                               final res = await ReminderPickerDialog.show(
@@ -260,7 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             showSelectedIcon: false,
                             style: ButtonStyle(
                               side: WidgetStateProperty.all(
-                                const BorderSide(color: Colors.black, width: 2.0),
+                                BorderSide(color: nc.border, width: 2.0),
                               ),
                               shape: WidgetStateProperty.all(
                                 RoundedRectangleBorder(
@@ -271,19 +274,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 if (states.contains(WidgetState.selected)) {
                                   return const Color(0xFFFFE500);
                                 }
-                                return Colors.white;
+                                return nc.surface;
                               }),
-                              foregroundColor: WidgetStateProperty.all(Colors.black),
+                              foregroundColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return Colors.black;
+                                }
+                                return nc.textPrimary;
+                              }),
                               textStyle: WidgetStateProperty.all(
                                 const TextStyle(
                                   fontFamily: 'SpaceGrotesk',
                                   fontWeight: FontWeight.w900,
                                   fontSize: 12.5,
-                                  color: Colors.black,
                                 ),
                               ),
                             ),
-                            segments: const [
+                            segments: [
                               ButtonSegment<int?>(
                                 value: null,
                                 label: Text(
@@ -292,7 +299,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     fontFamily: 'SpaceGrotesk',
                                     fontWeight: FontWeight.w900,
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: _provider.classReminderMinutes == null ? Colors.black : nc.textPrimary,
                                   ),
                                 ),
                               ),
@@ -304,7 +311,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     fontFamily: 'SpaceGrotesk',
                                     fontWeight: FontWeight.w900,
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: _provider.classReminderMinutes == 5 ? Colors.black : nc.textPrimary,
                                   ),
                                 ),
                               ),
@@ -316,7 +323,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     fontFamily: 'SpaceGrotesk',
                                     fontWeight: FontWeight.w900,
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: _provider.classReminderMinutes == 10 ? Colors.black : nc.textPrimary,
                                   ),
                                 ),
                               ),
@@ -328,7 +335,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     fontFamily: 'SpaceGrotesk',
                                     fontWeight: FontWeight.w900,
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: _provider.classReminderMinutes == 15 ? Colors.black : nc.textPrimary,
                                   ),
                                 ),
                               ),
@@ -340,7 +347,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     fontFamily: 'SpaceGrotesk',
                                     fontWeight: FontWeight.w900,
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: _provider.classReminderMinutes == 30 ? Colors.black : nc.textPrimary,
                                   ),
                                 ),
                               ),
@@ -352,7 +359,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     fontFamily: 'SpaceGrotesk',
                                     fontWeight: FontWeight.w900,
                                     fontSize: 12,
-                                    color: Colors.black,
+                                    color: _provider.classReminderMinutes == 60 ? Colors.black : nc.textPrimary,
                                   ),
                                 ),
                               ),
@@ -381,26 +388,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
-                const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
+                Divider(height: 1, thickness: 1.5, color: nc.border.withValues(alpha: 0.2)),
 
                 // Quiz Reminder Toggle
                 SwitchListTile(
                   key: const Key('quiz_reminder_switch'),
                   secondary: _buildLeadingIcon(Icons.quiz_outlined, const Color(0xFF00E676)),
-                  title: const Text(
+                  title: Text(
                     'Quiz reminder',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
-                      color: Colors.black,
+                      color: nc.textPrimary,
                     ),
                   ),
-                  subtitle: const Text(
+                  subtitle: Text(
                     'The evening before',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
-                      color: Color(0xFF222222),
+                      color: nc.textSecondary,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
@@ -408,7 +415,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   value: _provider.quizReminderEnabled,
                   onChanged: (val) => _provider.toggleQuizReminder(val),
                 ),
-                const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
+                Divider(height: 1, thickness: 1.5, color: nc.border.withValues(alpha: 0.2)),
 
                 // Quiz Reminder Time Picker Tile
                 ListTile(
@@ -425,7 +432,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       fontFamily: 'SpaceGrotesk',
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
-                      color: _provider.quizReminderEnabled ? Colors.black : Colors.black54,
+                      color: _provider.quizReminderEnabled ? nc.textPrimary : nc.textSecondary,
                     ),
                   ),
                   trailing: Container(
@@ -436,9 +443,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     decoration: BoxDecoration(
                       color: _provider.quizReminderEnabled
                           ? const Color(0xFFFFE500)
-                          : const Color(0xFFEEEEEE),
+                          : nc.surface,
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.black, width: 2.0),
+                      border: Border.all(color: nc.border, width: 2.0),
                     ),
                     child: Text(
                       _provider.formattedQuizReminderTime,
@@ -448,7 +455,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         fontSize: 13,
                         color: _provider.quizReminderEnabled
                             ? Colors.black
-                            : Colors.black54,
+                            : nc.textSecondary,
                       ),
                     ),
                   ),
@@ -472,20 +479,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Icons.notifications_active_outlined,
                     const Color(0xFFFFE500),
                   ),
-                  title: const Text(
+                  title: Text(
                     'Allow notifications',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
-                      color: Colors.black,
+                      color: nc.textPrimary,
                     ),
                   ),
-                  subtitle: const Text(
+                  subtitle: Text(
                     'Required for class and quiz reminders',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
-                      color: Color(0xFF222222),
+                      color: nc.textSecondary,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
@@ -541,28 +548,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Icons.calendar_month_outlined,
                     const Color(0xFF00E5FF),
                   ),
-                  title: const Text(
+                  title: Text(
                     'Edit timetable',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
-                      color: Colors.black,
+                      color: nc.textPrimary,
                     ),
                   ),
-                  subtitle: const Text(
+                  subtitle: Text(
                     'Add, modify, or remove classes',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
-                      color: Color(0xFF222222),
+                      color: nc.textSecondary,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
                   ),
-                  trailing: const Icon(Icons.chevron_right_rounded, color: Colors.black, size: 24),
+                  trailing: Icon(Icons.chevron_right_rounded, color: nc.icon, size: 24),
                   onTap: widget.onEditTimetable,
                 ),
-                const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
+                Divider(height: 1, thickness: 1.5, color: nc.border.withValues(alpha: 0.2)),
 
                 // Upload New Timetable Tile with Quota
                 ListTile(
@@ -571,29 +578,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Icons.upload_file_rounded,
                     const Color(0xFFB388FF),
                   ),
-                  title: const Text(
+                  title: Text(
                     'Upload new timetable',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
-                      color: Colors.black,
+                      color: nc.textPrimary,
                     ),
                   ),
-                  subtitle: const Text(
+                  subtitle: Text(
                     'Scan or upload a new schedule',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
-                      color: Color(0xFF222222),
+                      color: nc.textSecondary,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
                   ),
-                  trailing: const Icon(Icons.chevron_right_rounded, color: Colors.black, size: 24),
+                  trailing: Icon(Icons.chevron_right_rounded, color: nc.icon, size: 24),
                   onTap: _handleUploadNewTimetable,
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+
+            // ================= APPEARANCE =================
+            _buildSectionHeader(theme, 'APPEARANCE', stamp: 'THM01 / REVO'),
+            _buildThemeSelector(theme),
             const SizedBox(height: 24),
 
             // ================= ABOUT =================
@@ -606,25 +618,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Icons.mail_outline_rounded,
                     const Color(0xFFFFE500),
                   ),
-                  title: const Text(
+                  title: Text(
                     'Contact support',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
-                      color: Colors.black,
+                      color: nc.textPrimary,
                     ),
                   ),
-                  subtitle: const Text(
+                  subtitle: Text(
                     'support@nextclass.app',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
-                      color: Color(0xFF222222),
+                      color: nc.textSecondary,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
                   ),
-                  trailing: const Icon(Icons.open_in_new_rounded, size: 20, color: Colors.black),
+                  trailing: Icon(Icons.open_in_new_rounded, size: 20, color: nc.icon),
                   onTap: widget.onContactSupport ??
                       () {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -636,22 +648,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         );
                       },
                 ),
-                const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
+                Divider(height: 1, thickness: 1.5, color: nc.border.withValues(alpha: 0.2)),
                 ListTile(
                   leading: _buildLeadingIcon(
                     Icons.privacy_tip_outlined,
                     const Color(0xFFFF5500),
                   ),
-                  title: const Text(
+                  title: Text(
                     'Privacy Policy',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
-                      color: Colors.black,
+                      color: nc.textPrimary,
                     ),
                   ),
-                  trailing: const Icon(Icons.chevron_right_rounded, size: 24, color: Colors.black),
+                  trailing: Icon(Icons.chevron_right_rounded, size: 24, color: nc.icon),
                   onTap: widget.onPrivacyPolicy ??
                       () {
                         Navigator.of(context).push(
@@ -661,19 +673,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         );
                       },
                 ),
-                const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
+                Divider(height: 1, thickness: 1.5, color: nc.border.withValues(alpha: 0.2)),
                 ListTile(
                   leading: _buildLeadingIcon(
                     Icons.info_outline_rounded,
                     const Color(0xFF00E676),
                   ),
-                  title: const Text(
+                  title: Text(
                     'Version',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
-                      color: Colors.black,
+                      color: nc.textPrimary,
                     ),
                   ),
                   trailing: Container(
@@ -681,7 +693,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFE500),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.black, width: 1.5),
+                      border: Border.all(color: nc.border, width: 1.5),
                     ),
                     child: const Text(
                       '1.0.0',
@@ -695,7 +707,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 if (widget.onSignOut != null) ...[
-                  const Divider(height: 1, thickness: 1.5, color: Color(0xFFEEEEEE)),
+                  Divider(height: 1, thickness: 1.5, color: nc.border.withValues(alpha: 0.2)),
                   // Sign Out Button (shown only if sign out callback is provided)
                   ListTile(
                     key: const Key('sign_out_tile'),
@@ -725,22 +737,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildLeadingIcon(IconData icon, Color bgColor, {bool enabled = true}) {
+    final nc = context.ncColors;
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: enabled ? bgColor : const Color(0xFFE0E0E0),
+        color: enabled ? bgColor : (nc.isDark ? const Color(0xFF333333) : const Color(0xFFE0E0E0)),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Colors.black, width: 2.0),
+        border: Border.all(color: nc.border, width: 2.0),
       ),
       child: Icon(
         icon,
         size: 18,
-        color: enabled ? Colors.black : Colors.black54,
+        color: enabled ? Colors.black : nc.textSecondary,
       ),
     );
   }
 
   Widget _buildSectionHeader(ThemeData theme, String title, {String? stamp}) {
+    final nc = context.ncColors;
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8, right: 4),
       child: Row(
@@ -749,12 +763,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'SpaceGrotesk',
                 fontWeight: FontWeight.w900,
                 fontSize: 14,
                 letterSpacing: 1.1,
-                color: Colors.black,
+                color: nc.textPrimary,
               ),
             ),
           ),
@@ -784,19 +798,123 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildThemeSelector(ThemeData theme) {
+    final nc = context.ncColors;
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppTheme.themeModeNotifier,
+      builder: (context, currentMode, _) {
+        return _buildCardGroup(
+          theme,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      _buildLeadingIcon(Icons.palette_outlined, const Color(0xFF00E5FF)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'App theme',
+                              style: TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                color: nc.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              currentMode == ThemeMode.system
+                                  ? 'System Default'
+                                  : (currentMode == ThemeMode.light ? 'Light Mode' : 'Dark Mode'),
+                              style: TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                color: nc.textSecondary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      _buildThemeChip('SYSTEM', ThemeMode.system, currentMode, nc),
+                      const SizedBox(width: 8),
+                      _buildThemeChip('LIGHT', ThemeMode.light, currentMode, nc),
+                      const SizedBox(width: 8),
+                      _buildThemeChip('DARK', ThemeMode.dark, currentMode, nc),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildThemeChip(String label, ThemeMode mode, ThemeMode currentMode, NextClassColors nc) {
+    final isSelected = currentMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => AppTheme.setThemeMode(mode),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFFFE500) : nc.surface,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: nc.border, width: 2.0),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: nc.shadow,
+                      offset: const Offset(2, 2),
+                      blurRadius: 0,
+                    ),
+                  ]
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+              letterSpacing: 0.5,
+              color: isSelected ? Colors.black : nc.textPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCardGroup(ThemeData theme, {required List<Widget> children}) {
+    final nc = context.ncColors;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: nc.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: Colors.black,
+          color: nc.border,
           width: 3.0,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(3.5, 3.5),
+            color: nc.shadow,
+            offset: const Offset(3.5, 3.5),
             blurRadius: 0,
           ),
         ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 import '../../data/models/quiz_item.dart';
 import '../../data/repositories/quiz_repository.dart';
@@ -144,29 +145,30 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final nc = context.ncColors;
     final hasTimetable = _provider.hasTimetableClasses;
     final hasQuizzes = _provider.hasActiveQuizzes;
     final grouped = _provider.groupedQuizzes;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF6EE),
+        backgroundColor: nc.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleSpacing: 16,
-        shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
+        shape: Border(bottom: BorderSide(color: nc.border, width: 3.0)),
         title: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color: const Color(0xFFFFE500),
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.black, width: 2.5),
-            boxShadow: const [
+            border: Border.all(color: nc.border, width: 2.5),
+            boxShadow: [
               BoxShadow(
-                color: Colors.black,
-                offset: Offset(2.5, 2.5),
+                color: nc.shadow,
+                offset: const Offset(2.5, 2.5),
                 blurRadius: 0,
               ),
             ],
@@ -191,18 +193,18 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: nc.surface,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.black, width: 2),
-                  boxShadow: const [
+                  border: Border.all(color: nc.border, width: 2),
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(2, 2),
+                      color: nc.shadow,
+                      offset: const Offset(2, 2),
                       blurRadius: 0,
                     ),
                   ],
                 ),
-                child: const Icon(Icons.settings, size: 20, color: Colors.black),
+                child: Icon(Icons.settings, size: 20, color: nc.icon),
               ),
             ),
           ),
@@ -327,13 +329,13 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Your quizzes',
                                       style: TextStyle(
                                         fontFamily: 'SpaceGrotesk',
                                         fontWeight: FontWeight.w900,
                                         fontSize: 20,
-                                        color: Colors.black,
+                                        color: nc.textPrimary,
                                         letterSpacing: -0.3,
                                       ),
                                     ),
@@ -342,7 +344,7 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFFFE500),
                                         borderRadius: BorderRadius.circular(3),
-                                        border: Border.all(color: Colors.black, width: 1.5),
+                                        border: Border.all(color: nc.border, width: 1.5),
                                       ),
                                       child: Text(
                                         '${_provider.activeQuizzes.length} UPCOMING',
@@ -502,19 +504,21 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
     ThemeData theme,
     bool hasTimetable,
   ) {
+    final nc = context.ncColors;
+
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(28),
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: nc.surface,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.black, width: 3),
-            boxShadow: const [
+            border: Border.all(color: nc.border, width: 3),
+            boxShadow: [
               BoxShadow(
-                color: Colors.black,
-                offset: Offset(4, 4),
+                color: nc.shadow,
+                offset: const Offset(4, 4),
                 blurRadius: 0,
               ),
             ],
@@ -544,36 +548,36 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'No quizzes yet',
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5,
-                  color: Colors.black,
+                  color: nc.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 "When your teacher announces one, add it here and we'll remind you the evening before.",
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: nc.textSecondary,
                   height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
               Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(3, 3),
+                      color: nc.shadow,
+                      offset: const Offset(3, 3),
                       blurRadius: 0,
                     ),
                   ],
@@ -596,7 +600,7 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
-                      side: const BorderSide(color: Colors.black, width: 2.5),
+                      side: BorderSide(color: nc.border, width: 2.5),
                     ),
                   ),
                 ),

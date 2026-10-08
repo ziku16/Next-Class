@@ -74,6 +74,11 @@ Future<void> _initNonCriticalServices() async {
   } catch (_) {
     // Background reminder rescheduling failure does not block user interaction.
   }
+
+  // 4. Initialize theme mode preference
+  try {
+    await AppTheme.initThemeMode();
+  } catch (_) {}
 }
 
 /// Root Application Widget for NextClass.
@@ -84,13 +89,18 @@ class NextClassApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'NextClass',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
-      home: home ?? const SplashScreen(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppTheme.themeModeNotifier,
+      builder: (context, currentMode, _) {
+        return MaterialApp(
+          title: 'NextClass',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: currentMode,
+          home: home ?? const SplashScreen(),
+        );
+      },
     );
   }
 }

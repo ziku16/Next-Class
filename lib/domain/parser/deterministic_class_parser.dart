@@ -1,10 +1,11 @@
 import '../../data/models/class_item.dart';
-import 'day_detector.dart';
+import 'class_deduplicator.dart';
+import 'field_classifiers.dart';
 import 'grid_cell_assigner.dart';
 import 'ocr_models.dart';
 import 'time_detector.dart';
 
-/// Extracted intermediate class details before finalizing into [ClassItem].
+/// Extracted candidate class representation during cell-level parsing.
 class ParsedClassCandidate {
   final String dayOfWeek;
   final String startTime;
@@ -13,6 +14,7 @@ class ParsedClassCandidate {
   final String? room;
   final String? teacher;
   final bool isAiUnsure;
+  final double confidence;
   final int columnIndex;
   final int rowIndex;
   final int startSlotIndex;
@@ -26,6 +28,7 @@ class ParsedClassCandidate {
     this.room,
     this.teacher,
     this.isAiUnsure = false,
+    this.confidence = 1.0,
     required this.columnIndex,
     required this.rowIndex,
     required this.startSlotIndex,
@@ -40,6 +43,7 @@ class ParsedClassCandidate {
     String? room,
     String? teacher,
     bool? isAiUnsure,
+    double? confidence,
     int? columnIndex,
     int? rowIndex,
     int? startSlotIndex,
@@ -53,6 +57,7 @@ class ParsedClassCandidate {
       room: room ?? this.room,
       teacher: teacher ?? this.teacher,
       isAiUnsure: isAiUnsure ?? this.isAiUnsure,
+      confidence: confidence ?? this.confidence,
       columnIndex: columnIndex ?? this.columnIndex,
       rowIndex: rowIndex ?? this.rowIndex,
       startSlotIndex: startSlotIndex ?? this.startSlotIndex,
@@ -61,14 +66,17 @@ class ParsedClassCandidate {
   }
 }
 
-/// Strict, deterministic parser that analyzes lines within timetable cells.
+/// Production-grade deterministic parser for university timetable cells.
 ///
-/// Rules:
-/// - Grid cells are the source of truth; OCR text is parsed strictly inside each cell.
-/// - Never turns rooms, teachers, lab groups, headers, footers, or day labels into subjects.
-/// - Supports splitting stacked dual lab classes within a single cell by Y-coordinate.
-/// - Rejects cells without a valid, recognizable subject.
-/// - Does not invent missing data (leaves fields empty/null).
+/// Principles:
+/// - Semantic multi-signal classification replaces positional order assumptions.
+/// - Time NEVER becomes teacher, room, or subject.
+/// - Room NEVER becomes subject or teacher.
+/// - Teacher NEVER becomes subject or room.
+/// - Header, footer, and day metadata are strictly rejected.
+/// - Zero hallucinations: missing fields remain null.
+/// - Stacked dual lab entries partitioned cleanly without data leakage.
+/// - Final canonical deduplication merges true duplicates without losing legitimate repeated classes.
 class DeterministicClassParser {
   final TimeDetector timeDetector;
 
@@ -76,62 +84,7 @@ class DeterministicClassParser {
     this.timeDetector = const TimeDetector(),
   });
 
-  // Regex patterns for Teacher identification
-  static final RegExp _teacherPrefixRegex = RegExp(
-    r'^(?:Dr\.?|Prof\.?|Professor|Mr\.?|Ms\.?|Mrs\.?|Engr\.?|Sir|Madam|Lecturer|Instructor)\s+([A-Za-z\s\.\-]+)$',
-    caseSensitive: false,
-  );
-
-  static final RegExp _teacherLabeledRegex = RegExp(
-    r'^(?:Teacher|Faculty|Instructor|Prof|Lecturer)\s*[:\-]\s*(.+)$',
-    caseSensitive: false,
-  );
-
-  // Regex patterns for Room identification
-  static final RegExp _roomLabeledRegex = RegExp(
-    r'^(?:Room|Rm\.?|Lab|Laboratory|Hall|LH|LT|CR)\s*[:\-]?\s*([A-Za-z0-9\s\.\(\)\-]+)$',
-    caseSensitive: false,
-  );
-
-  static final RegExp _roomCodeRegex = RegExp(
-    r'^(?:(?:Room|Rm\.?|Lab|Hall|LH|LT|CR)\s*[-:]?\s*)?(?:[A-Z]{1,2}[-\s]?\d{1,3}[A-Z]?|Lab\s*[-:]?\s*\d+|Hall\s*[-:]?\s*[A-Za-z0-9]+|(?:CS|EE)\s+(?:C\.?Lab|DLD\s+Lab)(?:\s*[0-9A-Za-z\(\)]+)?)$',
-    caseSensitive: false,
-  );
-
-  // Lab Group identification (e.g. "Lab Group 1", "Lab Group 2", "Group 1")
-  static final RegExp _labGroupRegex = RegExp(
-    r'\b(?:Lab\s*Group|Group)\s*([0-9A-Za-z]+)\b',
-    caseSensitive: false,
-  );
-
-  // Explicit Lecture header tokens (e.g. "Lecture 1", "Lecture 2", "Lec 3")
-  static final RegExp _lectureHeaderRegex = RegExp(
-    r'^(?:Lecture|Lec)\s*[1-5]$',
-    caseSensitive: false,
-  );
-
-  // Time range pattern (e.g. "8:30 - 10:00", "11:30 - 13:15")
-  static final RegExp _timeRangeRegex = RegExp(
-    r'^\d{1,2}[:.]\d{2}\s*[-–—to~]+\s*\d{1,2}[:.]\d{2}$',
-    caseSensitive: false,
-  );
-
-  // Footer metadata tokens (e.g. "Timetable generated: 10/1/2026", "aSc Timetables")
-  static final RegExp _footerRegex = RegExp(
-    r'(?:timetable\s*generated|asc\s*timetables|generated\s*:\s*\d|asc\b)',
-    caseSensitive: false,
-  );
-
-  // Academic Course Keywords to differentiate Subjects from Person Names
-  static final RegExp _academicSubjectKeyword = RegExp(
-    r'\b(?:Systems|Structures|Engineering|Design|Logic|Geometry|Calculus|Analytics|Analysis|Programming|Science|Networks|Intelligence|Database|Physics|Chemistry|Mathematics|English|Lab|Management|Operating|Computer|Algorithms|Ethics|Economics|Accounting|Finance|History|Psychology|Algebra|Humanities|DBS|DS|DLD|SE|AI|CS|EE|MATH|ENG|PHY|CHEM)\b',
-    caseSensitive: false,
-  );
-
   /// Parses a collection of grid cells into structured [ClassItem]s.
-  ///
-  /// For university timetables, multi-period merging is disabled by default
-  /// so that each cell remains an isolated slot.
   List<ClassItem> parseCells(
     List<TimetableCell> cells, {
     bool? allowMultiPeriodMerge,
@@ -140,36 +93,35 @@ class DeterministicClassParser {
 
     final List<ParsedClassCandidate> rawCandidates = [];
 
-    // Parse each cell independently, splitting stacked lab blocks if present
     for (final cell in cells) {
       if (cell.isEmpty) continue;
 
-      // Filter pure noise lines before processing
+      // Filter noise lines
       final validLines = cell.lines.where((l) {
         final t = l.text.trim();
         return t.isNotEmpty &&
             !RegExp(r'^[\-_=|\.]{2,}$').hasMatch(t) &&
-            !_footerRegex.hasMatch(t) &&
-            !_lectureHeaderRegex.hasMatch(t) &&
-            DayDetector.matchDay(t) == null;
+            !FieldClassifiers.isFooterOrNoise(t) &&
+            !FieldClassifiers.isLectureHeader(t) &&
+            !FieldClassifiers.isDayName(t);
       }).toList();
 
       if (validLines.isEmpty) continue;
 
+      // Partition cell into class blocks (handles stacked labs e.g. DBS(Lab) + DS(Lab))
       final blocks = _splitLinesIntoClassBlocks(validLines);
       for (final blockLines in blocks) {
         final candidate = _parseBlock(blockLines, cell);
-        if (candidate != null && _isValidSubject(candidate.subject)) {
+        if (candidate != null && FieldClassifiers.isValidSubject(candidate.subject)) {
           rawCandidates.add(candidate);
         }
       }
     }
 
-    // Continuous/transposed grids merge across time rows.
-    // University timetable lecture slots (Days=Rows, Columns=Lectures) are strictly isolated.
+    // Merge multi-period classes if requested/applicable
     final isUniversityGrid = cells.any((c) => c.isDaysAsRows);
     final shouldMerge = allowMultiPeriodMerge ?? (!isUniversityGrid);
-    final mergedCandidates = shouldMerge
+    final processedCandidates = shouldMerge
         ? _mergeConsecutiveClasses(rawCandidates)
         : rawCandidates;
 
@@ -178,9 +130,9 @@ class DeterministicClassParser {
     final Map<String, int> subjectColorMap = {};
     int colorCounter = 0;
 
-    for (int i = 0; i < mergedCandidates.length; i++) {
-      final cand = mergedCandidates[i];
-      final normSubject = cand.subject.trim();
+    for (int i = 0; i < processedCandidates.length; i++) {
+      final cand = processedCandidates[i];
+      final normSubject = FieldClassifiers.cleanSubject(cand.subject);
       final key = normSubject.toLowerCase();
 
       final colorIndex = subjectColorMap.putIfAbsent(key, () {
@@ -202,17 +154,20 @@ class DeterministicClassParser {
       ));
     }
 
-    // Sort chronologically by day order, then start time
-    result.sort((a, b) {
+    // Level 3: Canonical Timetable Deduplication
+    final deduplicated = ClassDeduplicator.deduplicateClasses(result);
+
+    // Sort chronologically by weekday, then start time
+    deduplicated.sort((a, b) {
       final d = a.dayIndex.compareTo(b.dayIndex);
       if (d != 0) return d;
       return a.startMinutes.compareTo(b.startMinutes);
     });
 
-    return result;
+    return deduplicated;
   }
 
-  /// Splits a cell's lines into 1 or 2 distinct class blocks if multiple stacked classes/labs exist.
+  /// Partitions cell lines into separate blocks when stacked classes/labs exist.
   List<List<OcrTextLine>> _splitLinesIntoClassBlocks(List<OcrTextLine> lines) {
     if (lines.length <= 1) return [lines];
 
@@ -220,10 +175,8 @@ class DeterministicClassParser {
     final List<List<OcrTextLine>> blocks = [];
     List<OcrTextLine> currentBlock = [lines.first];
 
-    bool currentBlockHasLabHeading = _isLabHeading(lines.first.text);
-    bool currentBlockHasTeacherPrefix = _hasTeacherPrefix(lines.first.text);
-    bool currentBlockHasLabGroup = _labGroupRegex.hasMatch(lines.first.text);
-    bool currentBlockHasSubject = _isValidSubject(lines.first.text);
+    bool currentHasLabHeading = FieldClassifiers.isLabHeading(lines.first.text);
+    bool currentHasTeacher = FieldClassifiers.isTeacher(lines.first.text);
 
     for (int i = 1; i < lines.length; i++) {
       final currentLine = lines[i];
@@ -233,48 +186,33 @@ class DeterministicClassParser {
       final gap = currentLine.top - prevLine.bottom;
       final isLargeGap = gap > (avgLineHeight * 1.3).clamp(18.0, 50.0);
 
-      final isLabHeading = _isLabHeading(text);
-      final hasTeacherPrefix = _hasTeacherPrefix(text);
-      final hasLabGroup = _labGroupRegex.hasMatch(text);
-      final isValidSubj = _isValidSubject(text);
+      final isLabHeading = FieldClassifiers.isLabHeading(text);
+      final isTeacher = FieldClassifiers.isTeacher(text);
 
-      // Conditions indicating a new stacked class entry inside this cell:
       bool isNewBlock = false;
 
-      // 1. A new lab heading (e.g. "DS(Lab)") when current block already has a lab heading or teacher
-      if (isLabHeading && (currentBlockHasLabHeading || currentBlockHasTeacherPrefix || currentBlock.length >= 2)) {
+      // 1. A new lab heading (e.g. "DS(Lab)") after another lab heading or teacher
+      if (isLabHeading && (currentHasLabHeading || currentHasTeacher || currentBlock.length >= 2)) {
         isNewBlock = true;
       }
-      // 2. A second teacher prefix (e.g. Mr. Bilal Bukhari) when current block already has a teacher prefix
-      else if (hasTeacherPrefix && currentBlockHasTeacherPrefix) {
+      // 2. A second teacher prefix when current block already has one
+      else if (isTeacher && currentHasTeacher) {
         isNewBlock = true;
       }
-      // 3. A second Lab Group (e.g. Lab Group 2) when current block already has a lab group
-      else if (hasLabGroup && currentBlockHasLabGroup) {
-        isNewBlock = true;
-      }
-      // 4. A new distinct subject when current block already has a valid subject and teacher/lab
-      else if (isValidSubj && currentBlockHasSubject && (currentBlockHasTeacherPrefix || currentBlockHasLabHeading || currentBlock.length >= 3)) {
-        isNewBlock = true;
-      }
-      // 5. Large vertical gap with subject-like or lab heading text
-      else if (isLargeGap && currentBlock.length >= 3 && (isLabHeading || hasTeacherPrefix || isValidSubj)) {
+      // 3. Substantial vertical spatial gap + new subject/teacher heading
+      else if (isLargeGap && (FieldClassifiers.isValidSubject(text) || isTeacher) && currentBlock.length >= 2) {
         isNewBlock = true;
       }
 
       if (isNewBlock) {
         blocks.add(currentBlock);
         currentBlock = [currentLine];
-        currentBlockHasLabHeading = isLabHeading;
-        currentBlockHasTeacherPrefix = hasTeacherPrefix;
-        currentBlockHasLabGroup = hasLabGroup;
-        currentBlockHasSubject = isValidSubj;
+        currentHasLabHeading = isLabHeading;
+        currentHasTeacher = isTeacher;
       } else {
         currentBlock.add(currentLine);
-        if (isLabHeading) currentBlockHasLabHeading = true;
-        if (hasTeacherPrefix) currentBlockHasTeacherPrefix = true;
-        if (hasLabGroup) currentBlockHasLabGroup = true;
-        if (isValidSubj) currentBlockHasSubject = true;
+        if (isLabHeading) currentHasLabHeading = true;
+        if (isTeacher) currentHasTeacher = true;
       }
     }
 
@@ -283,17 +221,6 @@ class DeterministicClassParser {
     }
 
     return blocks;
-  }
-
-  /// Checks if text looks like a lab heading (e.g. "DBS(Lab)", "DS(Lab)", "DBS (Lab)", "CS(Lab)")
-  bool _isLabHeading(String text) {
-    return RegExp(r'\((?:Lab|lab)\)', caseSensitive: false).hasMatch(text) ||
-        RegExp(r'\b[A-Za-z]{2,5}\s*\((?:Lab|lab)\)', caseSensitive: false).hasMatch(text);
-  }
-
-  /// Checks if text starts with an explicit teacher prefix or label
-  bool _hasTeacherPrefix(String text) {
-    return _teacherPrefixRegex.hasMatch(text) || _teacherLabeledRegex.hasMatch(text);
   }
 
   /// Parses text lines of a single class block within a cell into a [ParsedClassCandidate].
@@ -306,7 +233,6 @@ class DeterministicClassParser {
     String? labGroup;
     String startTime = cell.startTime;
     String endTime = cell.endTime;
-    bool isAiUnsure = false;
 
     final unassignedLines = <String>[];
 
@@ -314,8 +240,11 @@ class DeterministicClassParser {
       String line = lineObj.text.trim();
       if (line.isEmpty) continue;
       if (RegExp(r'^[\-_=|\.]{2,}$').hasMatch(line)) continue;
-      if (_lectureHeaderRegex.hasMatch(line) || _footerRegex.hasMatch(line)) continue;
-      if (DayDetector.matchDay(line) != null) continue;
+      if (FieldClassifiers.isFooterOrNoise(line) ||
+          FieldClassifiers.isLectureHeader(line) ||
+          FieldClassifiers.isDayName(line)) {
+        continue;
+      }
 
       // 1. Check if line contains internal time range (e.g. "08:15 - 09:45")
       final range = timeDetector.parseTimeRange(line);
@@ -325,63 +254,55 @@ class DeterministicClassParser {
         final stripped = line
             .replaceAll(RegExp(r'\b\d{1,2}[:.]\d{2}\s*(am|pm)?\s*[-–—to~]+\s*\d{1,2}[:.]\d{2}\s*(am|pm)?', caseSensitive: false), '')
             .trim();
-        if (stripped.length > 2 && !_isMetadataOrNoise(stripped)) {
+        if (stripped.length > 2 && !_isExcludedFromSubject(stripped)) {
           line = stripped;
         } else {
           continue;
         }
+      } else if (FieldClassifiers.isTime(line)) {
+        // Pure time line - NEVER allow into teacher, room, or subject
+        continue;
       }
 
       // 2. Check Lab Group (e.g. "Lab Group 1", "Group 2")
-      final labGroupMatch = _labGroupRegex.firstMatch(line);
-      if (labGroupMatch != null) {
-        labGroup = labGroupMatch.group(0)?.trim();
-        // If line is ONLY the lab group, consume it
-        if (line.replaceAll(_labGroupRegex, '').trim().length <= 2) {
-          continue;
+      if (FieldClassifiers.isLabGroup(line)) {
+        final m = FieldClassifiers.labGroupPattern.firstMatch(line);
+        labGroup = m?.group(0)?.trim() ?? line;
+        continue;
+      }
+
+      // 3. Check Teacher (Prefix or Label or Person-Name structure)
+      if (FieldClassifiers.isTeacher(line)) {
+        final labelMatch = FieldClassifiers.teacherLabeledPattern.firstMatch(line);
+        if (labelMatch != null) {
+          teacher = labelMatch.group(1)?.trim();
+        } else {
+          teacher = line;
         }
-      }
-
-      // 3. Check Teacher (Prefix or Label)
-      final teacherLabelMatch = _teacherLabeledRegex.firstMatch(line);
-      if (teacherLabelMatch != null) {
-        teacher = teacherLabelMatch.group(1)?.trim();
         continue;
       }
 
-      final teacherPrefixMatch = _teacherPrefixRegex.firstMatch(line);
-      if (teacherPrefixMatch != null) {
-        teacher = line.trim();
+      // 4. Check Room / Location (NEVER allows to become subject)
+      if (FieldClassifiers.isLocation(line)) {
+        room = line;
         continue;
       }
 
-      // 4. Check Room / Lab
-      final roomLabelMatch = _roomLabeledRegex.firstMatch(line);
-      if (roomLabelMatch != null) {
-        room = line.trim();
-        continue;
-      }
-
-      if (_isRoomCode(line) && line.length <= 24) {
-        room = line.trim();
-        continue;
-      }
-
-      // 5. Check if line is inline combination like "Physics (Room B-12)"
+      // 5. Check inline parenthetical patterns like "Physics (Room B-12)" or "DLD (Mr. Ali)"
       final parenMatch = RegExp(r'^(.+?)\s*\(([^)]+)\)$').firstMatch(line);
-      if (parenMatch != null && !_isLabHeading(line)) {
+      if (parenMatch != null && !FieldClassifiers.isLabHeading(line)) {
         final mainPart = parenMatch.group(1)!.trim();
         final inside = parenMatch.group(2)!.trim();
 
-        if (_isRoomCode(inside) || _roomLabeledRegex.hasMatch(inside)) {
+        if (FieldClassifiers.isLocation(inside)) {
           room = inside;
-          if (_isValidSubject(mainPart)) {
+          if (FieldClassifiers.isValidSubject(mainPart)) {
             unassignedLines.add(mainPart);
           }
           continue;
-        } else if (_teacherPrefixRegex.hasMatch(inside)) {
+        } else if (FieldClassifiers.isTeacher(inside)) {
           teacher = inside;
-          if (_isValidSubject(mainPart)) {
+          if (FieldClassifiers.isValidSubject(mainPart)) {
             unassignedLines.add(mainPart);
           }
           continue;
@@ -391,52 +312,59 @@ class DeterministicClassParser {
       unassignedLines.add(line);
     }
 
-    // 6. Extract Subject and secondary unassigned lines
+    // 6. Semantic Subject Extraction from remaining lines
     if (unassignedLines.isNotEmpty) {
-      // Find the first line that qualifies as a valid subject
       int subjIdx = -1;
       for (int i = 0; i < unassignedLines.length; i++) {
-        if (_isValidSubject(unassignedLines[i])) {
+        final cand = unassignedLines[i];
+        if (FieldClassifiers.isValidSubject(cand) && !_isExcludedFromSubject(cand)) {
           subjIdx = i;
           break;
         }
       }
 
       if (subjIdx >= 0) {
-        subject = _cleanSubject(unassignedLines[subjIdx]);
+        subject = FieldClassifiers.cleanSubject(unassignedLines[subjIdx]);
 
-        // Check other lines for teacher or room if still null
+        // Evaluate remaining unassigned lines for secondary teacher or room
         for (int i = 0; i < unassignedLines.length; i++) {
           if (i == subjIdx) continue;
           final sec = unassignedLines[i].trim();
-          if (teacher == null && _looksLikePersonName(sec)) {
+          if (teacher == null && FieldClassifiers.isTeacher(sec)) {
             teacher = sec;
-          } else if (room == null && (_looksLikeRoom(sec) || _isRoomCode(sec))) {
+          } else if (room == null && FieldClassifiers.isLocation(sec)) {
             room = sec;
           }
         }
       }
     }
 
-    // A valid class MUST have a valid recognizable subject
-    if (subject == null || !_isValidSubject(subject)) {
+    // A valid class MUST have a genuine, recognizable subject
+    if (subject == null || !FieldClassifiers.isValidSubject(subject)) {
       return null;
     }
 
-    // 7. Combine Room and Lab Group
+    // Combine Room and Lab Group cleanly
     if (labGroup != null && labGroup.isNotEmpty) {
       if (room != null && room.isNotEmpty) {
         if (!room.toLowerCase().contains(labGroup.toLowerCase())) {
-          room = '$room ($labGroup)';
+          room = '$room, $labGroup';
         }
       } else {
         room = labGroup;
       }
     }
 
-    // 8. Quality validation
+    // Calculate confidence score and AI unsure flag
+    double confidence = 1.0;
+    bool isAiUnsure = false;
+
     if (room == null || room.isEmpty) {
+      confidence -= 0.25;
       isAiUnsure = true;
+    }
+    if (teacher == null || teacher.isEmpty) {
+      confidence -= 0.15;
     }
 
     return ParsedClassCandidate(
@@ -447,6 +375,7 @@ class DeterministicClassParser {
       room: room,
       teacher: teacher,
       isAiUnsure: isAiUnsure,
+      confidence: confidence,
       columnIndex: cell.columnIndex,
       rowIndex: cell.rowIndex,
       startSlotIndex: cell.timeSlotIndex,
@@ -454,14 +383,26 @@ class DeterministicClassParser {
     );
   }
 
+  /// Strictly checks whether a string must NOT be treated as a subject.
+  bool _isExcludedFromSubject(String text) {
+    final t = text.trim();
+    if (FieldClassifiers.isTime(t)) return true;
+    if (FieldClassifiers.isLocation(t)) return true;
+    if (FieldClassifiers.isTeacher(t)) return true;
+    if (FieldClassifiers.isDayName(t)) return true;
+    if (FieldClassifiers.isLectureHeader(t)) return true;
+    if (FieldClassifiers.isLabGroup(t)) return true;
+    if (FieldClassifiers.isFooterOrNoise(t)) return true;
+    return false;
+  }
+
   /// Merges consecutive classes on the same day if they share the same subject (e.g. 3-hour lab).
   List<ParsedClassCandidate> _mergeConsecutiveClasses(List<ParsedClassCandidate> candidates) {
     if (candidates.length <= 1) return candidates;
 
     final List<ParsedClassCandidate> merged = [];
-
-    // Group by day of week
     final Map<String, List<ParsedClassCandidate>> byDay = {};
+
     for (final cand in candidates) {
       byDay.putIfAbsent(cand.dayOfWeek, () => []).add(cand);
     }
@@ -478,8 +419,8 @@ class DeterministicClassParser {
           final next = list[i + 1];
 
           final isConsecutive = next.startSlotIndex == current.endSlotIndex + 1;
-          final isSameSubject = _normalizeSubjectForComparison(current.subject) ==
-              _normalizeSubjectForComparison(next.subject);
+          final isSameSubject = FieldClassifiers.normalizeForComparison(current.subject) ==
+              FieldClassifiers.normalizeForComparison(next.subject);
 
           if (isConsecutive && isSameSubject) {
             current = current.copyWith(
@@ -501,74 +442,5 @@ class DeterministicClassParser {
     }
 
     return merged;
-  }
-
-  bool _isMetadataOrNoise(String text) {
-    final t = text.trim();
-    if (t.isEmpty || t.length < 2) return true;
-    if (RegExp(r'^[\-_=|\.]{2,}$').hasMatch(t)) return true;
-    if (_lectureHeaderRegex.hasMatch(t)) return true;
-    if (_timeRangeRegex.hasMatch(t)) return true;
-    if (DayDetector.matchDay(t) != null) return true;
-    if (_footerRegex.hasMatch(t)) return true;
-    if (RegExp(r'\b(?:semester|university\s*weekly|class\s*schedule|timetable)\b', caseSensitive: false).hasMatch(t)) return true;
-    if (_labGroupRegex.hasMatch(t) && t.replaceAll(_labGroupRegex, '').trim().length <= 2) return true;
-    if (_hasTeacherPrefix(t) || _teacherLabeledRegex.hasMatch(t)) return true;
-    if (_roomLabeledRegex.hasMatch(t) || _isRoomCode(t)) return true;
-    return false;
-  }
-
-  bool _isRoomCode(String s) {
-    final t = s.trim();
-    if (_roomCodeRegex.hasMatch(t)) return true;
-    if (RegExp(r'^(?:LT|CR|LH)\s*\d+[A-Za-z]?$', caseSensitive: false).hasMatch(t)) return true;
-    if (RegExp(r'^(?:CS|EE)\s+(?:C\.?Lab|DLD\s+Lab)\b', caseSensitive: false).hasMatch(t)) return true;
-    return false;
-  }
-
-  bool _isValidSubject(String? subject) {
-    if (subject == null) return false;
-    final t = _cleanSubject(subject);
-    if (t.length < 3) return false;
-    if (!RegExp(r'[a-zA-Z]').hasMatch(t)) return false;
-    if (_isMetadataOrNoise(t)) return false;
-    if (RegExp(r'^[^a-zA-Z]+$').hasMatch(t)) return false;
-    return true;
-  }
-
-  bool _looksLikePersonName(String s) {
-    final t = s.trim();
-    if (RegExp(r'\d').hasMatch(t)) return false;
-    if (_academicSubjectKeyword.hasMatch(t)) return false;
-    if (_isLabHeading(t)) return false;
-    if (_hasTeacherPrefix(t)) return true;
-
-    final words = t.split(RegExp(r'\s+'));
-    return words.length >= 2 &&
-        words.length <= 4 &&
-        words.every((w) => w.isNotEmpty && w[0] == w[0].toUpperCase());
-  }
-
-  bool _looksLikeRoom(String s) {
-    if (_roomLabeledRegex.hasMatch(s)) return true;
-    if (_roomCodeRegex.hasMatch(s)) return true;
-    if (RegExp(r'\b(?:C\.?Lab|Lab|LT|LH|Hall|CR)\b', caseSensitive: false).hasMatch(s)) return true;
-    return RegExp(r'\d').hasMatch(s) && s.length <= 12;
-  }
-
-  String _cleanSubject(String s) {
-    var cleaned = s
-        .replaceAll(RegExp(r'^[^\w\(\)]+|[^\w\(\)]+$'), '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    cleaned = cleaned.replaceAllMapped(
-      RegExp(r'([A-Za-z0-9])\((Lab|lab)\)', caseSensitive: false),
-      (m) => '${m.group(1)} (${m.group(2)})',
-    );
-    return cleaned;
-  }
-
-  String _normalizeSubjectForComparison(String s) {
-    return s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
   }
 }

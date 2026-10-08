@@ -52,10 +52,10 @@ class AddEditQuizSheet extends StatefulWidget {
     return showModalBottomSheet<QuizItem>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFFFAF6EE),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-        side: BorderSide(color: Colors.black, width: 3.5),
+      backgroundColor: context.ncColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+        side: BorderSide(color: context.ncColors.border, width: 3.5),
       ),
       builder: (ctx) => AddEditQuizSheet(
         initialQuiz: initialQuiz,
@@ -310,7 +310,7 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                   width: 44,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: ncColors.border,
                     borderRadius: BorderRadius.circular(2.5),
                   ),
                 ),
@@ -328,11 +328,11 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFFF5500),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.black, width: 2),
-                          boxShadow: const [
+                          border: Border.all(color: ncColors.border, width: 2),
+                          boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(2, 2),
+                              color: ncColors.shadow,
+                              offset: const Offset(2, 2),
                               blurRadius: 0,
                             ),
                           ],
@@ -342,12 +342,12 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       const SizedBox(width: 8),
                       Text(
                         isEditing ? 'Edit quiz' : 'Add quiz',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'SpaceGrotesk',
                           fontWeight: FontWeight.w900,
                           fontSize: 22,
                           letterSpacing: -0.5,
-                          color: Colors.black,
+                          color: ncColors.textPrimary,
                         ),
                       ),
                     ],
@@ -358,18 +358,18 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: ncColors.surface,
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.black, width: 2),
-                        boxShadow: const [
+                        border: Border.all(color: ncColors.border, width: 2),
+                        boxShadow: [
                           BoxShadow(
-                            color: Colors.black,
-                            offset: Offset(2, 2),
+                            color: ncColors.shadow,
+                            offset: const Offset(2, 2),
                             blurRadius: 0,
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.close, size: 18, color: Colors.black),
+                      child: Icon(Icons.close, size: 18, color: ncColors.textPrimary),
                     ),
                   ),
                 ],
@@ -399,11 +399,11 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFE500),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.black, width: 2.5),
-                          boxShadow: const [
+                          border: Border.all(color: ncColors.border, width: 2.5),
+                          boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(3, 3),
+                              color: ncColors.shadow,
+                              offset: const Offset(3, 3),
                               blurRadius: 0,
                             ),
                           ],
@@ -415,7 +415,7 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                         'Upload your timetable to link quizzes directly to your classes.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.black87,
+                          color: ncColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -424,11 +424,11 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                 ),
                 const SizedBox(height: 24),
                 Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black,
-                        offset: Offset(3, 3),
+                        color: ncColors.shadow,
+                        offset: const Offset(3, 3),
                         blurRadius: 0,
                       ),
                     ],
@@ -457,7 +457,7 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6),
-                          side: const BorderSide(color: Colors.black, width: 2.5),
+                          side: BorderSide(color: ncColors.border, width: 2.5),
                         ),
                       ),
                     ),
@@ -478,23 +478,23 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Class Dropdown Selector
-                      const Text(
+                      Text(
                         'Class',
                         style: TextStyle(
                           fontFamily: 'SpaceGrotesk',
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
-                          color: Colors.black,
+                          color: ncColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(2.5, 2.5),
+                              color: ncColors.shadow,
+                              offset: const Offset(2.5, 2.5),
                               blurRadius: 0,
                             ),
                           ],
@@ -503,29 +503,29 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                           key: const Key('quiz_class_dropdown'),
                           isExpanded: true,
                           initialValue: _selectedClassId,
-                          dropdownColor: const Color(0xFFFAF6EE),
-                          style: const TextStyle(
+                          dropdownColor: ncColors.surface,
+                          style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
                             fontWeight: FontWeight.w700,
-                            color: Colors.black,
+                            color: ncColors.inputText,
                             fontSize: 14,
                           ),
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: ncColors.inputBackground,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                            prefixIcon: const Icon(Icons.class_outlined, color: Colors.black, size: 20),
+                            prefixIcon: Icon(Icons.class_outlined, color: ncColors.textPrimary, size: 20),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                              borderSide: BorderSide(color: ncColors.border, width: 2.5),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                              borderSide: BorderSide(color: ncColors.border, width: 3.0),
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                              borderSide: BorderSide(color: ncColors.border, width: 2.5),
                             ),
                           ),
                           items: _availableClasses.map((item) {
@@ -540,7 +540,7 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                                     height: 12,
                                     decoration: BoxDecoration(
                                       color: color,
-                                      border: Border.all(color: Colors.black, width: 1.5),
+                                      border: Border.all(color: ncColors.border, width: 1.5),
                                       borderRadius: BorderRadius.circular(3),
                                     ),
                                   ),
@@ -549,10 +549,10 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                                     child: Text(
                                       '${item.subject} (${item.dayOfWeek} ${item.startTime})',
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'SpaceGrotesk',
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.black,
+                                        color: ncColors.textPrimary,
                                       ),
                                     ),
                                   ),
@@ -572,23 +572,23 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       const SizedBox(height: 16),
 
                       // Quiz Topic / Title (Required)
-                      const Text(
+                      Text(
                         'Quiz Topic / Title',
                         style: TextStyle(
                           fontFamily: 'SpaceGrotesk',
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
-                          color: Colors.black,
+                          color: ncColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(2.5, 2.5),
+                              color: ncColors.shadow,
+                              offset: const Offset(2.5, 2.5),
                               blurRadius: 0,
                             ),
                           ],
@@ -597,34 +597,34 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                           key: const Key('quiz_title_field'),
                           controller: _titleController,
                           textCapitalization: TextCapitalization.sentences,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
                             fontWeight: FontWeight.w700,
-                            color: Colors.black,
+                            color: ncColors.inputText,
                             fontSize: 14,
                           ),
                           decoration: InputDecoration(
                             hintText: 'e.g. Unit 3, Ch. 4–5, Midterm 1',
-                            hintStyle: const TextStyle(
+                            hintStyle: TextStyle(
                               fontFamily: 'SpaceGrotesk',
-                              color: Colors.black45,
+                              color: ncColors.textSecondary.withValues(alpha: 0.6),
                               fontWeight: FontWeight.w500,
                             ),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: ncColors.inputBackground,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                            prefixIcon: const Icon(Icons.edit_note_rounded, color: Colors.black, size: 22),
+                            prefixIcon: Icon(Icons.edit_note_rounded, color: ncColors.textPrimary, size: 22),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                              borderSide: BorderSide(color: ncColors.border, width: 2.5),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                              borderSide: BorderSide(color: ncColors.border, width: 3.0),
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                              borderSide: BorderSide(color: ncColors.border, width: 2.5),
                             ),
                           ),
                           validator: (val) {
@@ -638,14 +638,14 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       const SizedBox(height: 16),
 
                       // Due Date Picker Tile
-                      const Text(
+                      Text(
                         'Due Date',
                         style: TextStyle(
                           fontFamily: 'SpaceGrotesk',
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
-                          color: Colors.black,
+                          color: ncColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -658,40 +658,40 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: ncColors.inputBackground,
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.black, width: 2.5),
-                            boxShadow: const [
+                            border: Border.all(color: ncColors.border, width: 2.5),
+                            boxShadow: [
                               BoxShadow(
-                                color: Colors.black,
-                                offset: Offset(2.5, 2.5),
+                                color: ncColors.shadow,
+                                offset: const Offset(2.5, 2.5),
                                 blurRadius: 0,
                               ),
                             ],
                           ),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.calendar_today_rounded,
                                 size: 20,
-                                color: Colors.black,
+                                color: ncColors.textPrimary,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   DateFormat('EEEE, d MMMM yyyy')
                                       .format(_selectedDate),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'SpaceGrotesk',
-                                    color: Colors.black,
+                                    color: ncColors.inputText,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 14,
                                   ),
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.arrow_drop_down,
-                                color: Colors.black,
+                                color: ncColors.textPrimary,
                               ),
                             ],
                           ),
@@ -700,23 +700,23 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       const SizedBox(height: 16),
 
                       // Optional Note
-                      const Text(
+                      Text(
                         'Notes (optional)',
                         style: TextStyle(
                           fontFamily: 'SpaceGrotesk',
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
-                          color: Colors.black,
+                          color: ncColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(2.5, 2.5),
+                              color: ncColors.shadow,
+                              offset: const Offset(2.5, 2.5),
                               blurRadius: 0,
                             ),
                           ],
@@ -725,34 +725,34 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                           key: const Key('quiz_note_field'),
                           controller: _noteController,
                           maxLines: 2,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
                             fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                            color: ncColors.inputText,
                             fontSize: 14,
                           ),
                           decoration: InputDecoration(
                             hintText: 'e.g. Bring a calculator, formula sheet allowed',
-                            hintStyle: const TextStyle(
+                            hintStyle: TextStyle(
                               fontFamily: 'SpaceGrotesk',
-                              color: Colors.black45,
+                              color: ncColors.textSecondary.withValues(alpha: 0.6),
                               fontWeight: FontWeight.w500,
                             ),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: ncColors.inputBackground,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                            prefixIcon: const Icon(Icons.notes_rounded, color: Colors.black, size: 20),
+                            prefixIcon: Icon(Icons.notes_rounded, color: ncColors.textPrimary, size: 20),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                              borderSide: BorderSide(color: ncColors.border, width: 2.5),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                              borderSide: BorderSide(color: ncColors.border, width: 3.0),
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                              borderSide: BorderSide(color: ncColors.border, width: 2.5),
                             ),
                           ),
                         ),
@@ -760,25 +760,25 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       const SizedBox(height: 20),
 
                       // Reminder Timing Section
-                      const Text(
+                      Text(
                         'Reminder Time',
                         style: TextStyle(
                           fontFamily: 'SpaceGrotesk',
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
-                          color: Colors.black,
+                          color: ncColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
 
                       // Segmented Button: Night before, Morning of quiz, Specific time
                       Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(2.5, 2.5),
+                              color: ncColors.shadow,
+                              offset: const Offset(2.5, 2.5),
                               blurRadius: 0,
                             ),
                           ],
@@ -789,14 +789,26 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                             key: const Key('quiz_reminder_type_segmented'),
                             showSelectedIcon: false,
                             style: ButtonStyle(
+                              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return const Color(0xFFFF5500);
+                                }
+                                return ncColors.inputBackground;
+                              }),
+                              foregroundColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return Colors.white;
+                                }
+                                return ncColors.textPrimary;
+                              }),
                               shape: WidgetStateProperty.all(
                                 RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(6),
-                                  side: const BorderSide(color: Colors.black, width: 2.5),
+                                  side: BorderSide(color: ncColors.border, width: 2.5),
                                 ),
                               ),
                               side: WidgetStateProperty.all(
-                                const BorderSide(color: Colors.black, width: 2.5),
+                                BorderSide(color: ncColors.border, width: 2.5),
                               ),
                             ),
                             segments: const [
@@ -839,19 +851,26 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       if (_reminderType == 'custom') ...[
                         Row(
                           children: [
-                            const Text(
+                            Text(
                               'Remind on:',
                               style: TextStyle(
                                 fontFamily: 'SpaceGrotesk',
                                 fontWeight: FontWeight.w800,
                                 fontSize: 13,
-                                color: Colors.black,
+                                color: ncColors.textPrimary,
                               ),
                             ),
                             const SizedBox(width: 12),
                             ChoiceChip(
                               label: const Text('Day of quiz'),
                               selected: _customDay == 'day_of',
+                              backgroundColor: ncColors.inputBackground,
+                              selectedColor: const Color(0xFFFF5500),
+                              labelStyle: TextStyle(
+                                color: _customDay == 'day_of' ? Colors.white : ncColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              side: BorderSide(color: ncColors.border, width: 2),
                               onSelected: (selected) {
                                 if (selected) {
                                   setState(() => _customDay = 'day_of');
@@ -862,6 +881,13 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                             ChoiceChip(
                               label: const Text('Night before'),
                               selected: _customDay == 'evening_before',
+                              backgroundColor: ncColors.inputBackground,
+                              selectedColor: const Color(0xFFFF5500),
+                              labelStyle: TextStyle(
+                                color: _customDay == 'evening_before' ? Colors.white : ncColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              side: BorderSide(color: ncColors.border, width: 2),
                               onSelected: (selected) {
                                 if (selected) {
                                   setState(() => _customDay = 'evening_before');
@@ -886,13 +912,13 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                             color: const Color(0xFFFFE500),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: Colors.black,
+                              color: ncColors.border,
                               width: 2.5,
                             ),
-                            boxShadow: const [
+                            boxShadow: [
                               BoxShadow(
-                                color: Colors.black,
-                                offset: Offset(2.5, 2.5),
+                                color: ncColors.shadow,
+                                offset: const Offset(2.5, 2.5),
                                 blurRadius: 0,
                               ),
                             ],
@@ -941,10 +967,10 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: ncColors.surface,
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                    color: Colors.black,
+                                    color: ncColors.border,
                                     width: 2,
                                   ),
                                 ),
@@ -953,17 +979,17 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                                   children: [
                                     Text(
                                       _formatTimeOfDay(_reminderTime),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'SpaceGrotesk',
                                         fontWeight: FontWeight.w900,
                                         fontSize: 12,
-                                        color: Colors.black,
+                                        color: ncColors.textPrimary,
                                       ),
                                     ),
                                     const SizedBox(width: 4),
-                                    const Icon(Icons.edit_outlined,
+                                    Icon(Icons.edit_outlined,
                                         size: 14,
-                                        color: Colors.black),
+                                        color: ncColors.textPrimary),
                                   ],
                                 ),
                               ),
@@ -975,11 +1001,11 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
 
                       // Save Button
                       Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(3.5, 3.5),
+                              color: ncColors.shadow,
+                              offset: const Offset(3.5, 3.5),
                               blurRadius: 0,
                             ),
                           ],
@@ -1016,7 +1042,7 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(6),
-                                side: const BorderSide(color: Colors.black, width: 2.5),
+                                side: BorderSide(color: ncColors.border, width: 2.5),
                               ),
                             ),
                           ),

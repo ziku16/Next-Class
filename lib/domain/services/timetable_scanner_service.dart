@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../data/models/class_item.dart';
+import '../parser/class_deduplicator.dart';
 import '../parser/deterministic_class_parser.dart';
 import '../parser/grid_cell_assigner.dart';
 import '../parser/image_preprocessor.dart';
@@ -98,12 +99,21 @@ class TimetableScannerService {
         );
       }
 
-      // 3. Grid reconstruction (Columns = Days, Rows = Times)
-      final grid = gridDetector.detectGrid(ocrResult);
+      // 2.5 OCR Level Deduplication (merges overlapping duplicate bounding boxes)
+      final deduplicatedLines = ClassDeduplicator.deduplicateOcrLines(ocrResult.lines);
+      final cleanOcrResult = OcrResult(
+        blocks: ocrResult.blocks,
+        lines: deduplicatedLines,
+        fullText: ocrResult.fullText,
+        imageSize: ocrResult.imageSize,
+      );
+
+      // 3. Adaptive Grid reconstruction
+      final grid = gridDetector.detectGrid(cleanOcrResult);
 
       // 4. Assign text elements to grid cells
       final cells = cellAssigner.assignLinesToCells(
-        ocrResult: ocrResult,
+        ocrResult: cleanOcrResult,
         grid: grid,
       );
 

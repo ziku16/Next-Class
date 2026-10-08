@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 
 /// Modal bottom sheet for adding or editing an individual timetable class.
@@ -21,13 +22,14 @@ class EditClassSheet extends StatefulWidget {
     String? defaultDay,
     int? suggestedColorIndex,
   }) {
+    final nc = context.ncColors;
     return showModalBottomSheet<ClassItem>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFFFAF6EE),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-        side: BorderSide(color: Colors.black, width: 3.5),
+      backgroundColor: nc.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+        side: BorderSide(color: nc.border, width: 3.5),
       ),
       builder: (ctx) => EditClassSheet(
         initialClass: initialClass,
@@ -200,16 +202,18 @@ class _EditClassSheetState extends State<EditClassSheet> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final isEditing = widget.initialClass != null;
+    final nc = context.ncColors;
 
     final showSubjectError =
         _hasAttemptedSubmit && _subjectController.text.trim().isEmpty;
     final showTimeError = !_isTimeValid;
 
     return Container(
-      color: const Color(0xFFFAF6EE),
+      color: nc.surface,
       child: Padding(
         padding: EdgeInsets.only(bottom: bottomInset),
         child: SingleChildScrollView(
@@ -224,7 +228,7 @@ class _EditClassSheetState extends State<EditClassSheet> {
                   width: 44,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: nc.border,
                     borderRadius: BorderRadius.circular(2.5),
                   ),
                 ),
@@ -237,11 +241,11 @@ class _EditClassSheetState extends State<EditClassSheet> {
                 children: [
                   Text(
                     isEditing ? 'Edit class' : 'Add class',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
-                      color: Colors.black,
+                      color: nc.textPrimary,
                     ),
                   ),
                   GestureDetector(
@@ -250,18 +254,18 @@ class _EditClassSheetState extends State<EditClassSheet> {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: nc.surface,
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.black, width: 2.0),
-                        boxShadow: const [
+                        border: Border.all(color: nc.border, width: 2.0),
+                        boxShadow: [
                           BoxShadow(
-                            color: Colors.black,
-                            offset: Offset(2, 2),
+                            color: nc.shadow,
+                            offset: const Offset(2, 2),
                             blurRadius: 0,
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.close, size: 18, color: Colors.black),
+                      child: Icon(Icons.close, size: 18, color: nc.icon),
                     ),
                   ),
                 ],
@@ -269,45 +273,46 @@ class _EditClassSheetState extends State<EditClassSheet> {
               const SizedBox(height: 20),
 
               // Day Dropdown
-              const Text(
+              Text(
                 'Day',
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
-                  color: Colors.black,
+                  color: nc.textPrimary,
                 ),
               ),
               const SizedBox(height: 6),
               Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(2.5, 2.5),
+                      color: nc.shadow,
+                      offset: const Offset(2.5, 2.5),
                       blurRadius: 0,
                     ),
                   ],
                 ),
                 child: DropdownButtonFormField<String>(
                   initialValue: _selectedDay,
+                  dropdownColor: nc.surface,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: nc.inputBackground,
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                      borderSide: BorderSide(color: nc.border, width: 2.5),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                      borderSide: BorderSide(color: nc.border, width: 3.0),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                      borderSide: BorderSide(color: nc.border, width: 2.5),
                     ),
                   ),
                   items: ClassItem.daysOfWeek.map((day) {
@@ -315,10 +320,10 @@ class _EditClassSheetState extends State<EditClassSheet> {
                       value: day,
                       child: Text(
                         day,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'SpaceGrotesk',
                           fontWeight: FontWeight.w700,
-                          color: Colors.black,
+                          color: nc.inputText,
                         ),
                       ),
                     );
@@ -331,23 +336,23 @@ class _EditClassSheetState extends State<EditClassSheet> {
               const SizedBox(height: 16),
 
               // Subject name field
-              const Text(
+              Text(
                 'Subject',
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
-                  color: Colors.black,
+                  color: nc.textPrimary,
                 ),
               ),
               const SizedBox(height: 6),
               Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(2.5, 2.5),
+                      color: nc.shadow,
+                      offset: const Offset(2.5, 2.5),
                       blurRadius: 0,
                     ),
                   ],
@@ -355,29 +360,33 @@ class _EditClassSheetState extends State<EditClassSheet> {
                 child: TextField(
                   controller: _subjectController,
                   textCapitalization: TextCapitalization.words,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'SpaceGrotesk',
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: nc.inputText,
                   ),
                   decoration: InputDecoration(
                     hintText: 'e.g. Mathematics, Physics',
+                    hintStyle: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      color: nc.textSecondary,
+                    ),
                     errorText: showSubjectError ? 'Add a subject name' : null,
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: nc.inputBackground,
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                      borderSide: BorderSide(color: nc.border, width: 2.5),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                      borderSide: BorderSide(color: nc.border, width: 3.0),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                      borderSide: BorderSide(color: nc.border, width: 2.5),
                     ),
                   ),
                 ),
@@ -393,14 +402,14 @@ class _EditClassSheetState extends State<EditClassSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Starts',
                           style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0.5,
-                            color: Colors.black,
+                            color: nc.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -412,13 +421,13 @@ class _EditClassSheetState extends State<EditClassSheet> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 10),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(color: Colors.black, width: 2.5),
+                              color: nc.surface,
+                              border: Border.all(color: nc.border, width: 2.5),
                               borderRadius: BorderRadius.circular(6),
-                              boxShadow: const [
+                              boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black,
-                                  offset: Offset(2.5, 2.5),
+                                  color: nc.shadow,
+                                  offset: const Offset(2.5, 2.5),
                                   blurRadius: 0,
                                 ),
                               ],
@@ -428,19 +437,19 @@ class _EditClassSheetState extends State<EditClassSheet> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.schedule,
                                       size: 16,
-                                      color: Colors.black,
+                                      color: nc.icon,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       _formatDisplayTimeWithoutPeriod(_startTime),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'SpaceGrotesk',
                                         fontSize: 14,
                                         fontWeight: FontWeight.w900,
-                                        color: Colors.black,
+                                        color: nc.textPrimary,
                                       ),
                                     ),
                                   ],
@@ -454,7 +463,7 @@ class _EditClassSheetState extends State<EditClassSheet> {
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFFFE500),
                                       borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: Colors.black, width: 1.5),
+                                      border: Border.all(color: nc.border, width: 1.5),
                                     ),
                                     child: Text(
                                       _startTime.period == DayPeriod.am ? 'AM' : 'PM',
@@ -481,14 +490,14 @@ class _EditClassSheetState extends State<EditClassSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Ends',
                           style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0.5,
-                            color: Colors.black,
+                            color: nc.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -500,18 +509,18 @@ class _EditClassSheetState extends State<EditClassSheet> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 10),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: nc.surface,
                               border: Border.all(
                                 color: showTimeError
                                     ? const Color(0xFFFF1744)
-                                    : Colors.black,
+                                    : nc.border,
                                 width: 2.5,
                               ),
                               borderRadius: BorderRadius.circular(6),
-                              boxShadow: const [
+                              boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black,
-                                  offset: Offset(2.5, 2.5),
+                                  color: nc.shadow,
+                                  offset: const Offset(2.5, 2.5),
                                   blurRadius: 0,
                                 ),
                               ],
@@ -526,7 +535,7 @@ class _EditClassSheetState extends State<EditClassSheet> {
                                       size: 16,
                                       color: showTimeError
                                           ? const Color(0xFFFF1744)
-                                          : Colors.black,
+                                          : nc.icon,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
@@ -537,7 +546,7 @@ class _EditClassSheetState extends State<EditClassSheet> {
                                         fontWeight: FontWeight.w900,
                                         color: showTimeError
                                             ? const Color(0xFFFF1744)
-                                            : Colors.black,
+                                            : nc.textPrimary,
                                       ),
                                     ),
                                   ],
@@ -553,7 +562,7 @@ class _EditClassSheetState extends State<EditClassSheet> {
                                           ? const Color(0xFFFFCDD2)
                                           : const Color(0xFFFFE500),
                                       borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: Colors.black, width: 1.5),
+                                      border: Border.all(color: nc.border, width: 1.5),
                                     ),
                                     child: Text(
                                       _endTime.period == DayPeriod.am ? 'AM' : 'PM',
@@ -604,52 +613,56 @@ class _EditClassSheetState extends State<EditClassSheet> {
               const SizedBox(height: 16),
 
               // Room (optional)
-              const Text(
+              Text(
                 'Room (optional)',
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
-                  color: Colors.black,
+                  color: nc.textPrimary,
                 ),
               ),
               const SizedBox(height: 6),
               Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(2.5, 2.5),
+                      color: nc.shadow,
+                      offset: const Offset(2.5, 2.5),
                       blurRadius: 0,
                     ),
                   ],
                 ),
                 child: TextField(
                   controller: _roomController,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'SpaceGrotesk',
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: nc.inputText,
                   ),
                   decoration: InputDecoration(
                     hintText: 'e.g. Room B-12, Lab 2',
-                    prefixIcon: const Icon(Icons.meeting_room_outlined, size: 20, color: Colors.black),
+                    hintStyle: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      color: nc.textSecondary,
+                    ),
+                    prefixIcon: Icon(Icons.meeting_room_outlined, size: 20, color: nc.icon),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: nc.inputBackground,
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                      borderSide: BorderSide(color: nc.border, width: 2.5),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                      borderSide: BorderSide(color: nc.border, width: 3.0),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                      borderSide: BorderSide(color: nc.border, width: 2.5),
                     ),
                   ),
                 ),
@@ -657,52 +670,56 @@ class _EditClassSheetState extends State<EditClassSheet> {
               const SizedBox(height: 16),
 
               // Teacher (optional)
-              const Text(
+              Text(
                 'Teacher (optional)',
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
-                  color: Colors.black,
+                  color: nc.textPrimary,
                 ),
               ),
               const SizedBox(height: 6),
               Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(2.5, 2.5),
+                      color: nc.shadow,
+                      offset: const Offset(2.5, 2.5),
                       blurRadius: 0,
                     ),
                   ],
                 ),
                 child: TextField(
                   controller: _teacherController,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'SpaceGrotesk',
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: nc.inputText,
                   ),
                   decoration: InputDecoration(
                     hintText: 'e.g. Ms. Sara, Dr. John',
-                    prefixIcon: const Icon(Icons.person_outline, size: 20, color: Colors.black),
+                    hintStyle: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      color: nc.textSecondary,
+                    ),
+                    prefixIcon: Icon(Icons.person_outline, size: 20, color: nc.icon),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: nc.inputBackground,
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                      borderSide: BorderSide(color: nc.border, width: 2.5),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                      borderSide: BorderSide(color: nc.border, width: 3.0),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                      borderSide: BorderSide(color: nc.border, width: 2.5),
                     ),
                   ),
                 ),
@@ -713,10 +730,10 @@ class _EditClassSheetState extends State<EditClassSheet> {
               Container(
                 decoration: BoxDecoration(
                   boxShadow: _canSave
-                      ? const [
+                      ? [
                           BoxShadow(
-                            color: Colors.black,
-                            offset: Offset(3.5, 3.5),
+                            color: nc.shadow,
+                            offset: const Offset(3.5, 3.5),
                             blurRadius: 0,
                           ),
                         ]
@@ -730,14 +747,14 @@ class _EditClassSheetState extends State<EditClassSheet> {
                     style: FilledButton.styleFrom(
                       backgroundColor: _canSave
                           ? const Color(0xFFFF5500)
-                          : const Color(0xFFDCE2E6),
+                          : (nc.isDark ? const Color(0xFF333333) : const Color(0xFFDCE2E6)),
                       foregroundColor:
-                          _canSave ? Colors.white : Colors.black45,
+                          _canSave ? Colors.white : nc.textSecondary,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                         side: BorderSide(
-                          color: _canSave ? Colors.black : Colors.black38,
+                          color: _canSave ? nc.border : nc.border.withValues(alpha: 0.3),
                           width: 2.5,
                         ),
                       ),
@@ -749,7 +766,7 @@ class _EditClassSheetState extends State<EditClassSheet> {
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.5,
-                        color: _canSave ? Colors.white : Colors.black45,
+                        color: _canSave ? Colors.white : nc.textSecondary,
                       ),
                     ),
                   ),

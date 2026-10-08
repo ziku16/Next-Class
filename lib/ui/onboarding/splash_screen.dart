@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 import '../../data/repositories/timetable_repository.dart';
 import '../main_navigation_screen.dart';
 import 'welcome_screen.dart';
@@ -76,8 +77,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.background,
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -93,11 +96,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFE500),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black, width: 3.5),
-                    boxShadow: const [
+                    border: Border.all(color: nc.border, width: 3.5),
+                    boxShadow: [
                       BoxShadow(
-                        color: Colors.black,
-                        offset: Offset(4.5, 4.5),
+                        color: nc.shadow,
+                        offset: const Offset(4.5, 4.5),
                         blurRadius: 0,
                       ),
                     ],
@@ -131,49 +134,49 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'NextClass',
                   style: TextStyle(
                     fontFamily: 'SpaceGrotesk',
                     fontSize: 32,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1.0,
-                    color: Colors.black,
+                    color: nc.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Never miss a class or a quiz',
                   style: TextStyle(
                     fontFamily: 'SpaceGrotesk',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black87,
+                    color: nc.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 20),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: nc.surface,
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Colors.black, width: 2),
-                    boxShadow: const [
+                    border: Border.all(color: nc.border, width: 2),
+                    boxShadow: [
                       BoxShadow(
-                        color: Colors.black,
-                        offset: Offset(2, 2),
+                        color: nc.shadow,
+                        offset: const Offset(2, 2),
                         blurRadius: 0,
                       ),
                     ],
                   ),
-                  child: const Text(
+                  child: Text(
                     'ACADEMIC ASSISTANT',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.2,
-                      color: Colors.black,
+                      color: nc.textPrimary,
                     ),
                   ),
                 ),

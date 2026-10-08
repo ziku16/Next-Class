@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/theme/next_class_colors.dart';
 
 /// Modal bottom sheet allowing selection between Camera and Gallery sources.
 class SourcePickerSheet extends StatelessWidget {
@@ -7,13 +8,14 @@ class SourcePickerSheet extends StatelessWidget {
 
   /// Displays the source picker bottom sheet and returns the selected ImageSource (or null).
   static Future<ImageSource?> show(BuildContext context) {
+    final nc = context.ncColors;
     return showModalBottomSheet<ImageSource>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFFFAF6EE),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-        side: BorderSide(color: Colors.black, width: 3.5),
+      backgroundColor: nc.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+        side: BorderSide(color: nc.border, width: 3.5),
       ),
       builder: (context) => const SourcePickerSheet(),
     );
@@ -21,6 +23,8 @@ class SourcePickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -34,50 +38,50 @@ class SourcePickerSheet extends StatelessWidget {
                 width: 44,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.black,
+                  color: nc.border,
                   borderRadius: BorderRadius.circular(2.5),
                 ),
               ),
             ),
             const SizedBox(height: 18),
-            const Text(
+            Text(
               'Add a timetable photo',
               style: TextStyle(
                 fontFamily: 'SpaceGrotesk',
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.5,
-                color: Colors.black,
+                color: nc.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Take a clear picture or select from your gallery.',
               style: TextStyle(
                 fontFamily: 'SpaceGrotesk',
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: nc.textSecondary,
               ),
             ),
             const SizedBox(height: 20),
 
             // Camera Option
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(3, 3),
+                    color: nc.shadow,
+                    offset: const Offset(3, 3),
                     blurRadius: 0,
                   ),
                 ],
               ),
               child: Material(
-                color: Colors.white,
+                color: nc.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
-                  side: const BorderSide(color: Colors.black, width: 2.5),
+                  side: BorderSide(color: nc.border, width: 2.5),
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(8),
@@ -92,7 +96,7 @@ class SourcePickerSheet extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFE500),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.black, width: 2),
+                            border: Border.all(color: nc.border, width: 2),
                           ),
                           child: const Icon(
                             Icons.photo_camera_rounded,
@@ -101,7 +105,7 @@ class SourcePickerSheet extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 14),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -111,23 +115,23 @@ class SourcePickerSheet extends StatelessWidget {
                                   fontFamily: 'SpaceGrotesk',
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
-                                  color: Colors.black,
+                                  color: nc.textPrimary,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               Text(
                                 'Take a fresh photo',
                                 style: TextStyle(
                                   fontFamily: 'SpaceGrotesk',
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                                  color: nc.textSecondary,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.black),
+                        Icon(Icons.arrow_forward_ios_rounded, size: 16, color: nc.icon),
                       ],
                     ),
                   ),
@@ -139,20 +143,20 @@ class SourcePickerSheet extends StatelessWidget {
 
             // Gallery Option
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(3, 3),
+                    color: nc.shadow,
+                    offset: const Offset(3, 3),
                     blurRadius: 0,
                   ),
                 ],
               ),
               child: Material(
-                color: Colors.white,
+                color: nc.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
-                  side: const BorderSide(color: Colors.black, width: 2.5),
+                  side: BorderSide(color: nc.border, width: 2.5),
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(8),
@@ -167,7 +171,7 @@ class SourcePickerSheet extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: const Color(0xFF00E676),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.black, width: 2),
+                            border: Border.all(color: nc.border, width: 2),
                           ),
                           child: const Icon(
                             Icons.photo_library_rounded,
@@ -176,7 +180,7 @@ class SourcePickerSheet extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 14),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -186,23 +190,23 @@ class SourcePickerSheet extends StatelessWidget {
                                   fontFamily: 'SpaceGrotesk',
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
-                                  color: Colors.black,
+                                  color: nc.textPrimary,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               Text(
                                 'Pick one you already have',
                                 style: TextStyle(
                                   fontFamily: 'SpaceGrotesk',
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                                  color: nc.textSecondary,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.black),
+                        Icon(Icons.arrow_forward_ios_rounded, size: 16, color: nc.icon),
                       ],
                     ),
                   ),
@@ -212,11 +216,11 @@ class SourcePickerSheet extends StatelessWidget {
 
             const SizedBox(height: 16),
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(2.5, 2.5),
+                    color: nc.shadow,
+                    offset: const Offset(2.5, 2.5),
                     blurRadius: 0,
                   ),
                 ],
@@ -227,20 +231,20 @@ class SourcePickerSheet extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(null),
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xFFDCE2E6),
-                    foregroundColor: Colors.black,
+                    backgroundColor: nc.surface,
+                    foregroundColor: nc.textPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
-                      side: const BorderSide(color: Colors.black, width: 2.5),
+                      side: BorderSide(color: nc.border, width: 2.5),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Cancel',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
-                      color: Colors.black,
+                      color: nc.textPrimary,
                     ),
                   ),
                 ),

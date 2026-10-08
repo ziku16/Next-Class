@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 import 'day_detector.dart';
+import 'field_classifiers.dart';
 import 'ocr_models.dart';
 import 'time_detector.dart';
 
@@ -102,7 +103,13 @@ class TimetableGrid {
   }
 }
 
-/// Detects and reconstructs the structural columns (Lectures or Days) and rows (Days or Times) of a timetable.
+/// Dynamic, layout-adaptive grid detector for university timetables.
+/// Supports:
+/// - Days as rows, Lectures/Times as columns (Format B / D)
+/// - Days as columns, Times as rows (Format A)
+/// - Dynamic day counts (5, 6, 7 days)
+/// - Dynamic lecture column counts (3, 4, 5, 6, 7 periods)
+/// - Strict footer / header filtering
 class TimetableGridDetector {
   final DayDetector dayDetector;
   final TimeDetector timeDetector;
@@ -112,8 +119,7 @@ class TimetableGridDetector {
     this.timeDetector = const TimeDetector(),
   });
 
-  // Standard 5 lecture slots defined by university timetable
-  static const List<(String, String, String)> standardLectures = [
+  static const List<(String, String, String)> defaultUniversityLectures = [
     ('Lecture 1', '08:30', '10:00'),
     ('Lecture 2', '10:00', '11:30'),
     ('Lecture 3', '11:30', '13:15'),
@@ -121,7 +127,7 @@ class TimetableGridDetector {
     ('Lecture 5', '15:00', '16:30'),
   ];
 
-  static const List<String> standardDays = [
+  static const List<String> defaultDays = [
     'Monday',
     'Tuesday',
     'Wednesday',
@@ -129,13 +135,9 @@ class TimetableGridDetector {
     'Friday',
   ];
 
-  // Static regex pattern for timetable footer metadata
-  static final RegExp footerPattern = RegExp(
-    r'(?:timetable\s*generated|asc\s*timetables|generated\s*:\s*\d|asc\b)',
-    caseSensitive: false,
-  );
+  static final RegExp footerPattern = FieldClassifiers.footerPattern;
 
-  /// Builds a [TimetableGrid] from spatial OCR results.
+  /// Builds an adaptive [TimetableGrid] from spatial OCR results.
   TimetableGrid detectGrid(OcrResult ocrResult) {
     final lines = ocrResult.lines;
     if (lines.isEmpty) {
@@ -152,93 +154,46 @@ class TimetableGridDetector {
     final imgWidth = ocrResult.imageSize.width > 0 ? ocrResult.imageSize.width : 1000.0;
     final imgHeight = ocrResult.imageSize.height > 0 ? ocrResult.imageSize.height : 1000.0;
 
-    // Determine grid orientation:
-    // Check if day headers are arranged vertically on the left (standard university grid)
-    // or horizontally across the top (transposed grid).
-    final isDaysAsRows = _determineIfDaysAsRows(lines, imgWidth, imgHeight);
+    // Detect orientation semantically
+    final orientation = dayDetector.detectOrientation(lines, imgWidth, imgHeight);
+    final isDaysAsRows = _shouldTreatDaysAsRows(lines, orientation, imgWidth, imgHeight);
 
     if (isDaysAsRows) {
-      return _detectUniversityGrid(lines, imgWidth, imgHeight);
+      return _detectDaysAsRowsGrid(lines, imgWidth, imgHeight);
     } else {
-      return _detectTransposedGrid(lines, imgWidth, imgHeight);
+      return _detectDaysAsColumnsGrid(lines, imgWidth, imgHeight);
     }
   }
 
-  /// Determines whether the timetable uses standard university layout (Rows = Days, Columns = Lectures).
-  bool _determineIfDaysAsRows(List<OcrTextLine> lines, double imgWidth, double imgHeight) {
-    // Check for explicit "Lecture" headers
+  bool _shouldTreatDaysAsRows(
+    List<OcrTextLine> lines,
+    DayOrientation orientation,
+    double imgWidth,
+    double imgHeight,
+  ) {
+    if (orientation == DayOrientation.vertical) return true;
+    if (orientation == DayOrientation.horizontal) return false;
+
+    // Check for explicit "Lecture" tokens or university lecture times
     final hasLectureHeader = lines.any((l) =>
-        RegExp(r'\b(?:Lecture|Lec)\s*[1-5]\b', caseSensitive: false).hasMatch(l.text));
+        RegExp(r'\b(?:Lecture|Lec)\s*[1-9]\b', caseSensitive: false).hasMatch(l.text));
     if (hasLectureHeader) return true;
 
-    // Check for standard lecture time headers across top (e.g. "8:30 - 10:00", "11:30 - 13:15")
     final hasStandardLectureTimes = lines.any((l) =>
         RegExp(r'\b(?:8:30|08:30|10:00|11:30|13:35|15:00)\s*[-–]\s*(?:10:00|11:30|13:15|15:00|16:30)\b').hasMatch(l.text));
     if (hasStandardLectureTimes) return true;
 
-    // Check day labels positions
-    final leftDayCandidates = <DayCandidate>[];
-    final topDayCandidates = <DayCandidate>[];
-
-    for (final line in lines) {
-      final tokens = line.text.split(RegExp(r'[\s\-,/|]+'));
-      for (final t in tokens) {
-        final day = DayDetector.matchDay(t);
-        if (day != null) {
-          if (line.center.dx < imgWidth * 0.35) {
-            leftDayCandidates.add(DayCandidate(dayName: day, boundingBox: line.boundingBox, rawText: line.text));
-          }
-          if (line.center.dy < imgHeight * 0.25) {
-            topDayCandidates.add(DayCandidate(dayName: day, boundingBox: line.boundingBox, rawText: line.text));
-          }
-          break;
-        }
-      }
-    }
-
-    final uniqueLeftDays = leftDayCandidates.map((d) => d.dayName).toSet().length;
-    final uniqueTopDays = topDayCandidates.map((d) => d.dayName).toSet().length;
-
-    // If more days found on the left vertically, it's Days-as-Rows!
-    if (uniqueLeftDays >= 2 && uniqueLeftDays >= uniqueTopDays) {
-      return true;
-    }
-
-    // If day labels are spread horizontally across top with high unique count:
-    if (uniqueTopDays >= 3 && uniqueLeftDays < 2) {
-      return false; // Transposed layout
-    }
-
-    // Default to University timetable grid
-    return true;
+    return true; // Default
   }
 
-  /// Detects the standard university timetable grid:
-  /// - Rows: Monday, Tuesday, Wednesday, Thursday, Friday (5 rows)
-  /// - Columns: Lecture 1 (08:30-10:00), Lecture 2 (10:00-11:30), Lecture 3 (11:30-13:15), Lecture 4 (13:35-15:00), Lecture 5 (15:00-16:30)
-  TimetableGrid _detectUniversityGrid(List<OcrTextLine> lines, double imgWidth, double imgHeight) {
+  /// Detects Days-as-Rows layout (Days on Y-axis down the left, Lectures/Times on X-axis across the top).
+  TimetableGrid _detectDaysAsRowsGrid(List<OcrTextLine> lines, double imgWidth, double imgHeight) {
     // 1. Detect Day Labels on the left
-    final dayCandidates = <DayCandidate>[];
-    for (final line in lines) {
-      if (line.center.dx > imgWidth * 0.35) continue; // Must be in the left column
-      final tokens = line.text.split(RegExp(r'[\s\-,/|]+'));
-      for (final t in tokens) {
-        final day = DayDetector.matchDay(t);
-        if (day != null) {
-          dayCandidates.add(DayCandidate(
-            dayName: day,
-            boundingBox: line.boundingBox,
-            rawText: line.text,
-          ));
-          break;
-        }
-      }
-    }
+    final dayCandidates = dayDetector.findVerticalDayCandidates(lines, maxLeft: imgWidth * 0.35);
 
-    // Sort left day candidates top-to-bottom
+    // Sort detected days top-to-bottom
     dayCandidates.sort((a, b) => a.center.dy.compareTo(b.center.dy));
 
-    // Deduplicate by day name
     final Map<String, DayCandidate> detectedDays = {};
     for (final c in dayCandidates) {
       detectedDays.putIfAbsent(c.dayName, () => c);
@@ -254,9 +209,9 @@ class TimetableGridDetector {
     // 2. Detect Lecture Headers across the top
     final headerCandidates = <OcrTextLine>[];
     for (final line in lines) {
-      if (line.center.dx < dayColumnRightX - 10) continue; // In day column
+      if (line.center.dx < dayColumnRightX - 10) continue;
       final text = line.text;
-      final isLectureWord = RegExp(r'\b(?:Lecture|Lec)\s*[1-5]\b', caseSensitive: false).hasMatch(text);
+      final isLectureWord = RegExp(r'\b(?:Lecture|Lec)\s*[1-9]\b', caseSensitive: false).hasMatch(text);
       final isLectureTime = RegExp(r'\b\d{1,2}[:.]\d{2}\s*[-–]\s*\d{1,2}[:.]\d{2}\b').hasMatch(text);
       if (isLectureWord || isLectureTime) {
         headerCandidates.add(line);
@@ -271,11 +226,6 @@ class TimetableGridDetector {
     }
     headerBottomY = headerBottomY.clamp(imgHeight * 0.08, imgHeight * 0.30);
 
-    // Determine table boundaries
-    final tableLeft = dayCandidates.isNotEmpty
-        ? dayCandidates.map((c) => c.left).reduce(min) - 10
-        : imgWidth * 0.02;
-
     // Detect footer lines across the bottom
     double? footerTopY;
     for (final line in lines) {
@@ -286,18 +236,26 @@ class TimetableGridDetector {
       }
     }
 
+    final tableLeft = dayCandidates.isNotEmpty
+        ? dayCandidates.map((c) => c.left).reduce(min) - 10
+        : imgWidth * 0.02;
+
     final tableTop = headerBottomY;
 
-    // Calculate table bottom strictly above any footer metadata and bounded by Friday row
+    // Use detected days or fall back to standard days
+    final activeDays = detectedDays.isNotEmpty
+        ? detectedDays.keys.toList()
+        : defaultDays;
+
     double tableBottom;
     if (dayCandidates.isNotEmpty) {
       final detectedDayList = detectedDays.values.toList()..sort((a, b) => a.top.compareTo(b.top));
       final estimatedRowHeight = detectedDayList.length >= 2
           ? (detectedDayList.last.top - detectedDayList.first.top) / (detectedDayList.length - 1)
-          : (imgHeight * 0.7) / standardDays.length;
+          : (imgHeight * 0.7) / activeDays.length;
 
-      final fridayCand = detectedDays['Friday'] ?? detectedDayList.last;
-      final candidateBottom = fridayCand.top + estimatedRowHeight + 10.0;
+      final lastDayCand = detectedDayList.last;
+      final candidateBottom = lastDayCand.top + estimatedRowHeight + 10.0;
       if (footerTopY != null) {
         tableBottom = min(candidateBottom, footerTopY - 10.0);
       } else {
@@ -320,78 +278,86 @@ class TimetableGridDetector {
     final maxRight = allRightPoints.isNotEmpty ? allRightPoints.reduce(max) : imgWidth * 0.95;
     final tableRight = max(maxRight + 20, imgWidth * 0.95).clamp(dayColumnRightX + 100, imgWidth);
 
-    // 3. Reconstruct 5 Day Rows (Monday .. Friday)
+    // 3. Reconstruct Day Rows
     final totalRowHeight = tableBottom - tableTop;
-    final avgRowHeight = totalRowHeight / standardDays.length;
+    final avgRowHeight = totalRowHeight / activeDays.length;
 
     final List<GridRow> rows = [];
-    for (int i = 0; i < standardDays.length; i++) {
-      final dayName = standardDays[i];
+    for (int i = 0; i < activeDays.length; i++) {
+      final dayName = activeDays[i];
       double rTop = tableTop + i * avgRowHeight;
       double rBottom = tableTop + (i + 1) * avgRowHeight;
 
-      // When day labels are detected, partition cleanly using the day label tops
       if (detectedDays.isNotEmpty) {
         if (i == 0) {
           rTop = tableTop;
         } else if (detectedDays.containsKey(dayName)) {
           rTop = detectedDays[dayName]!.top - 10;
-        } else if (detectedDays.containsKey(standardDays[i - 1])) {
-          rTop = detectedDays[standardDays[i - 1]]!.top + avgRowHeight;
+        } else if (detectedDays.containsKey(activeDays[i - 1])) {
+          rTop = detectedDays[activeDays[i - 1]]!.top + avgRowHeight;
         }
 
-        if (i == standardDays.length - 1) {
+        if (i == activeDays.length - 1) {
           rBottom = tableBottom;
-        } else if (detectedDays.containsKey(standardDays[i + 1])) {
-          rBottom = detectedDays[standardDays[i + 1]]!.top - 10;
+        } else if (detectedDays.containsKey(activeDays[i + 1])) {
+          rBottom = detectedDays[activeDays[i + 1]]!.top - 10;
         } else if (detectedDays.containsKey(dayName)) {
           rBottom = min(detectedDays[dayName]!.top + avgRowHeight, tableBottom);
         }
       }
+
       rBottom = min(rBottom, tableBottom);
 
       rows.add(GridRow(
         index: i,
         label: dayName,
         dayName: dayName,
-        startTime: standardLectures.first.$2,
-        endTime: standardLectures.last.$3,
+        startTime: defaultUniversityLectures.first.$2,
+        endTime: defaultUniversityLectures.last.$3,
         top: rTop,
         bottom: rBottom,
       ));
     }
 
-    // 4. Reconstruct 5 Lecture Columns (Lecture 1 .. 5)
+    // 4. Reconstruct Lecture Columns dynamically
     final Map<int, OcrTextLine> detectedLectureHeaders = {};
     for (final h in headerCandidates) {
-      final m = RegExp(r'\b(?:Lecture|Lec)\s*([1-5])\b', caseSensitive: false).firstMatch(h.text);
+      final m = RegExp(r'\b(?:Lecture|Lec)\s*([1-9])\b', caseSensitive: false).firstMatch(h.text);
       if (m != null) {
         final lecNum = int.tryParse(m.group(1)!) ?? 0;
-        if (lecNum >= 1 && lecNum <= 5) {
+        if (lecNum >= 1 && lecNum <= 9) {
           detectedLectureHeaders[lecNum - 1] = h;
         }
       }
     }
 
     final List<GridColumn> columns = [];
-    final hasAllHeaders = detectedLectureHeaders.length == standardLectures.length;
+    final int detectedCount = detectedLectureHeaders.length;
+    final int lectureCount = detectedCount >= 3 ? detectedCount : defaultUniversityLectures.length;
 
-    if (hasAllHeaders) {
+    if (detectedLectureHeaders.length >= 3) {
+      final sortedKeys = detectedLectureHeaders.keys.toList()..sort();
       final colBoundaries = <double>[dayColumnRightX];
-      for (int i = 0; i < standardLectures.length - 1; i++) {
-        final currentH = detectedLectureHeaders[i]!;
-        final nextH = detectedLectureHeaders[i + 1]!;
+
+      for (int i = 0; i < sortedKeys.length - 1; i++) {
+        final currentH = detectedLectureHeaders[sortedKeys[i]]!;
+        final nextH = detectedLectureHeaders[sortedKeys[i + 1]]!;
         colBoundaries.add((currentH.right + nextH.left) / 2);
       }
       colBoundaries.add(tableRight);
 
-      for (int i = 0; i < standardLectures.length; i++) {
-        final slot = standardLectures[i];
+      for (int i = 0; i < sortedKeys.length; i++) {
+        final k = sortedKeys[i];
+        final label = 'Lecture ${k + 1}';
+        final slotTimes = k < defaultUniversityLectures.length
+            ? defaultUniversityLectures[k]
+            : (label, '08:30', '10:00');
+
         columns.add(GridColumn(
           index: i,
-          label: slot.$1,
-          startTime: slot.$2,
-          endTime: slot.$3,
+          label: label,
+          startTime: slotTimes.$2,
+          endTime: slotTimes.$3,
           dayName: null,
           left: colBoundaries[i],
           right: colBoundaries[i + 1],
@@ -399,12 +365,14 @@ class TimetableGridDetector {
       }
     } else {
       final usableWidth = tableRight - dayColumnRightX;
-      final avgColWidth = usableWidth / standardLectures.length;
+      final avgColWidth = usableWidth / lectureCount;
 
-      for (int i = 0; i < standardLectures.length; i++) {
-        final slot = standardLectures[i];
+      for (int i = 0; i < lectureCount; i++) {
+        final slot = i < defaultUniversityLectures.length
+            ? defaultUniversityLectures[i]
+            : ('Lecture ${i + 1}', '08:30', '10:00');
         final colLeft = dayColumnRightX + i * avgColWidth;
-        final colRight = (i == standardLectures.length - 1)
+        final colRight = (i == lectureCount - 1)
             ? tableRight
             : dayColumnRightX + (i + 1) * avgColWidth;
 
@@ -430,8 +398,8 @@ class TimetableGridDetector {
     );
   }
 
-  /// Detects the transposed grid (Columns = Days, Rows = Times) for schedules with days across top.
-  TimetableGrid _detectTransposedGrid(List<OcrTextLine> lines, double imgWidth, double imgHeight) {
+  /// Detects Days-as-Columns layout (Days along top, Times down the left).
+  TimetableGrid _detectDaysAsColumnsGrid(List<OcrTextLine> lines, double imgWidth, double imgHeight) {
     final dayCandidates = dayDetector.findDayCandidates(lines);
     final timeCandidates = timeDetector.findTimeCandidates(lines);
 
@@ -453,12 +421,12 @@ class TimetableGridDetector {
     final List<GridColumn> columns = [];
     if (dayCandidates.isEmpty) {
       final usableLeft = max(timeColumnRightX, imgWidth * 0.1);
-      final colWidth = (imgWidth - usableLeft) / 5;
-      for (int i = 0; i < standardDays.length; i++) {
+      final colWidth = (imgWidth - usableLeft) / defaultDays.length;
+      for (int i = 0; i < defaultDays.length; i++) {
         columns.add(GridColumn(
           index: i,
-          label: standardDays[i],
-          dayName: standardDays[i],
+          label: defaultDays[i],
+          dayName: defaultDays[i],
           startTime: '08:30',
           endTime: '17:00',
           left: usableLeft + i * colWidth,

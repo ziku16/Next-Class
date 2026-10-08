@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 import '../../domain/services/notification_service.dart';
 import '../upload/upload_screen.dart';
 
@@ -31,15 +32,17 @@ class NotificationExplainerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF6EE),
+        backgroundColor: nc.background,
         elevation: 0,
         scrolledUnderElevation: 0,
-        shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
+        shape: Border(bottom: BorderSide(color: nc.border, width: 3.0)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: nc.icon),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Container(
@@ -47,7 +50,7 @@ class NotificationExplainerScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFFFFE500),
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.black, width: 1.5),
+            border: Border.all(color: nc.border, width: 1.5),
           ),
           child: const Text(
             'Step 2 of 3',
@@ -68,25 +71,25 @@ class NotificationExplainerScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Want a nudge\nbefore class?',
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontWeight: FontWeight.w900,
                   fontSize: 32,
                   height: 1.15,
-                  color: Colors.black,
+                  color: nc.textPrimary,
                   letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 "NextClass sends 2 types of reminders: before each class and for upcoming quizzes. That's all, zero spam.",
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: nc.textSecondary,
                   height: 1.35,
                 ),
               ),
@@ -98,7 +101,7 @@ class NotificationExplainerScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFE500),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.black, width: 1.5),
+                  border: Border.all(color: nc.border, width: 1.5),
                 ),
                 child: const Text(
                   '1. CLASS REMINDERS',
@@ -128,7 +131,7 @@ class NotificationExplainerScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFF00E676),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.black, width: 1.5),
+                  border: Border.all(color: nc.border, width: 1.5),
                 ),
                 child: const Text(
                   '2. QUIZ REMINDERS',
@@ -155,11 +158,11 @@ class NotificationExplainerScreen extends StatelessWidget {
 
               // Primary Action: Allow reminders
               Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(3.5, 3.5),
+                      color: nc.shadow,
+                      offset: const Offset(3.5, 3.5),
                       blurRadius: 0,
                     ),
                   ],
@@ -176,7 +179,7 @@ class NotificationExplainerScreen extends StatelessWidget {
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
-                        side: const BorderSide(color: Colors.black, width: 2.5),
+                        side: BorderSide(color: nc.border, width: 2.5),
                       ),
                     ),
                     child: const Text(
@@ -199,12 +202,12 @@ class NotificationExplainerScreen extends StatelessWidget {
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () => _proceed(context),
-                  child: const Text(
+                  child: Text(
                     'Not now',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontWeight: FontWeight.w900,
-                      color: Colors.black,
+                      color: nc.textPrimary,
                       fontSize: 15,
                     ),
                   ),
@@ -226,20 +229,22 @@ class NotificationExplainerScreen extends StatelessWidget {
     required String title,
     required String body,
   }) {
+    final nc = context.ncColors;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: nc.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: Colors.black,
+          color: nc.border,
           width: 2.5,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(3, 3),
+            color: nc.shadow,
+            offset: const Offset(3, 3),
             blurRadius: 0,
           ),
         ],
@@ -253,11 +258,11 @@ class NotificationExplainerScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 appName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontWeight: FontWeight.w700,
                   fontSize: 11,
-                  color: Colors.black87,
+                  color: nc.textSecondary,
                 ),
               ),
             ],
@@ -265,21 +270,21 @@ class NotificationExplainerScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'SpaceGrotesk',
               fontWeight: FontWeight.w900,
               fontSize: 15,
-              color: Colors.black,
+              color: nc.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             body,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'SpaceGrotesk',
               fontWeight: FontWeight.w600,
               fontSize: 13,
-              color: Colors.black87,
+              color: nc.textSecondary,
             ),
           ),
         ],

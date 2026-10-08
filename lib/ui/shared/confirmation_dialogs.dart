@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 
 /// Modal confirmation dialogs for NextClass (Flows 7 & 8).
 /// Enforces:
@@ -13,26 +14,27 @@ class ConfirmationDialogs {
   /// Buttons: [Stay signed in] / [Sign out]
   static Future<bool?> showSignOutDialog(BuildContext context) {
     final theme = Theme.of(context);
+    final nc = context.ncColors;
 
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFAF6EE),
+        backgroundColor: nc.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(6),
-          side: const BorderSide(color: Colors.black, width: 3.5),
+          side: BorderSide(color: nc.border, width: 3.5),
         ),
         title: Text(
           'Sign out?',
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
-            color: Colors.black,
+            color: nc.textPrimary,
           ),
         ),
         content: Text(
           'Reminders stop until you sign in again. Your timetable stays saved to your account.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: Colors.black87,
+            color: nc.textSecondary,
             fontWeight: FontWeight.w600,
             height: 1.4,
           ),
@@ -40,11 +42,11 @@ class ConfirmationDialogs {
         actions: [
           OutlinedButton(
             style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
+              backgroundColor: nc.surface,
+              foregroundColor: nc.textPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: Colors.black, width: 2.5),
+                side: BorderSide(color: nc.border, width: 2.5),
               ),
             ),
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -56,7 +58,7 @@ class ConfirmationDialogs {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: Colors.black, width: 2.5),
+                side: BorderSide(color: nc.border, width: 2.5),
               ),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -76,26 +78,27 @@ class ConfirmationDialogs {
     required String dayOfWeek,
   }) {
     final theme = Theme.of(context);
+    final nc = context.ncColors;
 
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFAF6EE),
+        backgroundColor: nc.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(6),
-          side: const BorderSide(color: Colors.black, width: 3.5),
+          side: BorderSide(color: nc.border, width: 3.5),
         ),
         title: Text(
           'Delete $subject?',
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
-            color: Colors.black,
+            color: nc.textPrimary,
           ),
         ),
         content: Text(
           'This removes it from $dayOfWeek and cancels its reminders. Any quiz linked to this class will go too.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: Colors.black87,
+            color: nc.textSecondary,
             fontWeight: FontWeight.w600,
             height: 1.4,
           ),
@@ -103,11 +106,11 @@ class ConfirmationDialogs {
         actions: [
           OutlinedButton(
             style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
+              backgroundColor: nc.surface,
+              foregroundColor: nc.textPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: Colors.black, width: 2.5),
+                side: BorderSide(color: nc.border, width: 2.5),
               ),
             ),
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -119,7 +122,7 @@ class ConfirmationDialogs {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: Colors.black, width: 2.5),
+                side: BorderSide(color: nc.border, width: 2.5),
               ),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -139,26 +142,27 @@ class ConfirmationDialogs {
     required String formattedDate,
   }) {
     final theme = Theme.of(context);
+    final nc = context.ncColors;
 
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFAF6EE),
+        backgroundColor: nc.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(6),
-          side: const BorderSide(color: Colors.black, width: 3.5),
+          side: BorderSide(color: nc.border, width: 3.5),
         ),
         title: Text(
           'Delete this quiz?',
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
-            color: Colors.black,
+            color: nc.textPrimary,
           ),
         ),
         content: Text(
           '$subject · $formattedDate. Its reminder will be cancelled.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: Colors.black87,
+            color: nc.textSecondary,
             fontWeight: FontWeight.w600,
             height: 1.4,
           ),
@@ -166,11 +170,11 @@ class ConfirmationDialogs {
         actions: [
           OutlinedButton(
             style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
+              backgroundColor: nc.surface,
+              foregroundColor: nc.textPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: Colors.black, width: 2.5),
+                side: BorderSide(color: nc.border, width: 2.5),
               ),
             ),
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -182,7 +186,7 @@ class ConfirmationDialogs {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: Colors.black, width: 2.5),
+                side: BorderSide(color: nc.border, width: 2.5),
               ),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),

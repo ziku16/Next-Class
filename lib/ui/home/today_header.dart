@@ -152,7 +152,7 @@ class TodayHeader extends StatelessWidget {
           _getGreeting(),
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w900,
-            color: Colors.black,
+            color: ncColors.textPrimary,
             letterSpacing: -0.5,
           ),
         ),
@@ -168,17 +168,17 @@ class TodayHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: ncColors.border,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.black, width: 2.0),
+                border: Border.all(color: ncColors.border, width: 2.0),
               ),
               child: Text(
                 _formatDate(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: ncColors.background,
                   letterSpacing: 0.2,
                 ),
               ),
@@ -189,25 +189,25 @@ class TodayHeader extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: ncColors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.black, width: 2.0),
-                  boxShadow: const [
+                  border: Border.all(color: ncColors.border, width: 2.0),
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(2, 2),
+                      color: ncColors.shadow,
+                      offset: const Offset(2, 2),
                       blurRadius: 0,
                     ),
                   ],
                 ),
                 child: Text(
                   '${classesToday.length} ${classesToday.length == 1 ? "CLASS" : "CLASSES"} TODAY',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'SpaceGrotesk',
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.5,
-                    color: Colors.black,
+                    color: ncColors.textPrimary,
                   ),
                 ),
               ),
@@ -236,11 +236,11 @@ class TodayHeader extends StatelessWidget {
       iconColor = Colors.black;
       textColor = Colors.black;
     } else if (!hasTimetable || classesToday.isEmpty) {
-      bgColor = Colors.white;
-      iconColor = Colors.black;
-      textColor = Colors.black;
+      bgColor = ncColors.surface;
+      iconColor = ncColors.icon;
+      textColor = ncColors.textPrimary;
     } else {
-      bgColor = const Color(0xFFFFF9C4); // Pale yellow ticket
+      bgColor = const Color(0xFFFFE500); // High-contrast safety yellow ticket
       iconColor = Colors.black;
       textColor = Colors.black;
     }
@@ -251,13 +251,13 @@ class TodayHeader extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: Colors.black,
+          color: ncColors.border,
           width: 2.5,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(2.5, 2.5),
+            color: ncColors.shadow,
+            offset: const Offset(2.5, 2.5),
             blurRadius: 0,
           ),
         ],

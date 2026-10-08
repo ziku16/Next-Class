@@ -51,6 +51,14 @@
             android:name="com.google.ml.vision.DEPENDENCIES"
             android:value="ocr" />
 
+        <!-- Default Local Notification Icon (monochrome alpha mask for status bar) & Accent Color -->
+        <meta-data
+            android:name="com.dexterous.flutterlocalnotifications.default_notification_icon"
+            android:resource="@drawable/ic_stat_nextclass" />
+        <meta-data
+            android:name="com.dexterous.flutterlocalnotifications.default_notification_color"
+            android:resource="@color/notification_accent" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

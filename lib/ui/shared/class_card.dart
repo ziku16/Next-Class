@@ -89,15 +89,23 @@ class ClassCard extends StatelessWidget {
     NextClassColors ncColors,
     Color subjectColor,
   ) {
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = state == ClassCardState.past
+        ? (isDark ? const Color(0xFF242424) : const Color(0xFFECEFF1))
+        : ncColors.surface;
+    final textColor = state == ClassCardState.past
+        ? (isDark ? const Color(0xFFAAAAAA) : const Color(0xFF555555))
+        : ncColors.textPrimary;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.black, width: 2.5),
-        boxShadow: const [
+        border: Border.all(color: ncColors.border, width: 2.5),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(3.0, 3.0),
+            color: ncColors.shadow,
+            offset: const Offset(3.0, 3.0),
             blurRadius: 0,
           ),
         ],
@@ -113,13 +121,13 @@ class ClassCard extends StatelessWidget {
             child: IntrinsicHeight(
               child: Row(
                 children: [
-                  // 8 dp Subject color stripe with black divider
+                  // 8 dp Subject color stripe with border
                   Container(
                     width: 8,
                     decoration: BoxDecoration(
                       color: subjectColor,
-                      border: const Border(
-                        right: BorderSide(color: Colors.black, width: 2.0),
+                      border: Border(
+                        right: BorderSide(color: ncColors.border, width: 2.0),
                       ),
                     ),
                   ),
@@ -134,15 +142,15 @@ class ClassCard extends StatelessWidget {
                             classItem.subject,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w900,
-                              color: Colors.black,
+                              color: textColor,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             '${classItem.startTime} – ${classItem.endTime}${classItem.room != null ? ' · ${classItem.room}' : ''}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'SpaceGrotesk',
-                              color: Colors.black,
+                              color: textColor,
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
                             ),
@@ -152,12 +160,12 @@ class ClassCard extends StatelessWidget {
                     ),
                   ),
                   if (state == ClassCardState.past) ...[
-                    const Padding(
-                      padding: EdgeInsets.only(right: 16),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16),
                       child: Icon(
                         Icons.check_circle,
                         size: 20,
-                        color: Colors.black,
+                        color: textColor,
                       ),
                     ),
                   ],
@@ -178,30 +186,42 @@ class ClassCard extends StatelessWidget {
     NextClassColors ncColors,
     Color subjectColor,
   ) {
+    final isDark = theme.brightness == Brightness.dark;
     final Color cardBg;
+    final Color textColor;
+    final Color metaColor;
+
     switch (state) {
       case ClassCardState.current:
-        cardBg = const Color(0xFFFFF9C4); // Pale safety yellow tint
+        cardBg = isDark ? const Color(0xFF4A4215) : const Color(0xFFFFF9C4); // Safety yellow tint
+        textColor = isDark ? Colors.white : Colors.black;
+        metaColor = isDark ? const Color(0xFFE0E0E0) : const Color(0xFF333333);
         break;
       case ClassCardState.next:
-        cardBg = const Color(0xFFFFE0B2); // Pale vivid orange tint
+        cardBg = isDark ? const Color(0xFF4D2A18) : const Color(0xFFFFE0B2); // Vivid orange tint
+        textColor = isDark ? Colors.white : Colors.black;
+        metaColor = isDark ? const Color(0xFFE0E0E0) : const Color(0xFF333333);
         break;
       case ClassCardState.past:
-        cardBg = const Color(0xFFECEFF1); // Muted ticket grey
+        cardBg = isDark ? const Color(0xFF242424) : const Color(0xFFECEFF1); // Muted ticket grey
+        textColor = isDark ? const Color(0xFFAAAAAA) : const Color(0xFF555555);
+        metaColor = isDark ? const Color(0xFF888888) : const Color(0xFF777777);
         break;
       default:
-        cardBg = Colors.white;
+        cardBg = ncColors.surface;
+        textColor = ncColors.textPrimary;
+        metaColor = ncColors.textSecondary;
     }
 
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.black, width: 3.0),
-        boxShadow: const [
+        border: Border.all(color: ncColors.border, width: 3.0),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(3.5, 3.5),
+            color: ncColors.shadow,
+            offset: const Offset(3.5, 3.5),
             blurRadius: 0,
           ),
         ],
@@ -248,7 +268,7 @@ class ClassCard extends StatelessWidget {
                                   classItem.subject,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w900,
-                                    color: Colors.black,
+                                    color: textColor,
                                     fontSize: 17,
                                   ),
                                 );
@@ -262,7 +282,7 @@ class ClassCard extends StatelessWidget {
                                       classItem.subject,
                                       style: theme.textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.w900,
-                                        color: Colors.black,
+                                        color: textColor,
                                         fontSize: 17,
                                       ),
                                     ),
@@ -280,7 +300,7 @@ class ClassCard extends StatelessWidget {
                                       classItem.subject,
                                       style: theme.textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.w900,
-                                        color: Colors.black,
+                                        color: textColor,
                                         fontSize: 17,
                                       ),
                                     ),
@@ -296,7 +316,7 @@ class ClassCard extends StatelessWidget {
                           Text(
                             '${classItem.startTime} – ${classItem.endTime}',
                             style: theme.textTheme.labelLarge?.copyWith(
-                              color: Colors.black,
+                              color: textColor,
                               fontWeight: FontWeight.w900,
                               fontFeatures: const [FontFeature.tabularFigures()],
                             ),
@@ -312,19 +332,19 @@ class ClassCard extends StatelessWidget {
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.meeting_room_outlined,
                                       size: 16,
-                                      color: Colors.black,
+                                      color: metaColor,
                                     ),
                                     const SizedBox(width: 5),
                                     Text(
                                       classItem.room!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'SpaceGrotesk',
                                         fontSize: 13,
                                         fontWeight: FontWeight.w800,
-                                        color: Colors.black,
+                                        color: metaColor,
                                       ),
                                     ),
                                   ],
@@ -333,19 +353,19 @@ class ClassCard extends StatelessWidget {
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.person_outline,
                                       size: 16,
-                                      color: Colors.black,
+                                      color: metaColor,
                                     ),
                                     const SizedBox(width: 5),
                                     Text(
                                       classItem.teacher!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'SpaceGrotesk',
                                         fontSize: 13,
                                         fontWeight: FontWeight.w800,
-                                        color: Colors.black,
+                                        color: metaColor,
                                       ),
                                     ),
                                   ],

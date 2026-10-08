@@ -30,13 +30,14 @@ class ClassDetailSheet extends StatelessWidget {
     VoidCallback? onAddQuiz,
     VoidCallback? onEditClass,
   }) {
+    final nc = context.ncColors;
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFFFAF6EE),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-        side: BorderSide(color: Colors.black, width: 3.5),
+      backgroundColor: nc.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+        side: BorderSide(color: nc.border, width: 3.5),
       ),
       builder: (ctx) => ClassDetailSheet(
         classItem: classItem,
@@ -56,7 +57,7 @@ class ClassDetailSheet extends StatelessWidget {
 
     return SafeArea(
       child: Container(
-        color: const Color(0xFFFAF6EE),
+        color: ncColors.surface,
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -68,7 +69,7 @@ class ClassDetailSheet extends StatelessWidget {
                 width: 44,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.black,
+                  color: ncColors.border,
                   borderRadius: BorderRadius.circular(2.5),
                 ),
               ),
@@ -85,7 +86,7 @@ class ClassDetailSheet extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: subjectColor,
                       borderRadius: BorderRadius.circular(3),
-                      border: Border.all(color: Colors.black, width: 2.0),
+                      border: Border.all(color: ncColors.border, width: 2.0),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -95,11 +96,11 @@ class ClassDetailSheet extends StatelessWidget {
                       children: [
                         Text(
                           classItem.subject,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'SpaceGrotesk',
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
-                            color: Colors.black,
+                            color: ncColors.textPrimary,
                             height: 1.15,
                           ),
                         ),
@@ -108,17 +109,17 @@ class ClassDetailSheet extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF3ECE0),
+                            color: ncColors.background,
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.black, width: 1.5),
+                            border: Border.all(color: ncColors.border, width: 1.5),
                           ),
                           child: Text(
                             '${classItem.dayOfWeek} · ${classItem.startTime} – ${classItem.endTime}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'SpaceGrotesk',
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: Colors.black,
+                              color: ncColors.textPrimary,
                             ),
                           ),
                         ),
@@ -134,11 +135,11 @@ class ClassDetailSheet extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFE500),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.black, width: 2.0),
-                          boxShadow: const [
+                          border: Border.all(color: ncColors.border, width: 2.0),
+                          boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(2, 2),
+                              color: ncColors.shadow,
+                              offset: const Offset(2, 2),
                               blurRadius: 0,
                             ),
                           ],
@@ -177,11 +178,11 @@ class ClassDetailSheet extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFFE0E0E0),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.black, width: 2.0),
-                          boxShadow: const [
+                          border: Border.all(color: ncColors.border, width: 2.0),
+                          boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(2, 2),
+                              color: ncColors.shadow,
+                              offset: const Offset(2, 2),
                               blurRadius: 0,
                             ),
                           ],
@@ -217,11 +218,11 @@ class ClassDetailSheet extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFD180),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.black, width: 2.0),
-                          boxShadow: const [
+                          border: Border.all(color: ncColors.border, width: 2.0),
+                          boxShadow: [
                             BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(2, 2),
+                              color: ncColors.shadow,
+                              offset: const Offset(2, 2),
                               blurRadius: 0,
                             ),
                           ],
@@ -265,16 +266,16 @@ class ClassDetailSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: ncColors.surface,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: Colors.black,
+                  color: ncColors.border,
                   width: 2.5,
                 ),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(3.5, 3.5),
+                    color: ncColors.shadow,
+                    offset: const Offset(3.5, 3.5),
                     blurRadius: 0,
                   ),
                 ],
@@ -289,7 +290,7 @@ class ClassDetailSheet extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFE500),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.black, width: 1.5),
+                          border: Border.all(color: ncColors.border, width: 1.5),
                         ),
                         child: const Icon(
                           Icons.meeting_room_outlined,
@@ -308,16 +309,16 @@ class ClassDetailSheet extends StatelessWidget {
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                             color: classItem.room != null && classItem.room!.isNotEmpty
-                                ? Colors.black
-                                : const Color(0xFF444444),
+                                ? ncColors.textPrimary
+                                : ncColors.textSecondary,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10),
-                    child: Divider(height: 2, thickness: 1.5, color: Colors.black),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Divider(height: 2, thickness: 1.5, color: ncColors.border),
                   ),
                   // Teacher Row
                   Row(
@@ -327,7 +328,7 @@ class ClassDetailSheet extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFF00E676),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.black, width: 1.5),
+                          border: Border.all(color: ncColors.border, width: 1.5),
                         ),
                         child: const Icon(
                           Icons.person_outline_rounded,
@@ -348,8 +349,8 @@ class ClassDetailSheet extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                             color: classItem.teacher != null &&
                                     classItem.teacher!.isNotEmpty
-                                ? Colors.black
-                                : const Color(0xFF444444),
+                                ? ncColors.textPrimary
+                                : ncColors.textSecondary,
                           ),
                         ),
                       ),
@@ -362,11 +363,11 @@ class ClassDetailSheet extends StatelessWidget {
 
             // Primary Action: Add Quiz
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(3.5, 3.5),
+                    color: ncColors.shadow,
+                    offset: const Offset(3.5, 3.5),
                     blurRadius: 0,
                   ),
                 ],
@@ -395,7 +396,7 @@ class ClassDetailSheet extends StatelessWidget {
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
-                      side: const BorderSide(color: Colors.black, width: 2.5),
+                      side: BorderSide(color: ncColors.border, width: 2.5),
                     ),
                   ),
                 ),
@@ -405,11 +406,11 @@ class ClassDetailSheet extends StatelessWidget {
 
             // Secondary Action: Edit Class
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(3.5, 3.5),
+                    color: ncColors.shadow,
+                    offset: const Offset(3.5, 3.5),
                     blurRadius: 0,
                   ),
                 ],
@@ -422,21 +423,21 @@ class ClassDetailSheet extends StatelessWidget {
                     Navigator.of(context).pop();
                     onEditClass?.call();
                   },
-                  icon: const Icon(Icons.edit_outlined, color: Colors.black),
-                  label: const Text(
+                  icon: Icon(Icons.edit_outlined, color: ncColors.icon),
+                  label: Text(
                     'Edit class',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
-                      color: Colors.black,
+                      color: ncColors.textPrimary,
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
+                    backgroundColor: ncColors.surface,
+                    foregroundColor: ncColors.textPrimary,
                     elevation: 0,
-                    side: const BorderSide(color: Colors.black, width: 2.5),
+                    side: BorderSide(color: ncColors.border, width: 2.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
                     ),

@@ -1,9 +1,24 @@
 import 'package:flutter/material.dart';
 
-/// NextClass custom color roles and functional tokens.
+/// NextClass custom color roles and centralized semantic REVO Brutalism tokens.
 /// Extends Flutter's ThemeData via ThemeExtension.
 @immutable
 class NextClassColors extends ThemeExtension<NextClassColors> {
+  // Centralized Semantic Tokens (Part 28)
+  final Color background;
+  final Color surface;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color border;
+  final Color shadow;
+  final Color accent;
+  final Color buttonText;
+  final Color cardText;
+  final Color inputBackground;
+  final Color inputText;
+  final Color icon;
+
+  // Functional & State Tokens
   final Color classCurrent;
   final Color classCurrentBorder;
   final Color classNext;
@@ -26,6 +41,18 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
   final List<Color> subjects;
 
   const NextClassColors({
+    required this.background,
+    required this.surface,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.border,
+    required this.shadow,
+    required this.accent,
+    required this.buttonText,
+    required this.cardText,
+    required this.inputBackground,
+    required this.inputText,
+    required this.icon,
     required this.classCurrent,
     required this.classCurrentBorder,
     required this.classNext,
@@ -60,6 +87,9 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
     Color(0xFF7C4DFF), // 7: Vivid Purple
   ];
 
+  /// Whether this theme is dark mode.
+  bool get isDark => background.computeLuminance() < 0.5;
+
   /// Returns the subject color corresponding to the given index (index % 8).
   Color getSubjectColor(int index) {
     if (subjects.isEmpty) return defaultSubjects[index % defaultSubjects.length];
@@ -68,8 +98,21 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
 
   /// Light theme extension instance
   static const light = NextClassColors(
+    background: Color(0xFFFAF6EE), // Warm off-white paper
+    surface: Color(0xFFFAF6EE),
+    textPrimary: Color(0xFF000000), // Stark solid black
+    textSecondary: Color(0xFF262626), // Dark neutral
+    border: Color(0xFF000000), // Solid black border
+    shadow: Color(0xFF000000), // Solid black hard shadow
+    accent: Color(0xFFFF5500), // Vivid orange
+    buttonText: Color(0xFFFFFFFF),
+    cardText: Color(0xFF000000),
+    inputBackground: Color(0xFFFFFFFF),
+    inputText: Color(0xFF000000),
+    icon: Color(0xFF000000),
+
     classCurrent: Color(0xFFFFE500), // Safety yellow active
-    classCurrentBorder: Color(0xFF000000), // Solid black border
+    classCurrentBorder: Color(0xFF000000),
     classNext: Color(0xFFFF5500), // Vivid orange next
     classPastBorder: Color(0xFF000000),
     quiz: Color(0xFFFF5500),
@@ -90,8 +133,21 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
     subjects: defaultSubjects,
   );
 
-  /// Dark theme extension instance
+  /// Dark theme extension instance (REVO Brutalism in Dark Mode)
   static const dark = NextClassColors(
+    background: Color(0xFF141414), // Deep matte brutalist charcoal
+    surface: Color(0xFF202020), // Dark card surface
+    textPrimary: Color(0xFFFAF6EE), // Crisp stark off-white
+    textSecondary: Color(0xFFCCCCCC), // Light neutral
+    border: Color(0xFFFFFFFF), // Crisp solid white border
+    shadow: Color(0xFF000000), // Solid black hard shadow
+    accent: Color(0xFFFF7043), // Vivid warm orange
+    buttonText: Color(0xFF000000),
+    cardText: Color(0xFFFAF6EE),
+    inputBackground: Color(0xFF2A2A2A),
+    inputText: Color(0xFFFFFFFF),
+    icon: Color(0xFFFFFFFF),
+
     classCurrent: Color(0xFFFFEE58),
     classCurrentBorder: Color(0xFFFFFFFF),
     classNext: Color(0xFFFF7043),
@@ -116,6 +172,18 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
 
   @override
   NextClassColors copyWith({
+    Color? background,
+    Color? surface,
+    Color? textPrimary,
+    Color? textSecondary,
+    Color? border,
+    Color? shadow,
+    Color? accent,
+    Color? buttonText,
+    Color? cardText,
+    Color? inputBackground,
+    Color? inputText,
+    Color? icon,
     Color? classCurrent,
     Color? classCurrentBorder,
     Color? classNext,
@@ -138,6 +206,18 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
     List<Color>? subjects,
   }) {
     return NextClassColors(
+      background: background ?? this.background,
+      surface: surface ?? this.surface,
+      textPrimary: textPrimary ?? this.textPrimary,
+      textSecondary: textSecondary ?? this.textSecondary,
+      border: border ?? this.border,
+      shadow: shadow ?? this.shadow,
+      accent: accent ?? this.accent,
+      buttonText: buttonText ?? this.buttonText,
+      cardText: cardText ?? this.cardText,
+      inputBackground: inputBackground ?? this.inputBackground,
+      inputText: inputText ?? this.inputText,
+      icon: icon ?? this.icon,
       classCurrent: classCurrent ?? this.classCurrent,
       classCurrentBorder: classCurrentBorder ?? this.classCurrentBorder,
       classNext: classNext ?? this.classNext,
@@ -167,6 +247,18 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
       return this;
     }
     return NextClassColors(
+      background: Color.lerp(background, other.background, t) ?? background,
+      surface: Color.lerp(surface, other.surface, t) ?? surface,
+      textPrimary: Color.lerp(textPrimary, other.textPrimary, t) ?? textPrimary,
+      textSecondary: Color.lerp(textSecondary, other.textSecondary, t) ?? textSecondary,
+      border: Color.lerp(border, other.border, t) ?? border,
+      shadow: Color.lerp(shadow, other.shadow, t) ?? shadow,
+      accent: Color.lerp(accent, other.accent, t) ?? accent,
+      buttonText: Color.lerp(buttonText, other.buttonText, t) ?? buttonText,
+      cardText: Color.lerp(cardText, other.cardText, t) ?? cardText,
+      inputBackground: Color.lerp(inputBackground, other.inputBackground, t) ?? inputBackground,
+      inputText: Color.lerp(inputText, other.inputText, t) ?? inputText,
+      icon: Color.lerp(icon, other.icon, t) ?? icon,
       classCurrent: Color.lerp(classCurrent, other.classCurrent, t) ?? classCurrent,
       classCurrentBorder: Color.lerp(classCurrentBorder, other.classCurrentBorder, t) ?? classCurrentBorder,
       classNext: Color.lerp(classNext, other.classNext, t) ?? classNext,
@@ -195,4 +287,6 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
 extension NextClassColorsX on BuildContext {
   NextClassColors get ncColors =>
       Theme.of(this).extension<NextClassColors>() ?? NextClassColors.light;
+
+  bool get isDark => ncColors.isDark;
 }

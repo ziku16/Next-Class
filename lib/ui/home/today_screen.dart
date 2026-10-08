@@ -12,6 +12,7 @@ import '../../state/quiz_provider.dart';
 import '../shared/class_card.dart';
 import '../shared/nc_banner.dart';
 import '../shared/offline_banner.dart';
+import '../../core/theme/next_class_colors.dart';
 import 'app_bottom_nav.dart';
 import 'quizzes_preview_row.dart';
 import 'today_header.dart';
@@ -253,27 +254,28 @@ class _TodayScreenState extends State<TodayScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final nc = context.ncColors;
     final hasTimetable = _allClasses.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EE),
+      backgroundColor: nc.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF6EE),
+        backgroundColor: nc.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleSpacing: 16,
-        shape: const Border(bottom: BorderSide(color: Colors.black, width: 3.0)),
+        shape: Border(bottom: BorderSide(color: nc.border, width: 3.0)),
         title: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color: const Color(0xFFFFE500), // Safety yellow
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.black, width: 2.5),
-            boxShadow: const [
+            border: Border.all(color: nc.border, width: 2.5),
+            boxShadow: [
               BoxShadow(
-                color: Colors.black,
-                offset: Offset(2.5, 2.5),
+                color: nc.shadow,
+                offset: const Offset(2.5, 2.5),
                 blurRadius: 0,
               ),
             ],
@@ -310,20 +312,20 @@ class _TodayScreenState extends State<TodayScreen> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: nc.surface,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.black, width: 2.0),
-                  boxShadow: const [
+                  border: Border.all(color: nc.border, width: 2.0),
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(2, 2),
+                      color: nc.shadow,
+                      offset: const Offset(2, 2),
                       blurRadius: 0,
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.settings,
-                  color: Colors.black,
+                  color: nc.icon,
                   size: 20,
                 ),
               ),
@@ -458,7 +460,7 @@ class _TodayScreenState extends State<TodayScreen> {
               'Today',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w900,
-                color: Colors.black,
+                color: context.ncColors.textPrimary,
                 fontSize: 20,
                 letterSpacing: 0.5,
               ),
@@ -466,18 +468,18 @@ class _TodayScreenState extends State<TodayScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.ncColors.surface,
                 borderRadius: BorderRadius.circular(3),
-                border: Border.all(color: Colors.black, width: 1.5),
+                border: Border.all(color: context.ncColors.border, width: 1.5),
               ),
-              child: const Text(
+              child: Text(
                 'OCT0221 / CLASSIFY',
                 style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 9,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.0,
-                  color: Colors.black,
+                  color: context.ncColors.textPrimary,
                 ),
               ),
             ),
@@ -522,19 +524,21 @@ class _TodayScreenState extends State<TodayScreen> {
 
   /// Empty state for first launch when no timetable has been created yet.
   Widget _buildFirstLaunchEmptyState(BuildContext context, ThemeData theme) {
+    final nc = context.ncColors;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: nc.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: Colors.black,
+          color: nc.border,
           width: 3.0,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(4, 4),
+            color: nc.shadow,
+            offset: const Offset(4, 4),
             blurRadius: 0,
           ),
         ],
@@ -561,7 +565,7 @@ class _TodayScreenState extends State<TodayScreen> {
                 : 'Welcome, ${widget.userName}. Nothing scheduled yet.',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w900,
-              color: Colors.black,
+              color: nc.textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -569,7 +573,7 @@ class _TodayScreenState extends State<TodayScreen> {
           Text(
             'Upload a photo of your timetable to automatically extract every class and get reminded right on time.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.black87,
+              color: nc.textSecondary,
               fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
@@ -583,7 +587,7 @@ class _TodayScreenState extends State<TodayScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: Colors.black, width: 2.5),
+                side: BorderSide(color: nc.border, width: 2.5),
               ),
             ),
           ),
@@ -594,19 +598,21 @@ class _TodayScreenState extends State<TodayScreen> {
 
   /// Empty state for weekends or days without any scheduled classes.
   Widget _buildWeekendNoClassesState(BuildContext context, ThemeData theme) {
+    final nc = context.ncColors;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: nc.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: Colors.black,
+          color: nc.border,
           width: 3.0,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(4, 4),
+            color: nc.shadow,
+            offset: const Offset(4, 4),
             blurRadius: 0,
           ),
         ],
@@ -631,7 +637,7 @@ class _TodayScreenState extends State<TodayScreen> {
             'No classes today. Enjoy the break!',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w900,
-              color: Colors.black,
+              color: nc.textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -639,7 +645,7 @@ class _TodayScreenState extends State<TodayScreen> {
           Text(
             'Take a breather or get ahead on upcoming quizzes.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.black87,
+              color: nc.textSecondary,
               fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,

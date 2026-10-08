@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/next_class_colors.dart';
 
 /// Revo-Brutalist Bottom Navigation Bar for NextClass:
-/// - Solid off-white bar with 3px black top border
-/// - Chunky rectangular tab segments with 2.5px solid black borders and hard offset drop shadows
-/// - High-contrast vibrant orange active tab highlighting
-/// - Bold black icons and ultra-bold condensed typography
+/// - Surface bar with 3px border
+/// - Chunky rectangular tab segments with 2.5px solid borders and hard offset drop shadows
+/// - High-contrast vibrant active tab highlighting
+/// - Theme-adaptive icons and ultra-bold typography
 class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onDestinationSelected;
@@ -17,11 +18,13 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.ncColors;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFFAF6EE),
+      decoration: BoxDecoration(
+        color: nc.surface,
         border: Border(
-          top: BorderSide(color: Colors.black, width: 3.0),
+          top: BorderSide(color: nc.border, width: 3.0),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -30,12 +33,14 @@ class AppBottomNav extends StatelessWidget {
         child: Row(
           children: [
             _buildTabItem(
+              context: context,
               index: 0,
               icon: currentIndex == 0 ? Icons.home_rounded : Icons.home_outlined,
               label: 'Today',
             ),
             const SizedBox(width: 8),
             _buildTabItem(
+              context: context,
               index: 1,
               icon: currentIndex == 1
                   ? Icons.calendar_month_rounded
@@ -44,6 +49,7 @@ class AppBottomNav extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             _buildTabItem(
+              context: context,
               index: 2,
               icon: currentIndex == 2
                   ? Icons.assignment_turned_in_rounded
@@ -57,11 +63,13 @@ class AppBottomNav extends StatelessWidget {
   }
 
   Widget _buildTabItem({
+    required BuildContext context,
     required int index,
     required IconData icon,
     required String label,
   }) {
     final isSelected = currentIndex == index;
+    final nc = context.ncColors;
 
     return Expanded(
       child: GestureDetector(
@@ -70,12 +78,12 @@ class AppBottomNav extends StatelessWidget {
         child: Container(
           height: 52,
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFFFB74D) : Colors.white,
+            color: isSelected ? const Color(0xFFFFB74D) : nc.surface,
             borderRadius: BorderRadius.circular(6.0),
-            border: Border.all(color: Colors.black, width: 2.5),
+            border: Border.all(color: nc.border, width: 2.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black,
+                color: nc.shadow,
                 offset: isSelected ? const Offset(1.5, 1.5) : const Offset(3.0, 3.0),
                 blurRadius: 0,
               ),
@@ -87,17 +95,17 @@ class AppBottomNav extends StatelessWidget {
               Icon(
                 icon,
                 size: 20,
-                color: Colors.black,
+                color: isSelected ? Colors.black : nc.icon,
               ),
               const SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
-                  color: Colors.black,
+                  color: isSelected ? Colors.black : nc.textPrimary,
                   height: 1.0,
                 ),
                 maxLines: 1,
@@ -111,24 +119,25 @@ class AppBottomNav extends StatelessWidget {
   }
 
   /// Helper factory to build the contextual NextClass FloatingActionButton.
-  /// Chunky brutalist button with 3px black border, hard offset drop shadow,
+  /// Chunky brutalist button with 3px border, hard offset drop shadow,
   /// and vivid orange / safety yellow background.
   static Widget buildFab({
     required BuildContext context,
     required bool hasTimetable,
     required VoidCallback onPressed,
   }) {
+    final nc = context.ncColors;
     final label = hasTimetable ? 'Add quiz' : 'Upload timetable';
     final icon = hasTimetable ? Icons.add_rounded : Icons.upload_file_rounded;
     final bgColor = hasTimetable ? const Color(0xFFFF5500) : const Color(0xFFFFE500);
     final fgColor = hasTimetable ? Colors.white : Colors.black;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black,
-            offset: Offset(3.5, 3.5),
+            color: nc.shadow,
+            offset: const Offset(3.5, 3.5),
             blurRadius: 0,
           ),
         ],
@@ -143,7 +152,7 @@ class AppBottomNav extends StatelessWidget {
         highlightElevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(6),
-          side: const BorderSide(color: Colors.black, width: 3.0),
+          side: BorderSide(color: nc.border, width: 3.0),
         ),
         icon: Icon(icon, color: fgColor, size: 22),
         label: Text(
