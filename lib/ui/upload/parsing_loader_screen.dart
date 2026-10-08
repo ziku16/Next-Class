@@ -7,15 +7,11 @@ import '../../state/upload_provider.dart';
 /// Fullscreen animated loader with copy cycling every 3 seconds with a 150 ms crossfade.
 class ParsingLoaderScreen extends StatefulWidget {
   final UploadProvider uploadProvider;
-  final bool simulateError;
-  final bool simulateEmpty;
   final bool autoStartExtraction;
 
   const ParsingLoaderScreen({
     super.key,
     required this.uploadProvider,
-    this.simulateError = false,
-    this.simulateEmpty = false,
     this.autoStartExtraction = true,
   });
 
@@ -25,9 +21,9 @@ class ParsingLoaderScreen extends StatefulWidget {
 
 class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
   static const List<String> _rotatingCopy = [
-    'Reading timetable...',
-    'Finding classes...',
-    'Almost done...',
+    'Sending to AI vision parser...',
+    'Extracting subjects & class times...',
+    'Formatting your timetable...',
   ];
 
   int _currentCopyIndex = 0;
@@ -53,10 +49,7 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
   }
 
   Future<void> _performExtraction() async {
-    final result = await widget.uploadProvider.extractClasses(
-      simulateError: widget.simulateError,
-      simulateEmpty: widget.simulateEmpty,
-    );
+    final result = await widget.uploadProvider.extractClasses();
 
     if (!mounted) return;
 
@@ -107,7 +100,7 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
                       border: Border.all(color: nc.border, width: 2),
                     ),
                     child: const Text(
-                      'READING TIMETABLE',
+                      'AI VISION PARSER',
                       style: TextStyle(
                         fontFamily: 'SpaceGrotesk',
                         fontWeight: FontWeight.w900,
@@ -154,7 +147,7 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
 
                   // Subtitle
                   Text(
-                    '100% on-device • No internet needed',
+                    'Cloudflare AI • Meta Llama 3.2 Vision',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 13,

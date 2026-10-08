@@ -1,14 +1,21 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/models/class_item.dart';
 import '../data/models/scan_quota.dart';
 import '../data/repositories/settings_repository.dart';
-import '../domain/services/timetable_scanner_service.dart';
+import '../services/timetable_parser_service.dart';
 
-/// State management for timetable upload and local on-device parsing pipeline.
+enum TimetableScanErrorCode {
+  rateLimitExceeded,
+  networkError,
+  serverError,
+  emptyResult,
+}
+
+/// State management for timetable upload and Cloudflare AI Vision parsing pipeline.
 class UploadProvider extends ChangeNotifier {
   final SettingsRepository _settingsRepository;
-  final TimetableScannerService _scannerService;
 
   XFile? _selectedImage;
   ScanQuota _quota = ScanQuota.initial();
@@ -19,9 +26,7 @@ class UploadProvider extends ChangeNotifier {
 
   UploadProvider({
     SettingsRepository? settingsRepository,
-    TimetableScannerService? scannerService,
-  })  : _settingsRepository = settingsRepository ?? SettingsRepository(),
-        _scannerService = scannerService ?? const TimetableScannerService() {
+  }) : _settingsRepository = settingsRepository ?? SettingsRepository() {
     refreshQuota();
   }
 
@@ -57,12 +62,8 @@ class UploadProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Executes on-device timetable scanning. Fully offline and unlimited.
-  Future<List<ClassItem>?> extractClasses({
-    bool isOnline = true,
-    bool simulateError = false,
-    bool simulateEmpty = false,
-  }) async {
+  /// Executes Cloudflare AI Vision timetable parsing.
+  Future<List<ClassItem>?> extractClasses() async {
     if (_selectedImage == null) {
       _errorMessage = 'Please select a photo first.';
       notifyListeners();
@@ -75,11 +76,16 @@ class UploadProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final classes = await _scannerService.scanTimetable(
-        _selectedImage!.path,
-        simulateError: simulateError,
-        simulateEmpty: simulateEmpty,
-      );
+      final rawJson = await TimetableParserService.parseTimetable(File(_selectedImage!.path));
+      final classes = TimetableParserService.jsonToClassItems(rawJson);
+
+      if (classes.isEmpty) {
+        _isLoading = false;
+        _errorCode = TimetableScanErrorCode.emptyResult;
+        _errorMessage = "No classes could be identified from this image. Please ensure your photo is clear and legible.";
+        notifyListeners();
+        return null;
+      }
 
       // Consume quota ONLY on success
       _quota = await _settingsRepository.consumeScan();
@@ -87,17 +93,19 @@ class UploadProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return classes;
-    } on TimetableScanException catch (e) {
-      _isLoading = false;
-      _errorCode = e.code;
-      _errorMessage = e.message;
-      notifyListeners();
-      return null;
     } catch (e) {
       _isLoading = false;
-      _errorCode = TimetableScanErrorCode.parsingFailed;
-      _errorMessage =
-          "We couldn't read your timetable this time. Please try again with a clearer photo.";
+      final errStr = e.toString();
+      if (errStr.contains('RATE_LIMIT_EXCEEDED')) {
+        _errorCode = TimetableScanErrorCode.rateLimitExceeded;
+        _errorMessage = 'Weekly scan limit reached (2 scans/week). Please enter classes manually.';
+      } else if (errStr.contains('SERVER_ERROR')) {
+        _errorCode = TimetableScanErrorCode.serverError;
+        _errorMessage = 'The timetable parser encountered a server error. Please try again.';
+      } else {
+        _errorCode = TimetableScanErrorCode.networkError;
+        _errorMessage = 'Unable to reach Cloudflare AI parser. Please check your internet connection.';
+      }
       notifyListeners();
       return null;
     }

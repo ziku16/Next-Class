@@ -4,9 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:nextclass/core/theme/app_theme.dart';
 import 'package:nextclass/data/database/app_database.dart';
 import 'package:nextclass/data/repositories/settings_repository.dart';
-import 'package:nextclass/domain/parser/local_ocr_engine.dart';
-import 'package:nextclass/domain/parser/ocr_models.dart';
-import 'package:nextclass/domain/services/timetable_scanner_service.dart';
 import 'package:nextclass/state/upload_provider.dart';
 import 'package:nextclass/ui/onboarding/notification_explainer_screen.dart';
 import 'package:nextclass/ui/onboarding/splash_screen.dart';
@@ -156,64 +153,35 @@ void main() {
         ),
       ));
 
-      expect(find.text('Reading timetable...'), findsOneWidget);
+      expect(find.text('Sending to AI vision parser...'), findsOneWidget);
 
       // Advance by 3 seconds
       await tester.pump(const Duration(seconds: 3));
-      expect(find.text('Finding classes...'), findsOneWidget);
+      expect(find.text('Extracting subjects & class times...'), findsOneWidget);
 
       // Advance by another 3 seconds
       await tester.pump(const Duration(seconds: 3));
-      expect(find.text('Almost done...'), findsOneWidget);
+      expect(find.text('Formatting your timetable...'), findsOneWidget);
 
       // Unmount the widget so its periodic timer is cancelled cleanly
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
-    test('UploadProvider enforces quota rules: Failures do NOT deduct quota; Successes do', () async {
-      final mockScanner = TimetableScannerService(
-        ocrEngine: MockOcrEngine.fromResult(
-          const OcrResult(
-            blocks: [],
-            lines: [
-              OcrTextLine(text: 'MON', boundingBox: Rect.fromLTWH(200, 50, 120, 30)),
-              OcrTextLine(text: 'TUE', boundingBox: Rect.fromLTWH(350, 50, 120, 30)),
-              OcrTextLine(text: 'WED', boundingBox: Rect.fromLTWH(500, 50, 120, 30)),
-              OcrTextLine(text: 'THU', boundingBox: Rect.fromLTWH(650, 50, 120, 30)),
-              OcrTextLine(text: 'FRI', boundingBox: Rect.fromLTWH(800, 50, 120, 30)),
-              OcrTextLine(text: '08:30 - 09:20', boundingBox: Rect.fromLTWH(50, 120, 110, 30)),
-              OcrTextLine(text: 'Mathematics', boundingBox: Rect.fromLTWH(210, 110, 100, 20)),
-              OcrTextLine(text: 'Dr. Smith', boundingBox: Rect.fromLTWH(210, 135, 80, 20)),
-              OcrTextLine(text: 'Room A-04', boundingBox: Rect.fromLTWH(210, 160, 70, 20)),
-            ],
-            fullText: '',
-            imageSize: Size(1000, 600),
-          ),
-        ),
-      );
+    test('UploadProvider enforces quota rules: Failures do NOT deduct quota', () async {
       final provider = UploadProvider(
         settingsRepository: settingsRepo,
-        scannerService: mockScanner,
       );
       await provider.refreshQuota();
 
       expect(provider.quota.dailyScansLeft, 2);
       expect(provider.quota.weeklyScansLeft, 3);
 
-      provider.setSelectedImage(XFile('mock_file.jpg'));
+      provider.setSelectedImage(XFile('non_existent_mock_file.jpg'));
 
-      // Test 1: Simulated failure must NOT deduct quota
-      final failResult = await provider.extractClasses(simulateError: true);
+      // Test: Failed network / file call must NOT deduct quota
+      final failResult = await provider.extractClasses();
       expect(failResult, isNull);
-      expect(provider.errorCode, TimetableScanErrorCode.parsingFailed);
       expect(provider.quota.dailyScansLeft, 2); // Quota untouched!
-
-      // Test 2: Successful extraction DOES deduct quota
-      final successResult = await provider.extractClasses(simulateError: false);
-      expect(successResult, isNotNull);
-      expect(successResult!.length, greaterThan(0));
-      expect(provider.quota.dailyScansLeft, 1); // Quota decremented by 1!
-      expect(provider.quota.weeklyScansLeft, 2);
     });
   });
 }

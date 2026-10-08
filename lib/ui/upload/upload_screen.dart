@@ -6,7 +6,6 @@ import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 import '../../domain/services/connectivity_service.dart';
 import '../../domain/services/notification_service.dart';
-import '../../domain/services/timetable_scanner_service.dart';
 import '../../state/upload_provider.dart';
 import '../main_navigation_screen.dart';
 import '../review/review_screen.dart';
@@ -109,17 +108,12 @@ class _UploadScreenState extends State<UploadScreen> {
     }
   }
 
-  Future<void> _startExtraction({
-    bool simulateError = false,
-    bool simulateEmpty = false,
-  }) async {
+  Future<void> _startExtraction() async {
     // Launch full-screen parsing loader
     final result = await Navigator.of(context).push<List<ClassItem>?>(
       MaterialPageRoute(
         builder: (_) => ParsingLoaderScreen(
           uploadProvider: _provider,
-          simulateError: simulateError,
-          simulateEmpty: simulateEmpty,
         ),
       ),
     );
@@ -148,7 +142,10 @@ class _UploadScreenState extends State<UploadScreen> {
   }
 
   void _showExtractionErrorDialog(TimetableScanErrorCode? code, String message) {
-    const title = "Couldn't read this timetable correctly.";
+    final isRateLimit = code == TimetableScanErrorCode.rateLimitExceeded;
+    final title = isRateLimit
+        ? "WEEKLY SCAN LIMIT REACHED"
+        : "COULD NOT SCAN TIMETABLE";
 
     final nc = context.ncColors;
 
@@ -169,9 +166,11 @@ class _UploadScreenState extends State<UploadScreen> {
           ),
         ),
         content: Text(
-          message.isNotEmpty
-              ? message
-              : "We couldn't understand this timetable image reliably. Try again with a clearer photo or enter your classes manually.",
+          isRateLimit
+              ? "Weekly scan limit reached (2 scans/week). Please enter classes manually."
+              : message.isNotEmpty
+                  ? message
+                  : "Unable to reach Cloudflare AI parser. Please check your internet connection.",
           style: TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontWeight: FontWeight.w600,
@@ -193,28 +192,29 @@ class _UploadScreenState extends State<UploadScreen> {
               ),
             ),
           ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              _startExtraction();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFF5500),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-                side: BorderSide(color: nc.border, width: 2),
+          if (!isRateLimit)
+            FilledButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _startExtraction();
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFFF5500),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  side: BorderSide(color: nc.border, width: 2),
+                ),
+              ),
+              child: const Text(
+                'Try Again',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
               ),
             ),
-            child: const Text(
-              'Try Again',
-              style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -359,19 +359,20 @@ class _UploadScreenState extends State<UploadScreen> {
                       child: Row(
                         children: const [
                           Icon(
-                            Icons.photo_camera_rounded,
+                            Icons.bolt_rounded,
                             size: 20,
                             color: Colors.black,
                           ),
                           SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              '100% on-device & private · Unlimited scans',
+                              'AI-POWERED TIMETABLE SCANNER',
                               style: TextStyle(
                                 fontFamily: 'SpaceGrotesk',
                                 color: Colors.black,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 13,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ),
