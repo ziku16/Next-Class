@@ -142,11 +142,25 @@ class _UploadScreenState extends State<UploadScreen> {
   }
 
   void _showExtractionErrorDialog(TimetableScanErrorCode? code, String message) {
-    final isRateLimit = code == TimetableScanErrorCode.rateLimitExceeded;
-    final title = isRateLimit
-        ? "WEEKLY SCAN LIMIT REACHED"
-        : "COULD NOT SCAN TIMETABLE";
+    final title = switch (code) {
+      TimetableScanErrorCode.rateLimitExceeded => "WEEKLY LIMIT REACHED",
+      TimetableScanErrorCode.parserFormatError => "FORMAT ERROR",
+      TimetableScanErrorCode.emptyResult => "NO CLASSES FOUND",
+      _ => "CONNECTION ERROR",
+    };
 
+    final contentText = switch (code) {
+      TimetableScanErrorCode.rateLimitExceeded =>
+        "Weekly limit reached (2 scans max per week).",
+      TimetableScanErrorCode.parserFormatError =>
+        "Could not parse timetable format. Please try again.",
+      TimetableScanErrorCode.emptyResult =>
+        "No classes could be identified from this image. Please ensure your photo is clear and legible.",
+      _ =>
+        "Request timed out or connection lost. Please check your internet.",
+    };
+
+    final isRateLimit = code == TimetableScanErrorCode.rateLimitExceeded;
     final nc = context.ncColors;
 
     showDialog(
@@ -166,11 +180,7 @@ class _UploadScreenState extends State<UploadScreen> {
           ),
         ),
         content: Text(
-          isRateLimit
-              ? "Weekly scan limit reached (2 scans/week). Please enter classes manually."
-              : message.isNotEmpty
-                  ? message
-                  : "Unable to reach Cloudflare AI parser. Please check your internet connection.",
+          contentText,
           style: TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontWeight: FontWeight.w600,

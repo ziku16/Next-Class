@@ -8,6 +8,7 @@ import '../services/timetable_parser_service.dart';
 
 enum TimetableScanErrorCode {
   rateLimitExceeded,
+  parserFormatError,
   networkError,
   serverError,
   emptyResult,
@@ -98,13 +99,16 @@ class UploadProvider extends ChangeNotifier {
       final errStr = e.toString();
       if (errStr.contains('RATE_LIMIT_EXCEEDED')) {
         _errorCode = TimetableScanErrorCode.rateLimitExceeded;
-        _errorMessage = 'Weekly scan limit reached (2 scans/week). Please enter classes manually.';
+        _errorMessage = 'Weekly limit reached (2 scans max per week).';
+      } else if (errStr.contains('PARSER_FORMAT_ERROR')) {
+        _errorCode = TimetableScanErrorCode.parserFormatError;
+        _errorMessage = 'Could not parse timetable format. Please try again.';
       } else if (errStr.contains('SERVER_ERROR')) {
         _errorCode = TimetableScanErrorCode.serverError;
         _errorMessage = 'The timetable parser encountered a server error. Please try again.';
       } else {
         _errorCode = TimetableScanErrorCode.networkError;
-        _errorMessage = 'Unable to reach Cloudflare AI parser. Please check your internet connection.';
+        _errorMessage = 'Request timed out or connection lost. Please check your internet.';
       }
       notifyListeners();
       return null;

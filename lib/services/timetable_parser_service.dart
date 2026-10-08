@@ -25,11 +25,32 @@ class TimetableParserService {
       ..headers['X-Device-ID'] = deviceId
       ..files.add(await http.MultipartFile.fromPath('image', imageFile.path));
 
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    final streamedResponse =
+        await request.send().timeout(const Duration(seconds: 60));
+    final response = await http.Response.fromStream(streamedResponse)
+        .timeout(const Duration(seconds: 60));
+
+    // ignore: avoid_print
+    print("RAW CLOUDFLARE RESPONSE: ${response.body}");
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      try {
+        String cleanBody = response.body.trim();
+        // Strip markdown code fences if present
+        if (cleanBody.startsWith("```json")) {
+          cleanBody = cleanBody
+              .replaceFirst(RegExp(r'^```json\s*'), '')
+              .replaceFirst(RegExp(r'\s*```$'), '');
+        } else if (cleanBody.startsWith("```")) {
+          cleanBody = cleanBody
+              .replaceFirst(RegExp(r'^```\s*'), '')
+              .replaceFirst(RegExp(r'\s*```$'), '');
+        }
+        return jsonDecode(cleanBody) as Map<String, dynamic>;
+      } on FormatException catch (e) {
+        throw Exception(
+            "PARSER_FORMAT_ERROR: Failed to parse JSON from AI response: $e");
+      }
     } else if (response.statusCode == 429) {
       throw Exception("RATE_LIMIT_EXCEEDED");
     } else {
