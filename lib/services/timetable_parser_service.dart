@@ -81,6 +81,8 @@ class TimetableParserService {
         final subject = lecture['subject']?.toString().trim() ?? 'Untitled Class';
         final timeStr = lecture['time']?.toString().trim() ?? '';
         final room = lecture['room']?.toString().trim();
+        // Extract teacher entity
+        final teacher = lecture['teacher']?.toString().trim();
 
         final colorIndex = subjectColorMap.putIfAbsent(
           subject.toLowerCase(),
@@ -98,6 +100,8 @@ class TimetableParserService {
             startTime: parsedTimes.$1,
             endTime: parsedTimes.$2,
             room: (room != null && room.isNotEmpty) ? room : null,
+            // Pass teacher to the domain model and SQLite
+            teacher: (teacher != null && teacher.isNotEmpty) ? teacher : null,
           ),
         );
       }
