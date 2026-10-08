@@ -33,15 +33,17 @@
 -keep,allowobfuscation,allowshrinking class com.google.gson.reflect.TypeToken
 -keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken
 
-# Google ML Kit Text Recognition keep & dontwarn rules
--keep class com.google.mlkit.vision.** { *; }
--keep class com.google.mlkit.common.** { *; }
--keep class com.google_mlkit_commons.** { *; }
--keep class com.google_mlkit_text_recognition.** { *; }
--dontwarn com.google.mlkit.vision.text.chinese.**
--dontwarn com.google.mlkit.vision.text.devanagari.**
--dontwarn com.google.mlkit.vision.text.japanese.**
--dontwarn com.google.mlkit.vision.text.korean.**
+# Room keep rules
+-keep class androidx.room.** { *; }
+-dontwarn androidx.room.**
+
+# Retrofit & OkHttp keep rules
+-keepattributes *Annotation*
+-keepclassmembers class * {
+    @retrofit2.http.* <methods>;
+}
+-dontwarn okhttp3.**
+-dontwarn retrofit2.**
 
 # NextClass app keep rules
 -keep class com.nextclass.app.nextclass.** { *; }

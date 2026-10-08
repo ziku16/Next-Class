@@ -36,7 +36,7 @@ class TimetableScannerService {
 
   const TimetableScannerService({
     this.preprocessor = const ImagePreprocessor(),
-    this.ocrEngine = const MlKitOcrEngine(),
+    this.ocrEngine = const MockOcrEngine.empty(),
     this.gridDetector = const TimetableGridDetector(),
     this.cellAssigner = const GridCellAssigner(),
     this.classParser = const DeterministicClassParser(),

@@ -46,11 +46,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Auto-download ML Kit OCR model on app install -->
-        <meta-data
-            android:name="com.google.ml.vision.DEPENDENCIES"
-            android:value="ocr" />
-
         <!-- Default Local Notification Icon (monochrome alpha mask for status bar) & Accent Color -->
         <meta-data
             android:name="com.dexterous.flutterlocalnotifications.default_notification_icon"
