@@ -60,8 +60,57 @@ class GridCellAssigner {
       }
     }
 
-    // Assign each line to the best cell based on its center coordinates
+    // Decompose lines that span multiple columns (e.g. OCR merged two columns together)
+    final List<OcrTextLine> decomposedLines = [];
     for (final line in ocrResult.lines) {
+      final cleanText = line.text.trim();
+      if (cleanText.isEmpty) continue;
+
+      if (TimetableGridDetector.footerPattern.hasMatch(cleanText)) continue;
+      if (RegExp(r'\b(?:semester|university\s*weekly|class\s*schedule)\b', caseSensitive: false).hasMatch(cleanText)) {
+        continue;
+      }
+
+      // Check if elements span multiple distinct columns
+      if (line.elements.length > 1) {
+        final Map<int, List<OcrTextElement>> colElements = {};
+        for (final elem in line.elements) {
+          int? colIdx;
+          for (int c = 0; c < cols.length; c++) {
+            if (cols[c].containsX(elem.center.dx)) {
+              colIdx = c;
+              break;
+            }
+          }
+          if (colIdx != null) {
+            colElements.putIfAbsent(colIdx, () => []).add(elem);
+          }
+        }
+
+        if (colElements.keys.length > 1) {
+          // Line spans multiple columns! Split it cleanly per column
+          for (final entry in colElements.entries) {
+            final elems = entry.value;
+            final text = elems.map((e) => e.text).join(' ');
+            final l = elems.map((e) => e.boundingBox.left).reduce((a, b) => a < b ? a : b);
+            final t = elems.map((e) => e.boundingBox.top).reduce((a, b) => a < b ? a : b);
+            final r = elems.map((e) => e.boundingBox.right).reduce((a, b) => a > b ? a : b);
+            final bo = elems.map((e) => e.boundingBox.bottom).reduce((a, b) => a > b ? a : b);
+            decomposedLines.add(OcrTextLine(
+              text: text,
+              boundingBox: Rect.fromLTRB(l, t, r, bo),
+              elements: elems,
+            ));
+          }
+          continue;
+        }
+      }
+
+      decomposedLines.add(line);
+    }
+
+    // Assign each line to the best cell based on overlap geometry
+    for (final line in decomposedLines) {
       final cleanText = line.text.trim();
       if (cleanText.isEmpty) continue;
 
@@ -82,7 +131,7 @@ class GridCellAssigner {
 
       // If Days-as-Rows, also skip explicit Lecture header tokens
       if (grid.isDaysAsRows) {
-        if (RegExp(r'^(?:Lecture|Lec)\s*[1-5]$', caseSensitive: false).hasMatch(cleanText)) {
+        if (RegExp(r'^(?:Lecture|Lec)\s*[1-9]$', caseSensitive: false).hasMatch(cleanText)) {
           continue;
         }
         if (RegExp(r'^\d{1,2}[:.]\d{2}\s*[-–]\s*\d{1,2}[:.]\d{2}$').hasMatch(cleanText) &&
@@ -95,7 +144,7 @@ class GridCellAssigner {
       if (line.right <= grid.dayColumnRightX && grid.dayColumnRightX > 0) {
         continue;
       }
-      if (grid.isDaysAsRows && line.center.dx < grid.columns.first.left) {
+      if (grid.isDaysAsRows && grid.columns.isNotEmpty && line.center.dx < grid.columns.first.left) {
         continue;
       }
       if (DayDetector.matchDay(cleanText) != null &&
@@ -117,22 +166,48 @@ class GridCellAssigner {
         }
       }
 
-      // 4. Find target Column index using centerX coordinate strictly
+      // 4. Find target Column index using maximum horizontal overlap (fallback to containsX)
       int? matchedColIdx;
+      double maxOverlapX = 0;
       for (int c = 0; c < cols.length; c++) {
-        if (cols[c].containsX(centerX)) {
+        final col = cols[c];
+        final overlapX = (line.right < col.left || line.left > col.right)
+            ? 0.0
+            : (col.right < line.right ? col.right : line.right) - (col.left > line.left ? col.left : line.left);
+        if (overlapX > maxOverlapX) {
+          maxOverlapX = overlapX;
           matchedColIdx = c;
-          break;
+        }
+      }
+      if (matchedColIdx == null && cols.isNotEmpty) {
+        for (int c = 0; c < cols.length; c++) {
+          if (cols[c].containsX(centerX)) {
+            matchedColIdx = c;
+            break;
+          }
         }
       }
       if (matchedColIdx == null || matchedColIdx < 0) continue;
 
-      // 5. Find target Row index using centerY coordinate strictly
+      // 5. Find target Row index using maximum vertical overlap (fallback to containsY)
       int? matchedRowIdx;
+      double maxOverlapY = 0;
       for (int r = 0; r < rows.length; r++) {
-        if (rows[r].containsY(centerY)) {
+        final row = rows[r];
+        final overlapY = (line.bottom < row.top || line.top > row.bottom)
+            ? 0.0
+            : (row.bottom < line.bottom ? row.bottom : line.bottom) - (row.top > line.top ? row.top : line.top);
+        if (overlapY > maxOverlapY) {
+          maxOverlapY = overlapY;
           matchedRowIdx = r;
-          break;
+        }
+      }
+      if (matchedRowIdx == null && rows.isNotEmpty) {
+        for (int r = 0; r < rows.length; r++) {
+          if (rows[r].containsY(centerY)) {
+            matchedRowIdx = r;
+            break;
+          }
         }
       }
       if (matchedRowIdx == null || matchedRowIdx < 0) continue;

@@ -54,7 +54,7 @@
         <!-- Default Local Notification Icon (monochrome alpha mask for status bar) & Accent Color -->
         <meta-data
             android:name="com.dexterous.flutterlocalnotifications.default_notification_icon"
-            android:resource="@drawable/ic_stat_nextclass" />
+            android:resource="@drawable/ic_notification" />
         <meta-data
             android:name="com.dexterous.flutterlocalnotifications.default_notification_color"
             android:resource="@color/notification_accent" />

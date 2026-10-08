@@ -92,7 +92,7 @@ class NotificationService {
     }
 
     const androidSettings =
-        AndroidInitializationSettings('@drawable/ic_stat_nextclass');
+        AndroidInitializationSettings('@drawable/ic_notification');
     const darwinSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -280,8 +280,8 @@ class NotificationService {
       priority: Priority.high,
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
-      icon: 'ic_stat_nextclass',
-      color: const Color(0xFF0E8A7D), // NextClass brand teal
+      icon: 'ic_notification',
+      color: const Color(0xFFFF5500), // NextClass brand vivid orange
       showWhen: true,
       styleInformation: bigTextStyle,
       playSound: true,
@@ -405,7 +405,7 @@ class NotificationService {
       priority: Priority.high,
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
-      icon: 'ic_stat_nextclass',
+      icon: 'ic_notification',
       color: const Color(0xFF5B6BD6), // NextClass quiz indigo
       showWhen: true,
       styleInformation: bigTextStyle,

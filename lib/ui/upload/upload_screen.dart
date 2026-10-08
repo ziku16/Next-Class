@@ -148,10 +148,7 @@ class _UploadScreenState extends State<UploadScreen> {
   }
 
   void _showExtractionErrorDialog(TimetableScanErrorCode? code, String message) {
-    String title = "That didn't work";
-    if (code == TimetableScanErrorCode.noClassesFound) {
-      title = 'No classes found';
-    }
+    const title = "Couldn't read this timetable correctly.";
 
     final nc = context.ncColors;
 
@@ -172,7 +169,9 @@ class _UploadScreenState extends State<UploadScreen> {
           ),
         ),
         content: Text(
-          message,
+          message.isNotEmpty
+              ? message
+              : "We couldn't understand this timetable image reliably. Try again with a clearer photo or enter your classes manually.",
           style: TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontWeight: FontWeight.w600,
@@ -186,7 +185,7 @@ class _UploadScreenState extends State<UploadScreen> {
               _handleManualEdit();
             },
             child: Text(
-              'Edit manually',
+              'Enter Classes Manually',
               style: TextStyle(
                 fontFamily: 'SpaceGrotesk',
                 fontWeight: FontWeight.w800,
@@ -208,7 +207,7 @@ class _UploadScreenState extends State<UploadScreen> {
               ),
             ),
             child: const Text(
-              'Try again',
+              'Try Again',
               style: TextStyle(
                 fontFamily: 'SpaceGrotesk',
                 fontWeight: FontWeight.w900,

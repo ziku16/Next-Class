@@ -118,9 +118,8 @@ class DeterministicClassParser {
       }
     }
 
-    // Merge multi-period classes if requested/applicable
-    final isUniversityGrid = cells.any((c) => c.isDaysAsRows);
-    final shouldMerge = allowMultiPeriodMerge ?? (!isUniversityGrid);
+    // Merge multi-period classes (e.g. 2-slot labs or lectures spanning consecutive periods)
+    final shouldMerge = allowMultiPeriodMerge ?? true;
     final processedCandidates = shouldMerge
         ? _mergeConsecutiveClasses(rawCandidates)
         : rawCandidates;
@@ -133,6 +132,15 @@ class DeterministicClassParser {
     for (int i = 0; i < processedCandidates.length; i++) {
       final cand = processedCandidates[i];
       final normSubject = FieldClassifiers.cleanSubject(cand.subject);
+
+      // Final strict candidate validation
+      if (!FieldClassifiers.isValidSubject(normSubject) ||
+          FieldClassifiers.isLocation(normSubject) ||
+          FieldClassifiers.isTeacher(normSubject) ||
+          FieldClassifiers.isTime(normSubject)) {
+        continue;
+      }
+
       final key = normSubject.toLowerCase();
 
       final colorIndex = subjectColorMap.putIfAbsent(key, () {
@@ -171,16 +179,42 @@ class DeterministicClassParser {
   List<List<OcrTextLine>> _splitLinesIntoClassBlocks(List<OcrTextLine> lines) {
     if (lines.length <= 1) return [lines];
 
-    final avgLineHeight = lines.map((l) => l.height).reduce((a, b) => a + b) / lines.length;
+    // Pre-split lines that contain explicit delimiters like "|" or ";"
+    final List<OcrTextLine> expandedLines = [];
+    for (final l in lines) {
+      final t = l.text.trim();
+      if (t.contains('|') && !RegExp(r'^[\-_=|\.]{2,}$').hasMatch(t)) {
+        final parts = t.split(RegExp(r'\s*\|\s*'));
+        for (final p in parts) {
+          if (p.trim().isNotEmpty) {
+            expandedLines.add(OcrTextLine(
+              text: p.trim(),
+              boundingBox: l.boundingBox,
+              elements: l.elements,
+            ));
+          }
+        }
+      } else {
+        expandedLines.add(l);
+      }
+    }
+
+    if (expandedLines.length <= 1) return [expandedLines];
+
+    final avgLineHeight = expandedLines.map((l) => l.height).reduce((a, b) => a + b) / expandedLines.length;
     final List<List<OcrTextLine>> blocks = [];
-    List<OcrTextLine> currentBlock = [lines.first];
+    List<OcrTextLine> currentBlock = [expandedLines.first];
 
-    bool currentHasLabHeading = FieldClassifiers.isLabHeading(lines.first.text);
-    bool currentHasTeacher = FieldClassifiers.isTeacher(lines.first.text);
+    final firstText = expandedLines.first.text.trim();
+    bool currentHasSubject = FieldClassifiers.isValidSubject(firstText) && !FieldClassifiers.isLocation(firstText);
+    bool currentHasLabHeading = FieldClassifiers.isLabHeading(firstText);
+    bool currentHasTeacher = FieldClassifiers.isTeacher(firstText);
+    bool currentHasRoom = FieldClassifiers.isLocation(firstText);
+    bool currentHasLabGroup = FieldClassifiers.isLabGroup(firstText);
 
-    for (int i = 1; i < lines.length; i++) {
-      final currentLine = lines[i];
-      final prevLine = lines[i - 1];
+    for (int i = 1; i < expandedLines.length; i++) {
+      final currentLine = expandedLines[i];
+      final prevLine = expandedLines[i - 1];
       final text = currentLine.text.trim();
 
       final gap = currentLine.top - prevLine.bottom;
@@ -188,31 +222,44 @@ class DeterministicClassParser {
 
       final isLabHeading = FieldClassifiers.isLabHeading(text);
       final isTeacher = FieldClassifiers.isTeacher(text);
+      final isRoom = FieldClassifiers.isLocation(text);
+      final isLabGroup = FieldClassifiers.isLabGroup(text);
+      final isSubject = FieldClassifiers.isValidSubject(text) && !isRoom && !isTeacher;
 
       bool isNewBlock = false;
 
-      // 1. A new lab heading (e.g. "DS(Lab)") after another lab heading or teacher
-      if (isLabHeading && (currentHasLabHeading || currentHasTeacher || currentBlock.length >= 2)) {
+      // 1. A new lab heading (e.g. "DS(Lab)") after another lab heading or teacher or subject
+      if (isLabHeading && (currentHasLabHeading || currentHasTeacher || currentHasSubject || currentBlock.length >= 2)) {
         isNewBlock = true;
       }
       // 2. A second teacher prefix when current block already has one
       else if (isTeacher && currentHasTeacher) {
         isNewBlock = true;
       }
-      // 3. Substantial vertical spatial gap + new subject/teacher heading
-      else if (isLargeGap && (FieldClassifiers.isValidSubject(text) || isTeacher) && currentBlock.length >= 2) {
+      // 3. A second subject when current block already has a subject and existing attributes
+      else if (isSubject && currentHasSubject && (currentHasTeacher || currentHasRoom || currentHasLabGroup || isLargeGap)) {
+        isNewBlock = true;
+      }
+      // 4. Substantial vertical spatial gap + new subject/teacher heading
+      else if (isLargeGap && (isSubject || isTeacher) && currentBlock.length >= 2) {
         isNewBlock = true;
       }
 
       if (isNewBlock) {
         blocks.add(currentBlock);
         currentBlock = [currentLine];
+        currentHasSubject = isSubject;
         currentHasLabHeading = isLabHeading;
         currentHasTeacher = isTeacher;
+        currentHasRoom = isRoom;
+        currentHasLabGroup = isLabGroup;
       } else {
         currentBlock.add(currentLine);
+        if (isSubject) currentHasSubject = true;
         if (isLabHeading) currentHasLabHeading = true;
         if (isTeacher) currentHasTeacher = true;
+        if (isRoom) currentHasRoom = true;
+        if (isLabGroup) currentHasLabGroup = true;
       }
     }
 
@@ -339,9 +386,41 @@ class DeterministicClassParser {
       }
     }
 
-    // A valid class MUST have a genuine, recognizable subject
-    if (subject == null || !FieldClassifiers.isValidSubject(subject)) {
+    // A valid class MUST have a genuine, recognizable subject (never room, teacher, or time)
+    if (subject == null ||
+        !FieldClassifiers.isValidSubject(subject) ||
+        FieldClassifiers.isLocation(subject) ||
+        FieldClassifiers.isTeacher(subject) ||
+        FieldClassifiers.isTime(subject) ||
+        FieldClassifiers.isDayName(subject) ||
+        FieldClassifiers.isLectureHeader(subject) ||
+        FieldClassifiers.isFooterOrNoise(subject)) {
       return null;
+    }
+
+    // Strict validation: NEVER confuse time, room, day, or header with teacher
+    if (teacher != null) {
+      final t = teacher.trim();
+      if (FieldClassifiers.isTime(t) ||
+          RegExp(r'\b\d{1,2}[:.]\d{2}\b').hasMatch(t) ||
+          FieldClassifiers.isLocation(t) ||
+          FieldClassifiers.isDayName(t) ||
+          FieldClassifiers.isLectureHeader(t) ||
+          FieldClassifiers.isFooterOrNoise(t)) {
+        teacher = null;
+      }
+    }
+
+    // Strict validation: NEVER confuse time, teacher, day, or header with room
+    if (room != null) {
+      final r = room.trim();
+      if (FieldClassifiers.isTime(r) ||
+          FieldClassifiers.isDayName(r) ||
+          FieldClassifiers.isTeacher(r) ||
+          FieldClassifiers.isLectureHeader(r) ||
+          FieldClassifiers.isFooterOrNoise(r)) {
+        room = null;
+      }
     }
 
     // Combine Room and Lab Group cleanly
@@ -418,11 +497,28 @@ class DeterministicClassParser {
         while (i + 1 < list.length) {
           final next = list[i + 1];
 
-          final isConsecutive = next.startSlotIndex == current.endSlotIndex + 1;
+          final isConsecutive = next.startSlotIndex == current.endSlotIndex + 1 ||
+              current.endTime == next.startTime;
           final isSameSubject = FieldClassifiers.normalizeForComparison(current.subject) ==
               FieldClassifiers.normalizeForComparison(next.subject);
 
-          if (isConsecutive && isSameSubject) {
+          final normTeacherA = current.teacher?.toLowerCase().trim() ?? '';
+          final normTeacherB = next.teacher?.toLowerCase().trim() ?? '';
+          final teachersCompatible = normTeacherA.isEmpty ||
+              normTeacherB.isEmpty ||
+              normTeacherA == normTeacherB ||
+              normTeacherA.contains(normTeacherB) ||
+              normTeacherB.contains(normTeacherA);
+
+          final normRoomA = current.room?.toLowerCase().trim() ?? '';
+          final normRoomB = next.room?.toLowerCase().trim() ?? '';
+          final roomsCompatible = normRoomA.isEmpty ||
+              normRoomB.isEmpty ||
+              normRoomA == normRoomB ||
+              normRoomA.contains(normRoomB) ||
+              normRoomB.contains(normRoomA);
+
+          if (isConsecutive && isSameSubject && teachersCompatible && roomsCompatible) {
             current = current.copyWith(
               endTime: next.endTime,
               endSlotIndex: next.endSlotIndex,

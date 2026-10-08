@@ -17,15 +17,15 @@ class FieldClassifiers {
 
   /// Matches explicit time ranges like:
   /// "8:30 - 10:00", "08:30-10:00", "8:30–10:00", "8:30 to 10:00", "08:30 – 10:00",
-  /// "8:30am - 10:00am", "11:30 - 1:15"
+  /// "8:30am - 10:00am", "11:30 - 1:15", "9am - 10:50", "10am - 11:50", "1pm - 2:50"
   static final RegExp timeRangePattern = RegExp(
-    r'^\s*\(?\s*(\d{1,2}[:.]\d{2})\s*(?:am|pm)?\s*[-–—~to/]+\s*(\d{1,2}[:.]\d{2})\s*(?:am|pm)?\s*\)?\s*$',
+    r'^\s*\(?\s*(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?\s*(?:[-–—~]|to|\/)\s*(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?\s*\)?\s*$',
     caseSensitive: false,
   );
 
-  /// Matches a single time string like "8:30", "08:30", "10:00", "13:15", "15:00", "8:30 AM"
+  /// Matches a single time string like "8:30", "08:30", "10:00", "13:15", "15:00", "8:30 AM", "9am", "1pm"
   static final RegExp singleTimePattern = RegExp(
-    r'^\s*\(?\s*(\d{1,2}[:.]\d{2})\s*(?:am|pm)?\s*\)?\s*$',
+    r'^\s*\(?\s*(?:(\d{1,2})[:.](\d{2})\s*(?:am|pm)?|(\d{1,2})\s*(?:am|pm))\s*\)?\s*$',
     caseSensitive: false,
   );
 
@@ -35,10 +35,19 @@ class FieldClassifiers {
     if (t.isEmpty) return false;
     if (timeRangePattern.hasMatch(t)) return true;
     if (singleTimePattern.hasMatch(t)) return true;
+
+    // Check if substring has explicit time range pattern
+    if (RegExp(r'\b\d{1,2}[:.]\d{2}\s*(?:am|pm)?\s*[-–—~to/]+\s*\d{1,2}[:.]\d{2}\s*(?:am|pm)?\b', caseSensitive: false).hasMatch(t)) {
+      final stripped = t.replaceAll(RegExp(r'\b\d{1,2}[:.]\d{2}\s*(?:am|pm)?\s*[-–—~to/]+\s*\d{1,2}[:.]\d{2}\s*(?:am|pm)?\b', caseSensitive: false), '').trim();
+      if (stripped.isEmpty || RegExp(r'^[\(\)\s\-–—]+$').hasMatch(stripped)) {
+        return true;
+      }
+    }
+
     // Check if after stripping whitespace and punctuation it's predominantly time
     final stripped = t.replaceAll(RegExp(r'[\s\-–—~to/:.apmAPM\(\)]'), '');
     if (stripped.isNotEmpty && RegExp(r'^\d+$').hasMatch(stripped)) {
-      if (t.contains(':') || t.contains('.') && RegExp(r'\d{1,2}\.\d{2}').hasMatch(t)) {
+      if (t.contains(':') || (t.contains('.') && RegExp(r'\d{1,2}\.\d{2}').hasMatch(t))) {
         return true;
       }
     }
@@ -49,26 +58,40 @@ class FieldClassifiers {
   // 2. LOCATION / ROOM CLASSIFICATION
   // ==========================================
 
-  /// Explicit room labeled prefix like "Room: 101", "Lab - 3", "LT: 2", "CR: 2"
+  /// Explicit room labeled prefix like "Room: 101", "Lab - 3", "LT: 2", "CR: 2", "LLT: 1"
   static final RegExp roomLabeledPattern = RegExp(
-    r'^\s*(?:Room|Rm\.?|Lab|Laboratory|Hall|LH|LT|CR)\s*[:\-]?\s*([A-Za-z0-9\s\.\(\)\-]+)$',
+    r'^\s*(?:Room|Rm\.?|Lab|Laboratory|Hall|LH|LT|LLT|CR|Seminar\s*Room|Auditorium|Audi)\s*[:\-#]?\s*([A-Za-z0-9\s\.\(\)\-]+)$',
     caseSensitive: false,
   );
 
   /// Standard university room codes:
-  /// "LT 1", "LT 2", "LT-4", "CR 2", "CR-1", "LH 3", "Room 101", "Lab 3",
-  /// "CS C.Lab 7", "CS C.Lab 2", "EE C.Lab (U)", "EE DLD Lab", "Hall A", "Hall-3",
-  /// "A-04", "B-12", "C-07", "Block B", "Auditorium"
+  /// "LT 1", "LT 2", "LT-4", "LT1", "LLT 2", "LLT2", "CR 2", "CR-1", "CR10", "LH 3", "Room 101", "Lab 3",
+  /// "CS C.Lab 7", "CS C.Lab 2", "EE C.Lab (U)", "EE C.Lab", "EE DLD Lab", "C.Lab 4", "CLab 2", "Hall A", "Hall-3",
+  /// "A-04", "B-12", "C-07", "F-302", "A121", "F302", "B202", "R101", "Block B", "Auditorium", "Library"
   static final RegExp roomCodePattern = RegExp(
-    r'^\s*(?:(?:Room|Rm\.?|Lab|Hall|LH|LT|CR)\s*[-:]?\s*)?(?:[A-Z]{1,2}[-\s]?\d{1,3}[A-Z]?|Lab\s*[-:]?\s*\d+|Hall\s*[-:]?\s*[A-Za-z0-9]+|(?:CS|EE)\s+(?:C\.?Lab|DLD\s+Lab)(?:\s*[0-9A-Za-z\(\)]+)?)\s*$',
+    r'^\s*(?:(?:Room|Rm\.?|Lab|Laboratory|Hall|LH|LT|LLT|CR)\s*[-:#]?\s*)?(?:[A-Z]{1,3}[-\s#]?\d{1,4}[A-Za-z]?|Lab\s*[-:#]?\s*\d+|Hall\s*[-:#]?\s*[A-Za-z0-9]+|(?:CS|EE|SE|IT)?\s*(?:C\.?Lab|DLD\s+Lab|CLab)(?:\s*[0-9A-Za-z\(\)]+)?)\s*$',
     caseSensitive: false,
   );
 
   /// Specific known room keywords
   static final RegExp roomKeywordsPattern = RegExp(
-    r'\b(?:C\.?Lab|DLD\s*Lab|Lab\b|Room\b|Rm\b|Hall\b|LT\b|CR\b|LH\b|Auditorium\b|Block\s+[A-Z0-9])',
+    r'\b(?:C\.?Lab|DLD\s*Lab|CLab\b|Lab\b|Room\b|Rm\b|Hall\b|LT\b|LLT\b|CR\b|LH\b|Auditorium\b|Audi\b|Library\b|Block\s+[A-Z0-9])',
     caseSensitive: false,
   );
+
+  /// Specific known standalone location names
+  static final Set<String> standaloneLocations = {
+    'auditorium',
+    'audi',
+    'library',
+    'seminar hall',
+    'seminar room',
+    'conference room',
+    'main hall',
+    'ee c.lab',
+    'cs c.lab',
+    'c.lab',
+  };
 
   /// Checks if [text] strongly indicates a classroom, laboratory, or hall location.
   static bool isLocation(String text) {
@@ -77,23 +100,31 @@ class FieldClassifiers {
     if (isTime(t)) return false;
     if (isDayName(t)) return false;
     if (isLectureHeader(t)) return false;
+    if (isLabHeading(t)) return false; // "DBS(Lab)" or "DS(Lab)" are subjects, not rooms
+
+    final lower = t.toLowerCase();
+    if (standaloneLocations.contains(lower)) return true;
 
     if (roomLabeledPattern.hasMatch(t)) return true;
     if (roomCodePattern.hasMatch(t)) return true;
 
-    // Pattern like "LT 1", "LT 2", "CR 2", "LH 4"
-    if (RegExp(r'^(?:LT|CR|LH)\s*\d+[A-Za-z]?$', caseSensitive: false).hasMatch(t)) {
+    // Pattern like "LT 1", "LT 2", "LT-4", "LT1", "LLT 2", "LLT2", "CR 2", "CR-2", "CR2", "LH 4", "LH-1"
+    if (RegExp(r'^(?:LT|LLT|CR|LH)\s*[-:#]?\s*\d+[A-Za-z]?$', caseSensitive: false).hasMatch(t)) {
       return true;
     }
-    // Pattern like "CS C.Lab 7", "EE C.Lab (U)", "EE DLD Lab"
-    if (RegExp(r'^(?:CS|EE)\s+(?:C\.?Lab|DLD\s+Lab)\b', caseSensitive: false).hasMatch(t)) {
+    // Pattern like "CS C.Lab 7", "EE C.Lab (U)", "EE DLD Lab", "C.Lab 4", "CLab 2", "C.Lab"
+    if (RegExp(r'^(?:(?:CS|EE|SE|IT)\s+)?(?:C\.?Lab|DLD\s+Lab|CLab)\b', caseSensitive: false).hasMatch(t)) {
       return true;
     }
-    // Pattern like "A-04", "B-12", "C-07", "R-101"
-    if (RegExp(r'^[A-Z][\-\s]\d{2,3}[A-Z]?$').hasMatch(t)) {
+    // Pattern like "A-04", "B-12", "C-07", "F-302", "R-101", "A121", "B202", "F302", "L102"
+    if (RegExp(r'^[A-Z][\-\s]?\d{2,4}[A-Z]?$').hasMatch(t)) {
       return true;
     }
-    // Short string (< 16 chars) with room keywords + digits (e.g. "Computer Lab 4")
+    // Pattern like "Room 101", "Rm 104", "Lab 4", "Hall A"
+    if (RegExp(r'^(?:Room|Rm\.?|Lab|Hall|Block|Building|Bld\.?)\s*[-:#]?\s*[A-Za-z0-9\-\.]+$', caseSensitive: false).hasMatch(t)) {
+      return true;
+    }
+    // Short string (< 25 chars) with room keywords + digits (e.g. "Computer Lab 4")
     if (t.length <= 25 && roomKeywordsPattern.hasMatch(t) && RegExp(r'\d').hasMatch(t)) {
       return true;
     }
@@ -122,11 +153,13 @@ class FieldClassifiers {
     final t = text.trim();
     if (t.isEmpty) return false;
     if (isTime(t)) return false;
+    if (RegExp(r'\b\d{1,2}[:.]\d{2}\b').hasMatch(t)) return false; // Time inside must NEVER be teacher
     if (isLocation(t)) return false;
     if (isDayName(t)) return false;
     if (isLectureHeader(t)) return false;
     if (isFooterOrNoise(t)) return false;
     if (isLabHeading(t)) return false;
+    if (isLabGroup(t)) return false;
 
     if (teacherPrefixPattern.hasMatch(t)) return true;
     if (teacherLabeledPattern.hasMatch(t)) return true;
@@ -137,6 +170,9 @@ class FieldClassifiers {
       caseSensitive: false,
     );
     if (nonPersonWords.hasMatch(t)) return false;
+
+    // Exclude room tokens
+    if (roomKeywordsPattern.hasMatch(t)) return false;
 
     // Multi-word name heuristic: 2 to 4 capitalized words with no digits, no course keywords
     final words = t.split(RegExp(r'\s+'));
@@ -283,6 +319,15 @@ class FieldClassifiers {
     if (isLectureHeader(t)) return false;
     if (isLabGroup(t)) return false;
     if (isFooterOrNoise(t)) return false;
+
+    // Room keywords without academic subject keywords must never be a subject
+    if (roomKeywordsPattern.hasMatch(t) && !hasAcademicCourseKeyword(t)) {
+      return false;
+    }
+    // Time indicators without academic subject keywords must never be a subject
+    if (RegExp(r'\b\d{1,2}[:.]\d{2}\b').hasMatch(t) && !hasAcademicCourseKeyword(t)) {
+      return false;
+    }
 
     // Lab headings like DBS(Lab) or DS(Lab) are explicitly valid subjects
     if (isLabHeading(t)) return true;

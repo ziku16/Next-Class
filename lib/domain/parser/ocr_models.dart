@@ -12,6 +12,16 @@ class OcrTextElement {
     this.confidence,
   });
 
+  double get left => boundingBox.left;
+  double get top => boundingBox.top;
+  double get right => boundingBox.right;
+  double get bottom => boundingBox.bottom;
+  double get width => boundingBox.width;
+  double get height => boundingBox.height;
+  Offset get center => boundingBox.center;
+  double get centerX => boundingBox.center.dx;
+  double get centerY => boundingBox.center.dy;
+
   @override
   String toString() => 'OcrTextElement("$text", bounds: $boundingBox)';
 }
@@ -35,6 +45,8 @@ class OcrTextLine {
   double get width => boundingBox.width;
   double get height => boundingBox.height;
   Offset get center => boundingBox.center;
+  double get centerX => boundingBox.center.dx;
+  double get centerY => boundingBox.center.dy;
 
   @override
   String toString() => 'OcrTextLine("$text", bounds: $boundingBox)';
@@ -59,6 +71,8 @@ class OcrTextBlock {
   double get width => boundingBox.width;
   double get height => boundingBox.height;
   Offset get center => boundingBox.center;
+  double get centerX => boundingBox.center.dx;
+  double get centerY => boundingBox.center.dy;
 
   @override
   String toString() => 'OcrTextBlock("${text.replaceAll('\n', ' ')}", bounds: $boundingBox)';
