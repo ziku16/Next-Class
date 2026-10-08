@@ -30,26 +30,32 @@ class TimetableParserService {
     final response = await http.Response.fromStream(streamedResponse)
         .timeout(const Duration(seconds: 60));
 
-    // ignore: avoid_print
-    print("RAW CLOUDFLARE RESPONSE: ${response.body}");
-
     if (response.statusCode == 200) {
+      // ignore: avoid_print
+      print("RAW CLOUDFLARE RESPONSE:\n${response.body}");
+
       try {
-        String cleanBody = response.body.trim();
-        // Strip markdown code fences if present
-        if (cleanBody.startsWith("```json")) {
-          cleanBody = cleanBody
-              .replaceFirst(RegExp(r'^```json\s*'), '')
-              .replaceFirst(RegExp(r'\s*```$'), '');
-        } else if (cleanBody.startsWith("```")) {
-          cleanBody = cleanBody
-              .replaceFirst(RegExp(r'^```\s*'), '')
-              .replaceFirst(RegExp(r'\s*```$'), '');
+        // 1. Locate the outermost JSON object bounds
+        final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(response.body);
+
+        if (jsonMatch == null) {
+          throw const FormatException("No JSON object detected in response body.");
         }
-        return jsonDecode(cleanBody) as Map<String, dynamic>;
+
+        final jsonString = jsonMatch.group(0)!;
+
+        // 2. Decode the isolated JSON string
+        final Map<String, dynamic> decoded = jsonDecode(jsonString);
+
+        if (!decoded.containsKey("schedule")) {
+          throw const FormatException("Missing 'schedule' key in parsed JSON.");
+        }
+
+        return decoded;
       } on FormatException catch (e) {
-        throw Exception(
-            "PARSER_FORMAT_ERROR: Failed to parse JSON from AI response: $e");
+        // ignore: avoid_print
+        print("JSON PARSE ERROR: $e");
+        throw Exception("PARSER_FORMAT_ERROR: Failed to parse schedule from AI response.");
       }
     } else if (response.statusCode == 429) {
       throw Exception("RATE_LIMIT_EXCEEDED");
