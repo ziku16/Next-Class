@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:nextclass/core/theme/app_theme.dart';
 import 'package:nextclass/data/database/app_database.dart';
 import 'package:nextclass/data/repositories/settings_repository.dart';
+import 'package:nextclass/domain/parser/local_ocr_engine.dart';
+import 'package:nextclass/domain/parser/ocr_models.dart';
 import 'package:nextclass/domain/services/timetable_scanner_service.dart';
 import 'package:nextclass/state/upload_provider.dart';
 import 'package:nextclass/ui/onboarding/notification_explainer_screen.dart';
@@ -169,7 +171,30 @@ void main() {
     });
 
     test('UploadProvider enforces quota rules: Failures do NOT deduct quota; Successes do', () async {
-      final provider = UploadProvider(settingsRepository: settingsRepo);
+      final mockScanner = TimetableScannerService(
+        ocrEngine: MockOcrEngine.fromResult(
+          const OcrResult(
+            blocks: [],
+            lines: [
+              OcrTextLine(text: 'MON', boundingBox: Rect.fromLTWH(200, 50, 120, 30)),
+              OcrTextLine(text: 'TUE', boundingBox: Rect.fromLTWH(350, 50, 120, 30)),
+              OcrTextLine(text: 'WED', boundingBox: Rect.fromLTWH(500, 50, 120, 30)),
+              OcrTextLine(text: 'THU', boundingBox: Rect.fromLTWH(650, 50, 120, 30)),
+              OcrTextLine(text: 'FRI', boundingBox: Rect.fromLTWH(800, 50, 120, 30)),
+              OcrTextLine(text: '08:30 - 09:20', boundingBox: Rect.fromLTWH(50, 120, 110, 30)),
+              OcrTextLine(text: 'Mathematics', boundingBox: Rect.fromLTWH(210, 110, 100, 20)),
+              OcrTextLine(text: 'Dr. Smith', boundingBox: Rect.fromLTWH(210, 135, 80, 20)),
+              OcrTextLine(text: 'Room A-04', boundingBox: Rect.fromLTWH(210, 160, 70, 20)),
+            ],
+            fullText: '',
+            imageSize: Size(1000, 600),
+          ),
+        ),
+      );
+      final provider = UploadProvider(
+        settingsRepository: settingsRepo,
+        scannerService: mockScanner,
+      );
       await provider.refreshQuota();
 
       expect(provider.quota.dailyScansLeft, 2);

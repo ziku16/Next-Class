@@ -69,7 +69,10 @@ class TimetableScannerService {
     final isMock = ocrEngine is MockOcrEngine;
     if (!fileExists && !isMock) {
       await Future.delayed(delay);
-      return _getSampleClasses();
+      throw const TimetableScanException(
+        TimetableScanErrorCode.parsingFailed,
+        "Timetable image could not be loaded. Please select a valid photo.",
+      );
     }
 
     PreprocessedImageResult? preprocessed;
@@ -104,7 +107,7 @@ class TimetableScannerService {
         grid: grid,
       );
 
-      // 5. Deterministic class parsing (Subject, Teacher, Room, Time, multi-row merge)
+      // 5. Deterministic class parsing (Subject, Teacher, Room, Time)
       final classes = classParser.parseCells(cells);
 
       if (classes.isEmpty) {
@@ -125,100 +128,5 @@ class TimetableScannerService {
     } finally {
       await preprocessed?.cleanup();
     }
-  }
-
-  /// Default sample classes returned during mock testing or fallback.
-  static List<ClassItem> _getSampleClasses() {
-    return const [
-      ClassItem(
-        id: 'cls_mon_math',
-        subject: 'Mathematics',
-        subjectColorIndex: 0,
-        dayOfWeek: 'Monday',
-        startTime: '08:30',
-        endTime: '09:20',
-        room: 'Room A-04',
-        teacher: 'Dr. Smith',
-      ),
-      ClassItem(
-        id: 'cls_mon_physics',
-        subject: 'Physics',
-        subjectColorIndex: 1,
-        dayOfWeek: 'Monday',
-        startTime: '09:30',
-        endTime: '10:20',
-        room: 'Room B-12',
-        teacher: 'Prof. Miller',
-      ),
-      ClassItem(
-        id: 'cls_mon_chem_lab',
-        subject: 'Chemistry Lab',
-        subjectColorIndex: 2,
-        dayOfWeek: 'Monday',
-        startTime: '11:00',
-        endTime: '12:40',
-        room: 'Lab 2',
-        teacher: 'Ms. Sara',
-      ),
-      ClassItem(
-        id: 'cls_tue_eng',
-        subject: 'English',
-        subjectColorIndex: 3,
-        dayOfWeek: 'Tuesday',
-        startTime: '08:30',
-        endTime: '09:20',
-        room: 'Room A-01',
-        teacher: 'Mr. John',
-      ),
-      ClassItem(
-        id: 'cls_tue_cs',
-        subject: 'Computer Science',
-        subjectColorIndex: 4,
-        dayOfWeek: 'Tuesday',
-        startTime: '10:30',
-        endTime: '11:20',
-        room: 'Room C-07',
-        teacher: 'Ms. Sara Ahmed Khan',
-      ),
-      ClassItem(
-        id: 'cls_thu_math',
-        subject: 'Mathematics',
-        subjectColorIndex: 0,
-        dayOfWeek: 'Thursday',
-        startTime: '08:30',
-        endTime: '09:20',
-        room: 'Room A-04',
-        teacher: 'Dr. Smith',
-      ),
-      ClassItem(
-        id: 'cls_thu_physics',
-        subject: 'Physics',
-        subjectColorIndex: 1,
-        dayOfWeek: 'Thursday',
-        startTime: '09:30',
-        endTime: '10:20',
-        room: 'Room B-12',
-        teacher: 'Prof. Miller',
-      ),
-      ClassItem(
-        id: 'cls_thu_chem_lab',
-        subject: 'Chemistry Lab',
-        subjectColorIndex: 2,
-        dayOfWeek: 'Thursday',
-        startTime: '11:00',
-        endTime: '12:40',
-        room: 'Lab 2',
-        teacher: 'Ms. Sara',
-      ),
-      ClassItem(
-        id: 'cls_fri_cs',
-        subject: 'Computer Science',
-        subjectColorIndex: 4,
-        dayOfWeek: 'Friday',
-        startTime: '09:00',
-        endTime: '10:30',
-        room: 'Room C-07',
-      ),
-    ];
   }
 }

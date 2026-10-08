@@ -710,4 +710,297 @@ void main() {
       expect(classes.first.subject, 'Computer Networks');
     });
   });
+
+  group('8. Regression Suite: Strict Grid as Source of Truth & Zero False Classes', () {
+    const gridDetector = TimetableGridDetector();
+    const assigner = GridCellAssigner();
+    const parser = DeterministicClassParser();
+
+    test('Strict 25 cells created and all external header, footer, day, margin text discarded', () {
+      final ocrResult = OcrResult(
+        blocks: [],
+        lines: [
+          // 1. External Title at very top
+          const OcrTextLine(text: 'University Weekly Schedule', boundingBox: Rect.fromLTWH(300, 10, 300, 25)),
+
+          // 2. Day Labels in Leftmost Column (Mon .. Fri)
+          const OcrTextLine(text: 'Mon', boundingBox: Rect.fromLTWH(20, 120, 50, 20)),
+          const OcrTextLine(text: 'Tue', boundingBox: Rect.fromLTWH(20, 220, 50, 20)),
+          const OcrTextLine(text: 'Wed', boundingBox: Rect.fromLTWH(20, 320, 50, 20)),
+          const OcrTextLine(text: 'Thu', boundingBox: Rect.fromLTWH(20, 420, 50, 20)),
+          const OcrTextLine(text: 'Fri', boundingBox: Rect.fromLTWH(20, 520, 50, 20)),
+
+          // 3. Top Header Row (Lecture 1 .. 5 and times)
+          const OcrTextLine(text: 'Lecture 1', boundingBox: Rect.fromLTWH(140, 40, 80, 18)),
+          const OcrTextLine(text: '8:30 - 10:00', boundingBox: Rect.fromLTWH(140, 62, 90, 18)),
+          const OcrTextLine(text: 'Lecture 2', boundingBox: Rect.fromLTWH(310, 40, 80, 18)),
+          const OcrTextLine(text: '10:00 - 11:30', boundingBox: Rect.fromLTWH(310, 62, 90, 18)),
+          const OcrTextLine(text: 'Lecture 3', boundingBox: Rect.fromLTWH(480, 40, 80, 18)),
+          const OcrTextLine(text: '11:30 - 13:15', boundingBox: Rect.fromLTWH(480, 62, 90, 18)),
+          const OcrTextLine(text: 'Lecture 4', boundingBox: Rect.fromLTWH(650, 40, 80, 18)),
+          const OcrTextLine(text: '13:35 - 15:00', boundingBox: Rect.fromLTWH(650, 62, 90, 18)),
+          const OcrTextLine(text: 'Lecture 5', boundingBox: Rect.fromLTWH(820, 40, 80, 18)),
+          const OcrTextLine(text: '15:00 - 16:30', boundingBox: Rect.fromLTWH(820, 62, 90, 18)),
+
+          // 4. Valid Classes inside cells
+          // Monday Lecture 2 (x=310, y=120)
+          const OcrTextLine(text: 'Database Systems', boundingBox: Rect.fromLTWH(310, 115, 120, 18)),
+          const OcrTextLine(text: 'Ms. Mehreen Wahab', boundingBox: Rect.fromLTWH(310, 137, 130, 18)),
+          const OcrTextLine(text: 'LT 2', boundingBox: Rect.fromLTWH(310, 159, 45, 18)),
+
+          // Wednesday Lecture 4 (x=650, y=320)
+          const OcrTextLine(text: 'Calculus and Analytic Geometry', boundingBox: Rect.fromLTWH(650, 315, 150, 18)),
+          const OcrTextLine(text: 'CR 2', boundingBox: Rect.fromLTWH(650, 337, 45, 18)),
+
+          // 5. External Footer Text below timetable boundary (y=620)
+          const OcrTextLine(text: 'Timetable generated: 10/1/2026', boundingBox: Rect.fromLTWH(40, 620, 200, 20)),
+          const OcrTextLine(text: 'aSc Timetables', boundingBox: Rect.fromLTWH(800, 620, 120, 20)),
+        ],
+        fullText: '',
+        imageSize: const Size(1000, 660),
+      );
+
+      final grid = gridDetector.detectGrid(ocrResult);
+      expect(grid.isValid, isTrue);
+      expect(grid.isDaysAsRows, isTrue);
+      expect(grid.rows.length, 5);
+      expect(grid.columns.length, 5);
+
+      final cells = assigner.assignLinesToCells(ocrResult: ocrResult, grid: grid);
+      // Exactly 25 logical cells (5 days × 5 lectures)
+      expect(cells.length, 25);
+
+      final classes = parser.parseCells(cells);
+      // Exactly 2 valid classes detected
+      expect(classes.length, 2);
+
+      // Verify no header classes
+      expect(classes.any((c) => c.subject.contains('Lecture')), isFalse);
+      expect(classes.any((c) => c.subject.contains('8:30')), isFalse);
+
+      // Verify no footer classes
+      expect(classes.any((c) => c.subject.contains('Timetable generated')), isFalse);
+      expect(classes.any((c) => c.subject.contains('aSc Timetables')), isFalse);
+
+      // Verify no day-label classes
+      expect(classes.any((c) => c.subject == 'Mon' || c.subject == 'Monday'), isFalse);
+
+      // Verify exact valid classes
+      final dbs = classes.firstWhere((c) => c.subject == 'Database Systems');
+      expect(dbs.dayOfWeek, 'Monday');
+      expect(dbs.startTime, '10:00');
+      expect(dbs.endTime, '11:30');
+      expect(dbs.teacher, 'Ms. Mehreen Wahab');
+      expect(dbs.room, 'LT 2');
+
+      final calc = classes.firstWhere((c) => c.subject.contains('Calculus'));
+      expect(calc.dayOfWeek, 'Wednesday');
+      expect(calc.startTime, '13:35');
+      expect(calc.endTime, '15:00');
+      expect(calc.room, 'CR 2');
+      expect(calc.teacher, isNull); // No hallucination!
+    });
+
+    test('Metadata-only cells (room only, lab group only, teacher only) produce ZERO classes', () {
+      final ocrResult = OcrResult(
+        blocks: [],
+        lines: [
+          // Days
+          const OcrTextLine(text: 'Mon', boundingBox: Rect.fromLTWH(20, 100, 50, 20)),
+          const OcrTextLine(text: 'Tue', boundingBox: Rect.fromLTWH(20, 200, 50, 20)),
+          const OcrTextLine(text: 'Wed', boundingBox: Rect.fromLTWH(20, 300, 50, 20)),
+          const OcrTextLine(text: 'Thu', boundingBox: Rect.fromLTWH(20, 400, 50, 20)),
+          const OcrTextLine(text: 'Fri', boundingBox: Rect.fromLTWH(20, 500, 50, 20)),
+
+          // Headers
+          const OcrTextLine(text: 'Lecture 1', boundingBox: Rect.fromLTWH(140, 40, 80, 18)),
+          const OcrTextLine(text: 'Lecture 2', boundingBox: Rect.fromLTWH(310, 40, 80, 18)),
+          const OcrTextLine(text: 'Lecture 3', boundingBox: Rect.fromLTWH(480, 40, 80, 18)),
+          const OcrTextLine(text: 'Lecture 4', boundingBox: Rect.fromLTWH(650, 40, 80, 18)),
+          const OcrTextLine(text: 'Lecture 5', boundingBox: Rect.fromLTWH(820, 40, 80, 18)),
+
+          // Cell (Monday, Lecture 1): Room ONLY
+          const OcrTextLine(text: 'LT 2', boundingBox: Rect.fromLTWH(140, 110, 45, 18)),
+
+          // Cell (Tuesday, Lecture 2): Lab Group ONLY
+          const OcrTextLine(text: 'Lab Group 1', boundingBox: Rect.fromLTWH(310, 210, 90, 18)),
+
+          // Cell (Wednesday, Lecture 3): Teacher ONLY
+          const OcrTextLine(text: 'Mr. Bilal Bukhari', boundingBox: Rect.fromLTWH(480, 310, 120, 18)),
+
+          // Cell (Thursday, Lecture 4): Teacher + Room (NO Subject)
+          const OcrTextLine(text: 'Ms. Mehreen Wahab', boundingBox: Rect.fromLTWH(650, 410, 130, 18)),
+          const OcrTextLine(text: 'CS C.Lab 7', boundingBox: Rect.fromLTWH(650, 435, 90, 18)),
+
+          // Cell (Friday, Lecture 5): OCR Noise ONLY
+          const OcrTextLine(text: '----------------', boundingBox: Rect.fromLTWH(820, 510, 100, 18)),
+          const OcrTextLine(text: '.........', boundingBox: Rect.fromLTWH(820, 530, 60, 18)),
+        ],
+        fullText: '',
+        imageSize: const Size(1000, 600),
+      );
+
+      final grid = gridDetector.detectGrid(ocrResult);
+      final cells = assigner.assignLinesToCells(ocrResult: ocrResult, grid: grid);
+      final classes = parser.parseCells(cells);
+
+      // Absolutely ZERO classes should be created from metadata-only cells!
+      expect(classes, isEmpty);
+    });
+
+    test('Never combines adjacent lecture periods (Lecture 2 + Lecture 3 are isolated)', () {
+      final ocrResult = OcrResult(
+        blocks: [],
+        lines: [
+          // Days
+          const OcrTextLine(text: 'Mon', boundingBox: Rect.fromLTWH(20, 100, 50, 20)),
+          const OcrTextLine(text: 'Tue', boundingBox: Rect.fromLTWH(20, 200, 50, 20)),
+          const OcrTextLine(text: 'Wed', boundingBox: Rect.fromLTWH(20, 300, 50, 20)),
+          const OcrTextLine(text: 'Thu', boundingBox: Rect.fromLTWH(20, 400, 50, 20)),
+          const OcrTextLine(text: 'Fri', boundingBox: Rect.fromLTWH(20, 500, 50, 20)),
+
+          // Headers
+          const OcrTextLine(text: 'Lecture 1', boundingBox: Rect.fromLTWH(140, 40, 80, 18)),
+          const OcrTextLine(text: 'Lecture 2', boundingBox: Rect.fromLTWH(310, 40, 80, 18)),
+          const OcrTextLine(text: 'Lecture 3', boundingBox: Rect.fromLTWH(480, 40, 80, 18)),
+          const OcrTextLine(text: 'Lecture 4', boundingBox: Rect.fromLTWH(650, 40, 80, 18)),
+          const OcrTextLine(text: 'Lecture 5', boundingBox: Rect.fromLTWH(820, 40, 80, 18)),
+
+          // Monday Lecture 2 (10:00 - 11:30)
+          const OcrTextLine(text: 'Database Systems', boundingBox: Rect.fromLTWH(310, 110, 120, 18)),
+          const OcrTextLine(text: 'Ms. Mehreen Wahab', boundingBox: Rect.fromLTWH(310, 130, 130, 18)),
+          const OcrTextLine(text: 'LT 2', boundingBox: Rect.fromLTWH(310, 150, 45, 18)),
+
+          // Monday Lecture 3 (11:30 - 13:15)
+          const OcrTextLine(text: 'Data Structures', boundingBox: Rect.fromLTWH(480, 110, 110, 18)),
+          const OcrTextLine(text: 'Mr. Bilal Bukhari', boundingBox: Rect.fromLTWH(480, 130, 120, 18)),
+          const OcrTextLine(text: 'LT 4', boundingBox: Rect.fromLTWH(480, 150, 45, 18)),
+        ],
+        fullText: '',
+        imageSize: const Size(1000, 600),
+      );
+
+      final grid = gridDetector.detectGrid(ocrResult);
+      final cells = assigner.assignLinesToCells(ocrResult: ocrResult, grid: grid);
+      final classes = parser.parseCells(cells);
+
+      expect(classes.length, 2);
+
+      // Class 1: Monday Lecture 2
+      final dbs = classes.firstWhere((c) => c.subject == 'Database Systems');
+      expect(dbs.startTime, '10:00');
+      expect(dbs.endTime, '11:30');
+      expect(dbs.teacher, 'Ms. Mehreen Wahab');
+      expect(dbs.room, 'LT 2');
+
+      // Class 2: Monday Lecture 3
+      final ds = classes.firstWhere((c) => c.subject == 'Data Structures');
+      expect(ds.startTime, '11:30');
+      expect(ds.endTime, '13:15');
+      expect(ds.teacher, 'Mr. Bilal Bukhari');
+      expect(ds.room, 'LT 4');
+    });
+
+    test('Full university regression: handles dual stacked labs and excludes all non-class metadata', () {
+      final ocrResult = OcrResult(
+        blocks: [],
+        lines: [
+          // Days column
+          const OcrTextLine(text: 'Mon', boundingBox: Rect.fromLTWH(20, 100, 45, 20)),
+          const OcrTextLine(text: 'Tue', boundingBox: Rect.fromLTWH(20, 200, 45, 20)),
+          const OcrTextLine(text: 'Wed', boundingBox: Rect.fromLTWH(20, 300, 45, 20)),
+          const OcrTextLine(text: 'Thu', boundingBox: Rect.fromLTWH(20, 400, 45, 20)),
+          const OcrTextLine(text: 'Fri', boundingBox: Rect.fromLTWH(20, 500, 45, 20)),
+
+          // 5 Lecture headers
+          const OcrTextLine(text: 'Lecture 1', boundingBox: Rect.fromLTWH(140, 40, 80, 18)),
+          const OcrTextLine(text: '8:30 - 10:00', boundingBox: Rect.fromLTWH(140, 62, 90, 18)),
+          const OcrTextLine(text: 'Lecture 2', boundingBox: Rect.fromLTWH(310, 40, 80, 18)),
+          const OcrTextLine(text: '10:00 - 11:30', boundingBox: Rect.fromLTWH(310, 62, 90, 18)),
+          const OcrTextLine(text: 'Lecture 3', boundingBox: Rect.fromLTWH(480, 40, 80, 18)),
+          const OcrTextLine(text: '11:30 - 13:15', boundingBox: Rect.fromLTWH(480, 62, 90, 18)),
+          const OcrTextLine(text: 'Lecture 4', boundingBox: Rect.fromLTWH(650, 40, 80, 18)),
+          const OcrTextLine(text: '13:35 - 15:00', boundingBox: Rect.fromLTWH(650, 62, 90, 18)),
+          const OcrTextLine(text: 'Lecture 5', boundingBox: Rect.fromLTWH(820, 40, 80, 18)),
+          const OcrTextLine(text: '15:00 - 16:30', boundingBox: Rect.fromLTWH(820, 62, 90, 18)),
+
+          // 1. Tuesday Lecture 1: Fundamentals of Digital Logic Design in LT 1
+          const OcrTextLine(text: 'Fundamentals of Digital Logic Design', boundingBox: Rect.fromLTWH(140, 205, 140, 16)),
+          const OcrTextLine(text: 'LT 1', boundingBox: Rect.fromLTWH(140, 225, 40, 16)),
+
+          // 2. Wednesday Lecture 2: Dual stacked lab classes:
+          // Sub-block 1: DBS(Lab)
+          const OcrTextLine(text: 'DBS(Lab)', boundingBox: Rect.fromLTWH(310, 305, 80, 8)),
+          const OcrTextLine(text: 'Ms. Mehreen Wahab', boundingBox: Rect.fromLTWH(310, 314, 110, 8)),
+          const OcrTextLine(text: 'Lab Group 1', boundingBox: Rect.fromLTWH(310, 323, 80, 8)),
+          const OcrTextLine(text: 'CS C.Lab 7', boundingBox: Rect.fromLTWH(310, 332, 75, 8)),
+          // Sub-block 2: DS(Lab)
+          const OcrTextLine(text: 'DS(Lab)', boundingBox: Rect.fromLTWH(310, 342, 70, 8)),
+          const OcrTextLine(text: 'Mr. Bilal Bukhari', boundingBox: Rect.fromLTWH(310, 351, 105, 8)),
+          const OcrTextLine(text: 'Lab Group 2', boundingBox: Rect.fromLTWH(310, 360, 80, 8)),
+          const OcrTextLine(text: 'EE C.Lab (U)', boundingBox: Rect.fromLTWH(310, 369, 85, 8)),
+
+          // 3. Thursday Lecture 4: Software Engineering in CR 2
+          const OcrTextLine(text: 'Software Engineering', boundingBox: Rect.fromLTWH(650, 405, 120, 16)),
+          const OcrTextLine(text: 'CR 2', boundingBox: Rect.fromLTWH(650, 425, 45, 16)),
+
+          // Footer noise
+          const OcrTextLine(text: 'Timetable generated: 10/1/2026', boundingBox: Rect.fromLTWH(30, 580, 180, 18)),
+          const OcrTextLine(text: 'aSc Timetables', boundingBox: Rect.fromLTWH(820, 580, 110, 18)),
+        ],
+        fullText: '',
+        imageSize: const Size(1000, 620),
+      );
+
+      final grid = gridDetector.detectGrid(ocrResult);
+      final cells = assigner.assignLinesToCells(ocrResult: ocrResult, grid: grid);
+      final classes = parser.parseCells(cells);
+
+      // Exactly 4 classes: DLD, DBS(Lab), DS(Lab), Software Engineering
+      expect(classes.length, 4);
+
+      // Verify no false classes
+      for (final c in classes) {
+        expect(c.subject.contains('Lecture'), isFalse);
+        expect(c.subject.contains('Timetable'), isFalse);
+        expect(c.subject.contains('aSc'), isFalse);
+        expect(c.subject.contains('Mon'), isFalse);
+        expect(c.subject.contains('Tue'), isFalse);
+        expect(c.subject.contains('LT 1'), isFalse);
+        expect(c.subject.contains('Lab Group'), isFalse);
+      }
+
+      // Check DLD
+      final dld = classes.firstWhere((c) => c.subject.contains('Logic Design'));
+      expect(dld.dayOfWeek, 'Tuesday');
+      expect(dld.startTime, '08:30');
+      expect(dld.endTime, '10:00');
+      expect(dld.room, 'LT 1');
+
+      // Check DBS(Lab)
+      final dbsLab = classes.firstWhere((c) => c.subject.contains('DBS'));
+      expect(dbsLab.dayOfWeek, 'Wednesday');
+      expect(dbsLab.startTime, '10:00');
+      expect(dbsLab.endTime, '11:30');
+      expect(dbsLab.teacher, 'Ms. Mehreen Wahab');
+      expect(dbsLab.room, contains('CS C.Lab 7'));
+      expect(dbsLab.room, contains('Lab Group 1'));
+
+      // Check DS(Lab)
+      final dsLab = classes.firstWhere((c) => c.subject.contains('DS') && !c.subject.contains('DBS'));
+      expect(dsLab.dayOfWeek, 'Wednesday');
+      expect(dsLab.startTime, '10:00');
+      expect(dsLab.endTime, '11:30');
+      expect(dsLab.teacher, 'Mr. Bilal Bukhari');
+      expect(dsLab.room, contains('EE C.Lab (U)'));
+      expect(dsLab.room, contains('Lab Group 2'));
+
+      // Check Software Engineering
+      final se = classes.firstWhere((c) => c.subject == 'Software Engineering');
+      expect(se.dayOfWeek, 'Thursday');
+      expect(se.startTime, '13:35');
+      expect(se.endTime, '15:00');
+      expect(se.room, 'CR 2');
+    });
+  });
 }

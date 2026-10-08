@@ -1,4 +1,6 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
+import 'day_detector.dart';
 import 'ocr_models.dart';
 import 'timetable_grid_detector.dart';
 
@@ -12,6 +14,7 @@ class TimetableCell {
   final int timeSlotIndex; // Index along the time axis (for merging multi-period classes)
   final List<OcrTextLine> lines;
   final Rect boundingBox;
+  final bool isDaysAsRows;
 
   const TimetableCell({
     required this.dayOfWeek,
@@ -22,6 +25,7 @@ class TimetableCell {
     required this.timeSlotIndex,
     required this.lines,
     required this.boundingBox,
+    this.isDaysAsRows = true,
   });
 
   bool get isEmpty => lines.isEmpty || lines.every((l) => l.text.trim().isEmpty);
@@ -61,6 +65,16 @@ class GridCellAssigner {
       final cleanText = line.text.trim();
       if (cleanText.isEmpty) continue;
 
+      // Filter out footer strings anywhere in the image
+      if (TimetableGridDetector.footerPattern.hasMatch(cleanText)) {
+        continue;
+      }
+
+      // Filter out global header title metadata
+      if (RegExp(r'\b(?:semester|university\s*weekly|class\s*schedule)\b', caseSensitive: false).hasMatch(cleanText)) {
+        continue;
+      }
+
       // 1. Skip lines in the header area across the top
       if (line.bottom <= grid.headerBottomY && grid.headerBottomY > 0) {
         continue;
@@ -77,16 +91,33 @@ class GridCellAssigner {
         }
       }
 
-      // 2. Skip lines in the day column on the left
+      // 2. Skip lines in the day column on the left or matching day names
       if (line.right <= grid.dayColumnRightX && grid.dayColumnRightX > 0) {
         continue;
       }
       if (grid.isDaysAsRows && line.center.dx < grid.columns.first.left) {
         continue;
       }
+      if (DayDetector.matchDay(cleanText) != null &&
+          line.center.dx < (grid.columns.isNotEmpty ? grid.columns.first.left + 20 : 150)) {
+        continue;
+      }
 
-      // 3. Find target Column index using centerX coordinate
+      // 3. Skip lines outside grid bounds (above top row, below bottom row, or outside side columns)
       final centerX = line.center.dx;
+      final centerY = line.center.dy;
+      if (grid.rows.isNotEmpty) {
+        if (centerY < grid.rows.first.top || centerY > grid.rows.last.bottom) {
+          continue;
+        }
+      }
+      if (grid.columns.isNotEmpty) {
+        if (centerX < grid.columns.first.left || centerX > grid.columns.last.right) {
+          continue;
+        }
+      }
+
+      // 4. Find target Column index using centerX coordinate strictly
       int? matchedColIdx;
       for (int c = 0; c < cols.length; c++) {
         if (cols[c].containsX(centerX)) {
@@ -94,24 +125,15 @@ class GridCellAssigner {
           break;
         }
       }
-      if (matchedColIdx == null) {
-        final col = grid.findColumn(centerX);
-        if (col != null) matchedColIdx = cols.indexOf(col);
-      }
       if (matchedColIdx == null || matchedColIdx < 0) continue;
 
-      // 4. Find target Row index using centerY coordinate
-      final centerY = line.center.dy;
+      // 5. Find target Row index using centerY coordinate strictly
       int? matchedRowIdx;
       for (int r = 0; r < rows.length; r++) {
         if (rows[r].containsY(centerY)) {
           matchedRowIdx = r;
           break;
         }
-      }
-      if (matchedRowIdx == null) {
-        final row = grid.findRow(centerY);
-        if (row != null) matchedRowIdx = rows.indexOf(row);
       }
       if (matchedRowIdx == null || matchedRowIdx < 0) continue;
 
@@ -162,7 +184,16 @@ class GridCellAssigner {
           timeSlotIndex: timeSlotIdx,
           lines: lines,
           boundingBox: bounds,
+          isDaysAsRows: grid.isDaysAsRows,
         ));
+      }
+    }
+
+    if (kDebugMode) {
+      for (final cell in cells) {
+        if (cell.isNotEmpty) {
+          debugPrint('[NextClass Grid] CELL ${cell.dayOfWeek} / Slot ${cell.timeSlotIndex}: ${cell.lines.map((l) => l.text.trim()).join(" | ")}');
+        }
       }
     }
 

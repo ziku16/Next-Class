@@ -1,4 +1,5 @@
 import '../../data/models/class_item.dart';
+import 'day_detector.dart';
 import 'grid_cell_assigner.dart';
 import 'ocr_models.dart';
 import 'time_detector.dart';
@@ -60,8 +61,14 @@ class ParsedClassCandidate {
   }
 }
 
-/// Deterministic parser that analyzes lines within timetable cells, extracting
-/// subject, teacher, room, splitting dual labs within a single cell, and merging multi-period classes.
+/// Strict, deterministic parser that analyzes lines within timetable cells.
+///
+/// Rules:
+/// - Grid cells are the source of truth; OCR text is parsed strictly inside each cell.
+/// - Never turns rooms, teachers, lab groups, headers, footers, or day labels into subjects.
+/// - Supports splitting stacked dual lab classes within a single cell by Y-coordinate.
+/// - Rejects cells without a valid, recognizable subject.
+/// - Does not invent missing data (leaves fields empty/null).
 class DeterministicClassParser {
   final TimeDetector timeDetector;
 
@@ -87,7 +94,7 @@ class DeterministicClassParser {
   );
 
   static final RegExp _roomCodeRegex = RegExp(
-    r'^(?:(?:Room|Rm\.?|Lab|Hall|LH|LT|CR)\s*[-:]?\s*)?([A-Z]{1,2}[-\s]?\d{1,3}[A-Z]?|Lab\s*[-:]?\s*\d+|Hall\s*[-:]?\s*\d+|[A-Z]{1,3}\s+C\.Lab\s*[0-9A-Za-z\(\)\s]*)$',
+    r'^(?:(?:Room|Rm\.?|Lab|Hall|LH|LT|CR)\s*[-:]?\s*)?(?:[A-Z]{1,2}[-\s]?\d{1,3}[A-Z]?|Lab\s*[-:]?\s*\d+|Hall\s*[-:]?\s*[A-Za-z0-9]+|(?:CS|EE)\s+(?:C\.?Lab|DLD\s+Lab)(?:\s*[0-9A-Za-z\(\)]+)?)$',
     caseSensitive: false,
   );
 
@@ -97,20 +104,54 @@ class DeterministicClassParser {
     caseSensitive: false,
   );
 
+  // Explicit Lecture header tokens (e.g. "Lecture 1", "Lecture 2", "Lec 3")
+  static final RegExp _lectureHeaderRegex = RegExp(
+    r'^(?:Lecture|Lec)\s*[1-5]$',
+    caseSensitive: false,
+  );
+
+  // Time range pattern (e.g. "8:30 - 10:00", "11:30 - 13:15")
+  static final RegExp _timeRangeRegex = RegExp(
+    r'^\d{1,2}[:.]\d{2}\s*[-–—to~]+\s*\d{1,2}[:.]\d{2}$',
+    caseSensitive: false,
+  );
+
+  // Footer metadata tokens (e.g. "Timetable generated: 10/1/2026", "aSc Timetables")
+  static final RegExp _footerRegex = RegExp(
+    r'(?:timetable\s*generated|asc\s*timetables|generated\s*:\s*\d|asc\b)',
+    caseSensitive: false,
+  );
+
+  // Academic Course Keywords to differentiate Subjects from Person Names
+  static final RegExp _academicSubjectKeyword = RegExp(
+    r'\b(?:Systems|Structures|Engineering|Design|Logic|Geometry|Calculus|Analytics|Analysis|Programming|Science|Networks|Intelligence|Database|Physics|Chemistry|Mathematics|English|Lab|Management|Operating|Computer|Algorithms|Ethics|Economics|Accounting|Finance|History|Psychology|Algebra|Humanities|DBS|DS|DLD|SE|AI|CS|EE|MATH|ENG|PHY|CHEM)\b',
+    caseSensitive: false,
+  );
+
   /// Parses a collection of grid cells into structured [ClassItem]s.
-  List<ClassItem> parseCells(List<TimetableCell> cells) {
+  ///
+  /// For university timetables, multi-period merging is disabled by default
+  /// so that each cell remains an isolated slot.
+  List<ClassItem> parseCells(
+    List<TimetableCell> cells, {
+    bool? allowMultiPeriodMerge,
+  }) {
     if (cells.isEmpty) return [];
 
     final List<ParsedClassCandidate> rawCandidates = [];
 
-    // Parse each cell, splitting multiple stacked class/lab blocks if present
+    // Parse each cell independently, splitting stacked lab blocks if present
     for (final cell in cells) {
       if (cell.isEmpty) continue;
 
-      // Filter pure noise lines before splitting
+      // Filter pure noise lines before processing
       final validLines = cell.lines.where((l) {
         final t = l.text.trim();
-        return t.isNotEmpty && !RegExp(r'^[\-_=|\.]{2,}$').hasMatch(t);
+        return t.isNotEmpty &&
+            !RegExp(r'^[\-_=|\.]{2,}$').hasMatch(t) &&
+            !_footerRegex.hasMatch(t) &&
+            !_lectureHeaderRegex.hasMatch(t) &&
+            DayDetector.matchDay(t) == null;
       }).toList();
 
       if (validLines.isEmpty) continue;
@@ -118,14 +159,19 @@ class DeterministicClassParser {
       final blocks = _splitLinesIntoClassBlocks(validLines);
       for (final blockLines in blocks) {
         final candidate = _parseBlock(blockLines, cell);
-        if (candidate != null) {
+        if (candidate != null && _isValidSubject(candidate.subject)) {
           rawCandidates.add(candidate);
         }
       }
     }
 
-    // Merge consecutive classes spanning multiple slots on the same day
-    final mergedCandidates = _mergeConsecutiveClasses(rawCandidates);
+    // Continuous/transposed grids merge across time rows.
+    // University timetable lecture slots (Days=Rows, Columns=Lectures) are strictly isolated.
+    final isUniversityGrid = cells.any((c) => c.isDaysAsRows);
+    final shouldMerge = allowMultiPeriodMerge ?? (!isUniversityGrid);
+    final mergedCandidates = shouldMerge
+        ? _mergeConsecutiveClasses(rawCandidates)
+        : rawCandidates;
 
     // Convert to domain ClassItem with color indices and unique IDs
     final List<ClassItem> result = [];
@@ -177,6 +223,7 @@ class DeterministicClassParser {
     bool currentBlockHasLabHeading = _isLabHeading(lines.first.text);
     bool currentBlockHasTeacherPrefix = _hasTeacherPrefix(lines.first.text);
     bool currentBlockHasLabGroup = _labGroupRegex.hasMatch(lines.first.text);
+    bool currentBlockHasSubject = _isValidSubject(lines.first.text);
 
     for (int i = 1; i < lines.length; i++) {
       final currentLine = lines[i];
@@ -189,6 +236,7 @@ class DeterministicClassParser {
       final isLabHeading = _isLabHeading(text);
       final hasTeacherPrefix = _hasTeacherPrefix(text);
       final hasLabGroup = _labGroupRegex.hasMatch(text);
+      final isValidSubj = _isValidSubject(text);
 
       // Conditions indicating a new stacked class entry inside this cell:
       bool isNewBlock = false;
@@ -205,8 +253,12 @@ class DeterministicClassParser {
       else if (hasLabGroup && currentBlockHasLabGroup) {
         isNewBlock = true;
       }
-      // 4. Large vertical gap and current block already has at least 3 lines
-      else if (isLargeGap && currentBlock.length >= 3 && (isLabHeading || hasTeacherPrefix)) {
+      // 4. A new distinct subject when current block already has a valid subject and teacher/lab
+      else if (isValidSubj && currentBlockHasSubject && (currentBlockHasTeacherPrefix || currentBlockHasLabHeading || currentBlock.length >= 3)) {
+        isNewBlock = true;
+      }
+      // 5. Large vertical gap with subject-like or lab heading text
+      else if (isLargeGap && currentBlock.length >= 3 && (isLabHeading || hasTeacherPrefix || isValidSubj)) {
         isNewBlock = true;
       }
 
@@ -216,11 +268,13 @@ class DeterministicClassParser {
         currentBlockHasLabHeading = isLabHeading;
         currentBlockHasTeacherPrefix = hasTeacherPrefix;
         currentBlockHasLabGroup = hasLabGroup;
+        currentBlockHasSubject = isValidSubj;
       } else {
         currentBlock.add(currentLine);
         if (isLabHeading) currentBlockHasLabHeading = true;
         if (hasTeacherPrefix) currentBlockHasTeacherPrefix = true;
         if (hasLabGroup) currentBlockHasLabGroup = true;
+        if (isValidSubj) currentBlockHasSubject = true;
       }
     }
 
@@ -260,6 +314,8 @@ class DeterministicClassParser {
       String line = lineObj.text.trim();
       if (line.isEmpty) continue;
       if (RegExp(r'^[\-_=|\.]{2,}$').hasMatch(line)) continue;
+      if (_lectureHeaderRegex.hasMatch(line) || _footerRegex.hasMatch(line)) continue;
+      if (DayDetector.matchDay(line) != null) continue;
 
       // 1. Check if line contains internal time range (e.g. "08:15 - 09:45")
       final range = timeDetector.parseTimeRange(line);
@@ -269,7 +325,7 @@ class DeterministicClassParser {
         final stripped = line
             .replaceAll(RegExp(r'\b\d{1,2}[:.]\d{2}\s*(am|pm)?\s*[-–—to~]+\s*\d{1,2}[:.]\d{2}\s*(am|pm)?', caseSensitive: false), '')
             .trim();
-        if (stripped.length > 2) {
+        if (stripped.length > 2 && !_isMetadataOrNoise(stripped)) {
           line = stripped;
         } else {
           continue;
@@ -306,8 +362,7 @@ class DeterministicClassParser {
         continue;
       }
 
-      final roomCodeMatch = _roomCodeRegex.firstMatch(line);
-      if (roomCodeMatch != null && line.length <= 22) {
+      if (_isRoomCode(line) && line.length <= 24) {
         room = line.trim();
         continue;
       }
@@ -318,13 +373,17 @@ class DeterministicClassParser {
         final mainPart = parenMatch.group(1)!.trim();
         final inside = parenMatch.group(2)!.trim();
 
-        if (_roomCodeRegex.hasMatch(inside) || _roomLabeledRegex.hasMatch(inside)) {
+        if (_isRoomCode(inside) || _roomLabeledRegex.hasMatch(inside)) {
           room = inside;
-          unassignedLines.add(mainPart);
+          if (_isValidSubject(mainPart)) {
+            unassignedLines.add(mainPart);
+          }
           continue;
         } else if (_teacherPrefixRegex.hasMatch(inside)) {
           teacher = inside;
-          unassignedLines.add(mainPart);
+          if (_isValidSubject(mainPart)) {
+            unassignedLines.add(mainPart);
+          }
           continue;
         }
       }
@@ -334,31 +393,37 @@ class DeterministicClassParser {
 
     // 6. Extract Subject and secondary unassigned lines
     if (unassignedLines.isNotEmpty) {
-      // First unassigned line is the Subject
-      subject = unassignedLines.first.replaceAll(RegExp(r'^[|#\-\*\s]+|[|#\-\*\s]+$'), '').trim();
+      // Find the first line that qualifies as a valid subject
+      int subjIdx = -1;
+      for (int i = 0; i < unassignedLines.length; i++) {
+        if (_isValidSubject(unassignedLines[i])) {
+          subjIdx = i;
+          break;
+        }
+      }
 
-      // Check remaining unassigned lines for teacher or room
-      for (int i = 1; i < unassignedLines.length; i++) {
-        final sec = unassignedLines[i].trim();
-        if (teacher == null && _looksLikePersonName(sec)) {
-          teacher = sec;
-        } else if (room == null && _looksLikeRoom(sec)) {
-          room = sec;
-        } else if (subject != null && subject.length < 25 && !sec.startsWith('(')) {
-          subject = '$subject ($sec)';
+      if (subjIdx >= 0) {
+        subject = _cleanSubject(unassignedLines[subjIdx]);
+
+        // Check other lines for teacher or room if still null
+        for (int i = 0; i < unassignedLines.length; i++) {
+          if (i == subjIdx) continue;
+          final sec = unassignedLines[i].trim();
+          if (teacher == null && _looksLikePersonName(sec)) {
+            teacher = sec;
+          } else if (room == null && (_looksLikeRoom(sec) || _isRoomCode(sec))) {
+            room = sec;
+          }
         }
       }
     }
 
-    if (subject == null || subject.isEmpty) {
-      return null; // Empty block
+    // A valid class MUST have a valid recognizable subject
+    if (subject == null || !_isValidSubject(subject)) {
+      return null;
     }
 
-    // 7. Clean and normalize Subject
-    subject = _cleanSubject(subject);
-    if (subject.isEmpty) return null;
-
-    // 8. Combine Room and Lab Group
+    // 7. Combine Room and Lab Group
     if (labGroup != null && labGroup.isNotEmpty) {
       if (room != null && room.isNotEmpty) {
         if (!room.toLowerCase().contains(labGroup.toLowerCase())) {
@@ -369,10 +434,7 @@ class DeterministicClassParser {
       }
     }
 
-    // 9. Validation
-    if (subject.length < 3) {
-      isAiUnsure = true;
-    }
+    // 8. Quality validation
     if (room == null || room.isEmpty) {
       isAiUnsure = true;
     }
@@ -441,24 +503,69 @@ class DeterministicClassParser {
     return merged;
   }
 
+  bool _isMetadataOrNoise(String text) {
+    final t = text.trim();
+    if (t.isEmpty || t.length < 2) return true;
+    if (RegExp(r'^[\-_=|\.]{2,}$').hasMatch(t)) return true;
+    if (_lectureHeaderRegex.hasMatch(t)) return true;
+    if (_timeRangeRegex.hasMatch(t)) return true;
+    if (DayDetector.matchDay(t) != null) return true;
+    if (_footerRegex.hasMatch(t)) return true;
+    if (RegExp(r'\b(?:semester|university\s*weekly|class\s*schedule|timetable)\b', caseSensitive: false).hasMatch(t)) return true;
+    if (_labGroupRegex.hasMatch(t) && t.replaceAll(_labGroupRegex, '').trim().length <= 2) return true;
+    if (_hasTeacherPrefix(t) || _teacherLabeledRegex.hasMatch(t)) return true;
+    if (_roomLabeledRegex.hasMatch(t) || _isRoomCode(t)) return true;
+    return false;
+  }
+
+  bool _isRoomCode(String s) {
+    final t = s.trim();
+    if (_roomCodeRegex.hasMatch(t)) return true;
+    if (RegExp(r'^(?:LT|CR|LH)\s*\d+[A-Za-z]?$', caseSensitive: false).hasMatch(t)) return true;
+    if (RegExp(r'^(?:CS|EE)\s+(?:C\.?Lab|DLD\s+Lab)\b', caseSensitive: false).hasMatch(t)) return true;
+    return false;
+  }
+
+  bool _isValidSubject(String? subject) {
+    if (subject == null) return false;
+    final t = _cleanSubject(subject);
+    if (t.length < 3) return false;
+    if (!RegExp(r'[a-zA-Z]').hasMatch(t)) return false;
+    if (_isMetadataOrNoise(t)) return false;
+    if (RegExp(r'^[^a-zA-Z]+$').hasMatch(t)) return false;
+    return true;
+  }
+
   bool _looksLikePersonName(String s) {
-    if (RegExp(r'\d').hasMatch(s)) return false;
-    final words = s.split(RegExp(r'\s+'));
-    return words.length >= 2 && words.length <= 4 && words.every((w) => w.isNotEmpty && w[0] == w[0].toUpperCase());
+    final t = s.trim();
+    if (RegExp(r'\d').hasMatch(t)) return false;
+    if (_academicSubjectKeyword.hasMatch(t)) return false;
+    if (_isLabHeading(t)) return false;
+    if (_hasTeacherPrefix(t)) return true;
+
+    final words = t.split(RegExp(r'\s+'));
+    return words.length >= 2 &&
+        words.length <= 4 &&
+        words.every((w) => w.isNotEmpty && w[0] == w[0].toUpperCase());
   }
 
   bool _looksLikeRoom(String s) {
     if (_roomLabeledRegex.hasMatch(s)) return true;
     if (_roomCodeRegex.hasMatch(s)) return true;
-    if (RegExp(r'\b(?:C\.Lab|Lab|LT|LH|Hall|CR)\b', caseSensitive: false).hasMatch(s)) return true;
+    if (RegExp(r'\b(?:C\.?Lab|Lab|LT|LH|Hall|CR)\b', caseSensitive: false).hasMatch(s)) return true;
     return RegExp(r'\d').hasMatch(s) && s.length <= 12;
   }
 
   String _cleanSubject(String s) {
-    return s
+    var cleaned = s
         .replaceAll(RegExp(r'^[^\w\(\)]+|[^\w\(\)]+$'), '')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+    cleaned = cleaned.replaceAllMapped(
+      RegExp(r'([A-Za-z0-9])\((Lab|lab)\)', caseSensitive: false),
+      (m) => '${m.group(1)} (${m.group(2)})',
+    );
+    return cleaned;
   }
 
   String _normalizeSubjectForComparison(String s) {

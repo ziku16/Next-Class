@@ -85,44 +85,18 @@ class TimetableGrid {
 
   bool get isValid => columns.isNotEmpty && rows.isNotEmpty;
 
-  /// Finds the column containing the given X coordinate.
+  /// Finds the column containing the given X coordinate strictly.
   GridColumn? findColumn(double x) {
     for (final col in columns) {
       if (col.containsX(x)) return col;
     }
-    // Fallback: pick the closest column if slightly out of bounds
-    if (columns.isNotEmpty) {
-      GridColumn closest = columns.first;
-      double minDiff = (x - closest.centerX).abs();
-      for (final col in columns.skip(1)) {
-        final diff = (x - col.centerX).abs();
-        if (diff < minDiff) {
-          minDiff = diff;
-          closest = col;
-        }
-      }
-      return closest;
-    }
     return null;
   }
 
-  /// Finds the row containing the given Y coordinate.
+  /// Finds the row containing the given Y coordinate strictly.
   GridRow? findRow(double y) {
     for (final row in rows) {
       if (row.containsY(y)) return row;
-    }
-    // Fallback: pick closest row
-    if (rows.isNotEmpty) {
-      GridRow closest = rows.first;
-      double minDiff = (y - closest.centerY).abs();
-      for (final r in rows.skip(1)) {
-        final diff = (y - r.centerY).abs();
-        if (diff < minDiff) {
-          minDiff = diff;
-          closest = r;
-        }
-      }
-      return closest;
     }
     return null;
   }
@@ -154,6 +128,12 @@ class TimetableGridDetector {
     'Thursday',
     'Friday',
   ];
+
+  // Static regex pattern for timetable footer metadata
+  static final RegExp footerPattern = RegExp(
+    r'(?:timetable\s*generated|asc\s*timetables|generated\s*:\s*\d|asc\b)',
+    caseSensitive: false,
+  );
 
   /// Builds a [TimetableGrid] from spatial OCR results.
   TimetableGrid detectGrid(OcrResult ocrResult) {
@@ -296,18 +276,49 @@ class TimetableGridDetector {
         ? dayCandidates.map((c) => c.left).reduce(min) - 10
         : imgWidth * 0.02;
 
-    final contentLines = lines.where((l) => l.center.dy > headerBottomY && l.center.dx > dayColumnRightX).toList();
+    // Detect footer lines across the bottom
+    double? footerTopY;
+    for (final line in lines) {
+      if (footerPattern.hasMatch(line.text.trim())) {
+        if (footerTopY == null || line.top < footerTopY) {
+          footerTopY = line.top;
+        }
+      }
+    }
+
+    final tableTop = headerBottomY;
+
+    // Calculate table bottom strictly above any footer metadata and bounded by Friday row
+    double tableBottom;
+    if (dayCandidates.isNotEmpty) {
+      final detectedDayList = detectedDays.values.toList()..sort((a, b) => a.top.compareTo(b.top));
+      final estimatedRowHeight = detectedDayList.length >= 2
+          ? (detectedDayList.last.top - detectedDayList.first.top) / (detectedDayList.length - 1)
+          : (imgHeight * 0.7) / standardDays.length;
+
+      final fridayCand = detectedDays['Friday'] ?? detectedDayList.last;
+      final candidateBottom = fridayCand.top + estimatedRowHeight + 10.0;
+      if (footerTopY != null) {
+        tableBottom = min(candidateBottom, footerTopY - 10.0);
+      } else {
+        tableBottom = min(candidateBottom, imgHeight * 0.95);
+      }
+    } else {
+      tableBottom = footerTopY != null ? (footerTopY - 15.0) : (imgHeight * 0.85);
+    }
+
+    final contentLines = lines.where((l) =>
+        l.center.dy > headerBottomY &&
+        l.center.dy < tableBottom &&
+        l.center.dx > dayColumnRightX &&
+        !footerPattern.hasMatch(l.text.trim())
+    ).toList();
     final allRightPoints = [
       if (headerCandidates.isNotEmpty) ...headerCandidates.map((l) => l.right),
       if (contentLines.isNotEmpty) ...contentLines.map((l) => l.right),
     ];
     final maxRight = allRightPoints.isNotEmpty ? allRightPoints.reduce(max) : imgWidth * 0.95;
     final tableRight = max(maxRight + 20, imgWidth * 0.95).clamp(dayColumnRightX + 100, imgWidth);
-
-    final tableTop = headerBottomY;
-    final tableBottom = dayCandidates.isNotEmpty
-        ? max(dayCandidates.last.bottom + 20, contentLines.isNotEmpty ? contentLines.map((l) => l.bottom).reduce(max) + 15 : imgHeight * 0.85)
-        : (contentLines.isNotEmpty ? contentLines.map((l) => l.bottom).reduce(max) + 15 : imgHeight * 0.85);
 
     // 3. Reconstruct 5 Day Rows (Monday .. Friday)
     final totalRowHeight = tableBottom - tableTop;
@@ -334,9 +345,10 @@ class TimetableGridDetector {
         } else if (detectedDays.containsKey(standardDays[i + 1])) {
           rBottom = detectedDays[standardDays[i + 1]]!.top - 10;
         } else if (detectedDays.containsKey(dayName)) {
-          rBottom = detectedDays[dayName]!.top + avgRowHeight;
+          rBottom = min(detectedDays[dayName]!.top + avgRowHeight, tableBottom);
         }
       }
+      rBottom = min(rBottom, tableBottom);
 
       rows.add(GridRow(
         index: i,

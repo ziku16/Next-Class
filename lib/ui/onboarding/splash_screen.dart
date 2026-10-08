@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/timetable_repository.dart';
 import '../main_navigation_screen.dart';
 import 'welcome_screen.dart';
@@ -45,18 +44,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         if (widget.nextDestination == null) {
           try {
             final hasClasses = await TimetableRepository().hasClasses();
-            bool hasSeenOnboarding = false;
-            try {
-              final prefs = await SharedPreferences.getInstance().timeout(
-                const Duration(milliseconds: 300),
-              );
-              hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-            } catch (_) {}
-
-            if (hasClasses || hasSeenOnboarding) {
+            if (hasClasses) {
               destination = const MainNavigationScreen();
+            } else {
+              destination = const WelcomeScreen();
             }
-          } catch (_) {}
+          } catch (_) {
+            destination = const WelcomeScreen();
+          }
         }
         if (mounted) {
           Navigator.of(context).pushReplacement(
