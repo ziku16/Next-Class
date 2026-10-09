@@ -5,6 +5,7 @@ import '../../data/models/class_item.dart';
 import '../../domain/services/notification_service.dart';
 import '../../state/timetable_provider.dart';
 import '../main_navigation_screen.dart';
+import '../shared/bounceable.dart';
 import '../shared/class_card.dart';
 import '../shared/nc_banner.dart';
 import '../shared/undo_snackbar.dart';
@@ -287,50 +288,53 @@ class _ReviewScreenState extends State<ReviewScreen> {
               ),
               child: SafeArea(
                 top: false,
-                child: Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: nc.shadow,
-                        offset: const Offset(3.5, 3.5),
-                        blurRadius: 0,
-                      ),
-                    ],
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: FilledButton(
-                      onPressed:
-                          _provider.isSaving ? null : _handleSave,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF5500),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          side: BorderSide(color: nc.border, width: 2.5),
+                child: Bounceable(
+                  onTap: _provider.isSaving ? null : _handleSave,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: nc.shadow,
+                          offset: const Offset(3.5, 3.5),
+                          blurRadius: 0,
                         ),
+                      ],
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: FilledButton(
+                        onPressed:
+                            _provider.isSaving ? null : _handleSave,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF5500),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            side: BorderSide(color: nc.border, width: 2.5),
+                          ),
+                        ),
+                        child: _provider.isSaving
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Save timetable',
+                                style: TextStyle(
+                                  fontFamily: 'SpaceGrotesk',
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  letterSpacing: 0.5,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
-                      child: _provider.isSaving
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Save timetable',
-                              style: TextStyle(
-                                fontFamily: 'SpaceGrotesk',
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16,
-                                letterSpacing: 0.5,
-                                color: Colors.white,
-                              ),
-                            ),
                     ),
                   ),
                 ),

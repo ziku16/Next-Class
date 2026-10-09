@@ -7,6 +7,7 @@ import '../../data/repositories/quiz_repository.dart';
 import '../../data/repositories/timetable_repository.dart';
 import '../../domain/services/notification_service.dart';
 import '../../state/quiz_provider.dart';
+import '../shared/bounceable.dart';
 import '../shared/nc_banner.dart';
 import '../shared/undo_snackbar.dart';
 
@@ -774,78 +775,31 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       ),
                       const SizedBox(height: 8),
 
-                      // Segmented Button: Night before, Morning of quiz, Specific time
-                      Container(
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: ncColors.shadow,
-                              offset: const Offset(2.5, 2.5),
-                              blurRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: SegmentedButton<String>(
-                            key: const Key('quiz_reminder_type_segmented'),
-                            showSelectedIcon: false,
-                            style: ButtonStyle(
-                              backgroundColor: WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return const Color(0xFFFF5500);
-                                }
-                                return ncColors.inputBackground;
-                              }),
-                              foregroundColor: WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return Colors.white;
-                                }
-                                return ncColors.textPrimary;
-                              }),
-                              shape: WidgetStateProperty.all(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  side: BorderSide(color: ncColors.border, width: 2.5),
-                                ),
-                              ),
-                              side: WidgetStateProperty.all(
-                                BorderSide(color: ncColors.border, width: 2.5),
-                              ),
-                            ),
-                            segments: const [
-                              ButtonSegment<String>(
-                                value: 'evening_before',
-                                label: Text('Night before', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                                icon: Icon(Icons.nights_stay_rounded, size: 16),
-                              ),
-                              ButtonSegment<String>(
-                                value: 'morning_of',
-                                label: Text('Morning', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                                icon: Icon(Icons.wb_sunny_rounded, size: 16),
-                              ),
-                              ButtonSegment<String>(
-                                value: 'custom',
-                                label: Text('Specific time', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                                icon: Icon(Icons.access_time_filled_rounded,
-                                    size: 16),
-                              ),
-                            ],
-                            selected: {_reminderType},
-                            onSelectionChanged: (Set<String> newSelection) {
-                              setState(() {
-                                _reminderType = newSelection.first;
-                                if (_reminderType == 'morning_of') {
-                                  _reminderTime =
-                                      const TimeOfDay(hour: 8, minute: 0);
-                                } else if (_reminderType == 'evening_before') {
-                                  _reminderTime =
-                                      const TimeOfDay(hour: 20, minute: 0);
-                                }
-                              });
-                            },
+                      // Standalone Retro-Brutalist Toggle Buttons: Night before, Morning, Specific time
+                      Row(
+                        key: const Key('quiz_reminder_type_segmented'),
+                        children: [
+                          _buildReminderToggleOption(
+                            value: 'evening_before',
+                            label: 'Night before',
+                            icon: Icons.nights_stay_rounded,
+                            ncColors: ncColors,
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          _buildReminderToggleOption(
+                            value: 'morning_of',
+                            label: 'Morning',
+                            icon: Icons.wb_sunny_rounded,
+                            ncColors: ncColors,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildReminderToggleOption(
+                            value: 'custom',
+                            label: 'Specific time',
+                            icon: Icons.access_time_filled_rounded,
+                            ncColors: ncColors,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
 
@@ -1002,49 +956,52 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       const SizedBox(height: 24),
 
                       // Save Button
-                      Container(
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: ncColors.shadow,
-                              offset: const Offset(3.5, 3.5),
-                              blurRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: FilledButton.icon(
-                            key: const Key('save_quiz_button'),
-                            onPressed: _isSaving ? null : _handleSave,
-                            icon: _isSaving
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Icon(Icons.check_rounded, color: Colors.white),
-                            label: Text(
-                              isEditing ? 'Save changes' : 'Save quiz',
-                              style: const TextStyle(
-                                fontFamily: 'SpaceGrotesk',
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16,
-                                letterSpacing: 0.5,
-                                color: Colors.white,
+                      Bounceable(
+                        onTap: _isSaving ? null : _handleSave,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: ncColors.shadow,
+                                offset: const Offset(3.5, 3.5),
+                                blurRadius: 0,
                               ),
-                            ),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFFFF5500),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                                side: BorderSide(color: ncColors.border, width: 2.5),
+                            ],
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: FilledButton.icon(
+                              key: const Key('save_quiz_button'),
+                              onPressed: _isSaving ? null : _handleSave,
+                              icon: _isSaving
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(Icons.check_rounded, color: Colors.white),
+                              label: Text(
+                                isEditing ? 'Save changes' : 'Save quiz',
+                                style: const TextStyle(
+                                  fontFamily: 'SpaceGrotesk',
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  letterSpacing: 0.5,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF5500),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  side: BorderSide(color: ncColors.border, width: 2.5),
+                                ),
                               ),
                             ),
                           ),
@@ -1054,6 +1011,72 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                   ),
                 ),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReminderToggleOption({
+    required String value,
+    required String label,
+    required IconData icon,
+    required NextClassColors ncColors,
+  }) {
+    final isSelected = _reminderType == value;
+    // Bright accent fill (orange #FF6B00 / #FF5500) when selected; clean cream when unselected
+    const selectedBg = Color(0xFFFF6B00);
+    const unselectedBg = Color(0xFFFFFDF0);
+
+    return Expanded(
+      child: Bounceable(
+        onTap: () {
+          setState(() {
+            _reminderType = value;
+            if (_reminderType == 'morning_of') {
+              _reminderTime = const TimeOfDay(hour: 8, minute: 0);
+            } else if (_reminderType == 'evening_before') {
+              _reminderTime = const TimeOfDay(hour: 20, minute: 0);
+            }
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          decoration: BoxDecoration(
+            color: isSelected ? selectedBg : unselectedBg,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: Colors.black, width: 2.0),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black,
+                offset: Offset(2, 2),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: isSelected ? Colors.white : Colors.black,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: isSelected ? Colors.white : Colors.black,
+                ),
+              ),
             ],
           ),
         ),

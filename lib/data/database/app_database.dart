@@ -32,6 +32,10 @@ class AppDatabase {
 
   /// In-memory database factory for fast, isolated unit and widget tests
   static Future<AppDatabase> createInMemory() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
     final dbManager = AppDatabase._internal();
     _database = await openDatabase(
       inMemoryDatabasePath,
@@ -135,8 +139,16 @@ class AppDatabase {
       await txn.delete('settings');
       await txn.delete('quota');
 
-      await txn.insert('settings', UserSettings.defaults().toMap());
-      await txn.insert('quota', ScanQuota.initial().toMap());
+      await txn.insert('settings', UserSettings.defaults().toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace);
+      await txn.insert('quota', ScanQuota.initial().toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace);
     });
+  }
+
+  /// Completely resets the database, wiping all user classes and quizzes.
+  /// Used for clean installs, QA testing, and development data clearing.
+  Future<void> debugResetDatabase() async {
+    await clearAllTables();
   }
 }

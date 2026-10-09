@@ -15,15 +15,15 @@ class FluidPageTransitionsBuilder extends PageTransitionsBuilder {
   ) {
     final curvedAnimation = CurvedAnimation(
       parent: animation,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
+      curve: Curves.fastOutSlowIn,
+      reverseCurve: Curves.fastOutSlowIn,
     );
 
     return FadeTransition(
       opacity: curvedAnimation,
       child: SlideTransition(
         position: Tween<Offset>(
-          begin: const Offset(0.04, 0.0),
+          begin: const Offset(0.03, 0.0),
           end: Offset.zero,
         ).animate(curvedAnimation),
         child: child,
@@ -33,29 +33,30 @@ class FluidPageTransitionsBuilder extends PageTransitionsBuilder {
 }
 
 /// Custom [PageRouteBuilder] providing fluid Framer-Motion-style physics for page pushes.
-class FluidPageRoute<T> extends PageRouteBuilder<T> {
+/// Configured with 300ms duration, [Curves.fastOutSlowIn], and subtle horizontal slide with opacity fade.
+class FramerPageRoute<T> extends PageRouteBuilder<T> {
   final WidgetBuilder builder;
 
-  FluidPageRoute({
+  FramerPageRoute({
     required this.builder,
     super.settings,
   }) : super(
           pageBuilder: (context, animation, secondaryAnimation) =>
               builder(context),
-          transitionDuration: const Duration(milliseconds: 260),
-          reverseTransitionDuration: const Duration(milliseconds: 200),
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 250),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             final curvedAnimation = CurvedAnimation(
               parent: animation,
-              curve: Curves.easeOutCubic,
-              reverseCurve: Curves.easeInCubic,
+              curve: Curves.fastOutSlowIn,
+              reverseCurve: Curves.fastOutSlowIn,
             );
 
             return FadeTransition(
               opacity: curvedAnimation,
               child: SlideTransition(
                 position: Tween<Offset>(
-                  begin: const Offset(0.04, 0.0),
+                  begin: const Offset(0.03, 0.0),
                   end: Offset.zero,
                 ).animate(curvedAnimation),
                 child: child,
@@ -63,4 +64,12 @@ class FluidPageRoute<T> extends PageRouteBuilder<T> {
             );
           },
         );
+}
+
+/// Alias for [FramerPageRoute] for backwards compatibility.
+class FluidPageRoute<T> extends FramerPageRoute<T> {
+  FluidPageRoute({
+    required super.builder,
+    super.settings,
+  });
 }

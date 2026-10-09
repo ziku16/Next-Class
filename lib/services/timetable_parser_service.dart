@@ -1,27 +1,98 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../data/models/class_item.dart';
 
-class TimetableParserService {
-  static const String _workerUrl = "https://nextclass-parser.muhammadzakriaawan237.workers.dev/";
+/// Exception thrown when on-device scan rate limit is exceeded.
+class ScanLimitException implements Exception {
+  final String message;
+  const ScanLimitException(this.message);
 
-  static Future<String> _getOrCreateDeviceId() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? deviceId = prefs.getString("DEVICE_ID");
-    if (deviceId == null) {
-      deviceId = const Uuid().v4();
-      await prefs.setString("DEVICE_ID", deviceId);
+  @override
+  String toString() => 'RATE_LIMIT_EXCEEDED: $message';
+}
+
+class TimetableParserService {
+  static const String _geminiApiKey =
+      'AQ.Ab8RN6JrQFmyYNWAeRh5xQngnwxWpO8IW_fnAyO3YyR4FWjDTg';
+  static const String _modelName = 'gemini-1.5-flash';
+
+  static const String _scanHistoryKey = 'timetable_scan_timestamps';
+  static const int maxScansPerDay = 2;
+  static const int maxScansPerWeek = 3;
+
+  /// Returns recent scan timestamps within the 7-day rolling window.
+  static Future<List<DateTime>> getRecentScanTimestamps([SharedPreferences? testPrefs]) async {
+    final prefs = testPrefs ?? await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_scanHistoryKey) ?? [];
+    final now = DateTime.now();
+    final cutoff = now.subtract(const Duration(days: 7));
+
+    final List<DateTime> valid = [];
+    for (final s in raw) {
+      final dt = DateTime.tryParse(s);
+      if (dt != null && dt.isAfter(cutoff)) {
+        valid.add(dt);
+      }
     }
-    return deviceId;
+    return valid;
+  }
+
+  /// Checks on-device scan quota before initiating a scan.
+  /// Throws [ScanLimitException] if daily or weekly limits are exceeded.
+  static Future<void> checkScanQuota([SharedPreferences? testPrefs]) async {
+    final prefs = testPrefs ?? await SharedPreferences.getInstance();
+    final history = await getRecentScanTimestamps(prefs);
+    final now = DateTime.now();
+
+    final dailyScans = history.where((dt) =>
+        dt.year == now.year && dt.month == now.month && dt.day == now.day).length;
+    final weeklyScans = history.length;
+
+    if (dailyScans >= maxScansPerDay) {
+      throw ScanLimitException(
+        'Daily scan limit reached ($maxScansPerDay/$maxScansPerDay). You can scan again tomorrow.',
+      );
+    }
+    if (weeklyScans >= maxScansPerWeek) {
+      throw ScanLimitException(
+        'Weekly scan limit reached ($maxScansPerWeek/$maxScansPerWeek). Please wait for rolling scans to reset.',
+      );
+    }
+  }
+
+  /// Records successful scan timestamp and prunes records older than 7 days.
+  static Future<void> recordSuccessfulScan([SharedPreferences? testPrefs]) async {
+    final prefs = testPrefs ?? await SharedPreferences.getInstance();
+    final history = await getRecentScanTimestamps(prefs);
+    history.add(DateTime.now());
+
+    final now = DateTime.now();
+    final cutoff = now.subtract(const Duration(days: 7));
+    final pruned = history.where((dt) => dt.isAfter(cutoff)).toList();
+
+    await prefs.setStringList(
+      _scanHistoryKey,
+      pruned.map((dt) => dt.toIso8601String()).toList(),
+    );
+  }
+
+  /// Clears scan history (useful for tests and clean install reset).
+  static Future<void> clearScanHistory([SharedPreferences? testPrefs]) async {
+    final prefs = testPrefs ?? await SharedPreferences.getInstance();
+    await prefs.remove(_scanHistoryKey);
   }
 
   /// Downscales and compresses the timetable image before sending over the network.
+  /// - Format: JPEG
+  /// - Maximum bounds: 1600px width, 1200px height (preserving aspect ratio)
+  /// - Quality: 80% (sharp text, ~200-300 KB file size)
+  /// - Writes output to application's temporary cache directory.
   static Future<File> preprocessImage(File originalFile) async {
     try {
       if (!await originalFile.exists()) {
@@ -78,59 +149,90 @@ class TimetableParserService {
     }
   }
 
-  static Future<Map<String, dynamic>> parseTimetable(File imageFile) async {
+  /// Parses timetable directly via Gemini 1.5 Flash.
+  static Future<Map<String, dynamic>> parseTimetable(
+    File imageFile, {
+    GenerativeModel? customModel,
+    SharedPreferences? customPrefs,
+  }) async {
+    // 1. Enforce on-device rate limiting
+    await checkScanQuota(customPrefs);
+
     File? preprocessedFile;
 
     try {
       preprocessedFile = await preprocessImage(imageFile);
-      final fileToUpload = preprocessedFile;
+      final imageBytes = await preprocessedFile.readAsBytes();
 
-      final deviceId = await _getOrCreateDeviceId();
+      final model = customModel ??
+          GenerativeModel(
+            model: _modelName,
+            apiKey: _geminiApiKey,
+            generationConfig: GenerationConfig(
+              responseMimeType: 'application/json',
+              temperature: 0.0,
+            ),
+          );
 
-      final request = http.MultipartRequest('POST', Uri.parse(_workerUrl))
-        ..headers['X-Device-ID'] = deviceId
-        ..files.add(await http.MultipartFile.fromPath('image', fileToUpload.path));
+      const prompt = '''
+You are an expert university timetable extractor.
+Analyze the timetable image and extract all lecture / class sessions into a valid JSON object.
+Return JSON with this exact schema:
+{
+  "entries": [
+    {
+      "day": "Monday",
+      "subject": "Course Name",
+      "group": "Section / Group if specified",
+      "start": "HH:MM",
+      "end": "HH:MM",
+      "room": "Room / Hall / Lab number",
+      "teacher": "Instructor or Professor Name"
+    }
+  ]
+}
+Rules:
+- Strictly output ONLY valid JSON matching the schema above.
+- Ensure 24-hour time formats (HH:MM).
+- Day must be Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, or Sunday.
+- If teacher, room, or group is absent or unreadable, set to null.
+''';
 
-      // 65-second client timeout provides ample headroom for Google inference
-      final streamedResponse =
-          await request.send().timeout(const Duration(seconds: 65));
-      final response = await http.Response.fromStream(streamedResponse)
-          .timeout(const Duration(seconds: 65));
+      final content = [
+        Content.multi([
+          TextPart(prompt),
+          DataPart('image/jpeg', imageBytes),
+        ]),
+      ];
 
-      if (response.statusCode == 200) {
-        // ignore: avoid_print
-        print("RAW CLOUDFLARE RESPONSE:\n${response.body}");
+      final response = await model
+          .generateContent(content)
+          .timeout(const Duration(seconds: 60));
 
-        try {
-          final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(response.body);
-
-          if (jsonMatch == null) {
-            throw const FormatException("No JSON object detected in response body.");
-          }
-
-          final jsonString = jsonMatch.group(0)!;
-          final Map<String, dynamic> decoded = jsonDecode(jsonString);
-
-          // Support both new 'entries' and legacy 'schedule' payload structures
-          if (!decoded.containsKey("entries") && !decoded.containsKey("schedule")) {
-            throw const FormatException("Missing both 'entries' and 'schedule' keys in response.");
-          }
-
-          return decoded;
-        } on FormatException catch (e) {
-          // ignore: avoid_print
-          print("JSON PARSE ERROR: $e");
-          throw Exception("PARSER_FORMAT_ERROR: Failed to parse schedule from AI response.");
-        }
-      } else if (response.statusCode == 429) {
-        throw Exception("RATE_LIMIT_EXCEEDED: Daily or weekly scan limit reached.");
-      } else if (response.statusCode == 500) {
-        throw Exception("SERVER_ERROR_500: Server encountered an error processing your timetable.");
-      } else if (response.statusCode == 504) {
-        throw Exception("SERVER_ERROR_504: Gateway timeout from timetable parser backend.");
-      } else {
-        throw Exception("SERVER_ERROR_${response.statusCode}: Request failed with status code${response.statusCode}.");
+      final text = response.text;
+      if (text == null || text.trim().isEmpty) {
+        throw const FormatException("Empty response received from Gemini.");
       }
+
+      // Isolate outermost JSON object
+      final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(text);
+      if (jsonMatch == null) {
+        throw const FormatException("No JSON object detected in response body.");
+      }
+
+      final jsonString = jsonMatch.group(0)!;
+      final Map<String, dynamic> decoded = jsonDecode(jsonString);
+
+      if (!decoded.containsKey("entries") && !decoded.containsKey("schedule")) {
+        throw const FormatException("Missing both 'entries' and 'schedule' keys in response.");
+      }
+
+      // Record successful scan upon successful receipt and decoding
+      await recordSuccessfulScan(customPrefs);
+
+      return decoded;
+    } on ScanLimitException {
+      rethrow;
     } on TimeoutException catch (e) {
       // ignore: avoid_print
       print("REQUEST TIMEOUT: $e");
@@ -139,10 +241,18 @@ class TimetableParserService {
       // ignore: avoid_print
       print("SOCKET ERROR: $e");
       throw Exception("NETWORK_ERROR: Unable to connect to timetable server. Please check your internet.");
-    } on http.ClientException catch (e) {
+    } on FormatException catch (e) {
       // ignore: avoid_print
-      print("HTTP CLIENT ERROR: $e");
-      throw Exception("NETWORK_ERROR: Network connection failed: ${e.message}");
+      print("JSON PARSE ERROR: $e");
+      throw Exception("PARSER_FORMAT_ERROR: Failed to parse schedule from AI response: $e");
+    } catch (e) {
+      // ignore: avoid_print
+      print("GEMINI INFERENCE ERROR: $e");
+      final errStr = e.toString();
+      if (errStr.contains('429') || errStr.contains('quota') || errStr.contains('QUOTA')) {
+        throw const ScanLimitException("Daily or weekly scan limit reached.");
+      }
+      throw Exception("PARSER_ERROR: AI parsing failed: $e");
     } finally {
       if (preprocessedFile != null && preprocessedFile.path != imageFile.path) {
         try {
@@ -159,7 +269,7 @@ class TimetableParserService {
     final List<ClassItem> items = [];
     final Map<String, int> subjectColorMap = {};
 
-    // 1. Support for the new Worker's flat 'entries' schema
+    // 1. Support for flat 'entries' schema
     if (json.containsKey('entries') && json['entries'] is List) {
       final rawEntries = json['entries'] as List<dynamic>;
 

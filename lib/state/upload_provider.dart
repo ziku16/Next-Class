@@ -97,9 +97,12 @@ class UploadProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       final errStr = e.toString();
-      if (errStr.contains('RATE_LIMIT_EXCEEDED')) {
+      if (e is ScanLimitException) {
         _errorCode = TimetableScanErrorCode.rateLimitExceeded;
-        _errorMessage = 'Weekly limit reached (2 scans max per week).';
+        _errorMessage = e.message;
+      } else if (errStr.contains('RATE_LIMIT_EXCEEDED')) {
+        _errorCode = TimetableScanErrorCode.rateLimitExceeded;
+        _errorMessage = 'Scan limit reached (Max 2 scans/day, 3 scans/week).';
       } else if (errStr.contains('PARSER_FORMAT_ERROR')) {
         _errorCode = TimetableScanErrorCode.parserFormatError;
         _errorMessage = 'Could not parse timetable format. Please try again.';

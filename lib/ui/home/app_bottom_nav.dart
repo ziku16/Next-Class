@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/next_class_colors.dart';
+import '../shared/bounceable.dart';
 
 /// Revo-Brutalist Bottom Navigation Bar for NextClass:
 /// - Surface bar with 3px border
@@ -132,37 +133,40 @@ class AppBottomNav extends StatelessWidget {
     final bgColor = hasTimetable ? const Color(0xFFFF5500) : const Color(0xFFFFE500);
     final fgColor = hasTimetable ? Colors.white : Colors.black;
 
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: nc.shadow,
-            offset: const Offset(3.5, 3.5),
-            blurRadius: 0,
-          ),
-        ],
-      ),
-      child: FloatingActionButton.extended(
-        onPressed: onPressed,
-        backgroundColor: bgColor,
-        foregroundColor: fgColor,
-        elevation: 0,
-        focusElevation: 0,
-        hoverElevation: 0,
-        highlightElevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
-          side: BorderSide(color: nc.border, width: 3.0),
+    return Bounceable(
+      onTap: onPressed,
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: nc.shadow,
+              offset: const Offset(3.5, 3.5),
+              blurRadius: 0,
+            ),
+          ],
         ),
-        icon: Icon(icon, color: fgColor, size: 22),
-        label: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'SpaceGrotesk',
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.5,
-            color: fgColor,
+        child: FloatingActionButton.extended(
+          onPressed: onPressed,
+          backgroundColor: bgColor,
+          foregroundColor: fgColor,
+          elevation: 0,
+          focusElevation: 0,
+          hoverElevation: 0,
+          highlightElevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
+            side: BorderSide(color: nc.border, width: 3.0),
+          ),
+          icon: Icon(icon, color: fgColor, size: 22),
+          label: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+              color: fgColor,
+            ),
           ),
         ),
       ),
