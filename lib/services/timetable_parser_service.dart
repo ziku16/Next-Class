@@ -20,7 +20,11 @@ class ScanLimitException implements Exception {
 class TimetableParserService {
   static const String _geminiApiKey =
       'AQ.Ab8RN6JrQFmyYNWAeRh5xQngnwxWpO8IW_fnAyO3YyR4FWjDTg';
-  static const String _modelName = 'gemini-1.5-flash';
+  static const List<String> _candidateModels = [
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3-flash-preview',
+  ];
 
   static const String _scanHistoryKey = 'timetable_scan_timestamps';
   static const int maxScansPerDay = 2;
@@ -164,16 +168,6 @@ class TimetableParserService {
       preprocessedFile = await preprocessImage(imageFile);
       final imageBytes = await preprocessedFile.readAsBytes();
 
-      final model = customModel ??
-          GenerativeModel(
-            model: _modelName,
-            apiKey: _geminiApiKey,
-            generationConfig: GenerationConfig(
-              responseMimeType: 'application/json',
-              temperature: 0.0,
-            ),
-          );
-
       const prompt = '''
 You are an expert university timetable extractor.
 Analyze the timetable image and extract all lecture / class sessions into a valid JSON object.
@@ -205,14 +199,47 @@ Rules:
         ]),
       ];
 
-      final response = await model
-          .generateContent(content)
-          .timeout(const Duration(seconds: 60));
+      GenerateContentResponse? response;
+      Object? lastError;
 
-      final text = response.text;
-      if (text == null || text.trim().isEmpty) {
-        throw const FormatException("Empty response received from Gemini.");
+      if (customModel != null) {
+        response = await customModel
+            .generateContent(content)
+            .timeout(const Duration(seconds: 40));
+      } else {
+        for (final modelName in _candidateModels) {
+          try {
+            final model = GenerativeModel(
+              model: modelName,
+              apiKey: _geminiApiKey,
+              generationConfig: GenerationConfig(
+                responseMimeType: 'application/json',
+                temperature: 0.0,
+              ),
+            );
+            final candidateRes = await model
+                .generateContent(content)
+                .timeout(const Duration(seconds: 35));
+            if (candidateRes.text != null && candidateRes.text!.trim().isNotEmpty) {
+              response = candidateRes;
+              break;
+            }
+          } catch (e) {
+            lastError = e;
+            // ignore: avoid_print
+            print("Model $modelName attempt failed: $e. Trying next candidate...");
+          }
+        }
       }
+
+      if (response == null || response.text == null || response.text!.trim().isEmpty) {
+        if (lastError != null) {
+          throw lastError;
+        }
+        throw const FormatException("Empty response received from AI scanner.");
+      }
+
+      final text = response.text!;
 
       // Isolate outermost JSON object
       final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(text);

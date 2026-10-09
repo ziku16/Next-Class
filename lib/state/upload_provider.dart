@@ -106,12 +106,18 @@ class UploadProvider extends ChangeNotifier {
       } else if (errStr.contains('PARSER_FORMAT_ERROR')) {
         _errorCode = TimetableScanErrorCode.parserFormatError;
         _errorMessage = 'Could not parse timetable format. Please try again.';
-      } else if (errStr.contains('SERVER_ERROR')) {
+      } else if (errStr.contains('NETWORK_TIMEOUT') || errStr.contains('TimeoutException')) {
+        _errorCode = TimetableScanErrorCode.networkError;
+        _errorMessage = 'Request timed out. Please check your internet connection.';
+      } else if (errStr.contains('NETWORK_ERROR') || errStr.contains('SocketException')) {
+        _errorCode = TimetableScanErrorCode.networkError;
+        _errorMessage = 'Unable to connect to timetable service. Please check your internet connection.';
+      } else if (errStr.contains('PARSER_ERROR') || errStr.contains('SERVER_ERROR')) {
         _errorCode = TimetableScanErrorCode.serverError;
-        _errorMessage = 'The timetable parser encountered a server error. Please try again.';
+        _errorMessage = 'AI extraction failed. Please ensure photo is clear and try again.';
       } else {
         _errorCode = TimetableScanErrorCode.networkError;
-        _errorMessage = 'Request timed out or connection lost. Please check your internet.';
+        _errorMessage = 'An error occurred while scanning timetable. Please try again.';
       }
       notifyListeners();
       return null;
