@@ -18,7 +18,7 @@ android {
     defaultConfig {
         applicationId = "com.nextclass.app.nextclass"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkPreview ?: flutter.targetSdkVersion
+        targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
