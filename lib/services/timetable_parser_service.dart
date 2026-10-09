@@ -21,9 +21,8 @@ class TimetableParserService {
   static const String _geminiApiKey =
       'AQ.Ab8RN6JrQFmyYNWAeRh5xQngnwxWpO8IW_fnAyO3YyR4FWjDTg';
   static const List<String> _candidateModels = [
-    'gemini-3.5-flash',
-    'gemini-3.5-flash-lite',
-    'gemini-3-flash-preview',
+    'gemini-1.5-flash',
+    'gemini-2.0-flash',
   ];
 
   static const String _scanHistoryKey = 'timetable_scan_timestamps';
