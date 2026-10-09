@@ -87,8 +87,8 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
     Color(0xFF7C4DFF), // 7: Vivid Purple
   ];
 
-  /// Whether this theme is dark mode.
-  bool get isDark => background.computeLuminance() < 0.5;
+  /// Whether this theme is dark mode (always false to lock to light theme).
+  bool get isDark => false;
 
   /// Returns the subject color corresponding to the given index (index % 8).
   Color getSubjectColor(int index) {
@@ -98,7 +98,7 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
 
   /// Light theme extension instance
   static const light = NextClassColors(
-    background: Color(0xFFFAF6EE), // Warm off-white paper
+    background: Color(0xFFFFFDF0), // Warm retro cream paper
     surface: Color(0xFFFAF6EE),
     textPrimary: Color(0xFF000000), // Stark solid black
     textSecondary: Color(0xFF262626), // Dark neutral
@@ -133,42 +133,8 @@ class NextClassColors extends ThemeExtension<NextClassColors> {
     subjects: defaultSubjects,
   );
 
-  /// Dark theme extension instance (REVO Brutalism in Dark Mode)
-  static const dark = NextClassColors(
-    background: Color(0xFF141414), // Deep matte brutalist charcoal
-    surface: Color(0xFF202020), // Dark card surface
-    textPrimary: Color(0xFFFAF6EE), // Crisp stark off-white
-    textSecondary: Color(0xFFCCCCCC), // Light neutral
-    border: Color(0xFFFFFFFF), // Crisp solid white border
-    shadow: Color(0xFF000000), // Solid black hard shadow
-    accent: Color(0xFFFF7043), // Vivid warm orange
-    buttonText: Color(0xFF000000),
-    cardText: Color(0xFFFAF6EE),
-    inputBackground: Color(0xFF2A2A2A),
-    inputText: Color(0xFFFFFFFF),
-    icon: Color(0xFFFFFFFF),
-
-    classCurrent: Color(0xFFFFEE58),
-    classCurrentBorder: Color(0xFFFFFFFF),
-    classNext: Color(0xFFFF7043),
-    classPastBorder: Color(0xFFFFFFFF),
-    quiz: Color(0xFFFF7043),
-    onQuiz: Color(0xFF000000),
-    quizContainer: Color(0xFFD84315),
-    onQuizContainer: Color(0xFFFFFFFF),
-    quizUrgent: Color(0xFFFF5252),
-    onQuizUrgent: Color(0xFF000000),
-    success: Color(0xFF69F0AE),
-    successContainer: Color(0xFF00C853),
-    onSuccessContainer: Color(0xFF000000),
-    warning: Color(0xFFFFEE58),
-    warningContainer: Color(0xFFFBC02D),
-    onWarningContainer: Color(0xFF000000),
-    info: Color(0xFF448AFF),
-    infoContainer: Color(0xFF1565C0),
-    onInfoContainer: Color(0xFFFFFFFF),
-    subjects: defaultSubjects,
-  );
+  /// Dark theme extension instance is locked to light
+  static const dark = light;
 
   @override
   NextClassColors copyWith({

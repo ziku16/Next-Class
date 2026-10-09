@@ -27,11 +27,9 @@ class GoogleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final bgColor = isDark ? const Color(0xFF131314) : const Color(0xFFFFFFFF);
-    final borderColor = isDark ? const Color(0xFF8E918F) : const Color(0xFF747775);
-    final textColor = isDark ? const Color(0xFFE3E3E3) : const Color(0xFF1F1F1F);
+    const bgColor = Color(0xFFFFFFFF);
+    const borderColor = Color(0xFF747775);
+    const textColor = Color(0xFF1F1F1F);
 
     return SizedBox(
       height: 48,

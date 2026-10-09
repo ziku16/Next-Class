@@ -15,6 +15,18 @@ import 'ui/onboarding/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Enforce system UI overlay style: dark status bar icons and navigation bar icons
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+      systemNavigationBarColor: Color(0xFFFFFDF0),
+      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarDividerColor: Colors.transparent,
+    ),
+  );
+
   // Initialize the baseline timezone database for date/time computations.
   try {
     tz.initializeTimeZones();
@@ -74,14 +86,10 @@ Future<void> _initNonCriticalServices() async {
   } catch (_) {
     // Background reminder rescheduling failure does not block user interaction.
   }
-
-  // 4. Initialize theme mode preference
-  try {
-    await AppTheme.initThemeMode();
-  } catch (_) {}
 }
 
 /// Root Application Widget for NextClass.
+/// Strictly locked to Light theme to prevent Android dark mode inversion.
 class NextClassApp extends StatelessWidget {
   final Widget? home;
 
@@ -89,18 +97,12 @@ class NextClassApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: AppTheme.themeModeNotifier,
-      builder: (context, currentMode, _) {
-        return MaterialApp(
-          title: 'NextClass',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: currentMode,
-          home: home ?? const SplashScreen(),
-        );
-      },
+    return MaterialApp(
+      title: 'NextClass',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      themeMode: ThemeMode.light,
+      home: home ?? const SplashScreen(),
     );
   }
 }

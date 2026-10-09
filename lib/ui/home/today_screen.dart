@@ -12,6 +12,7 @@ import '../../state/quiz_provider.dart';
 import '../shared/class_card.dart';
 import '../shared/nc_banner.dart';
 import '../shared/offline_banner.dart';
+import '../shared/undo_snackbar.dart';
 import '../../core/theme/next_class_colors.dart';
 import 'app_bottom_nav.dart';
 import 'quizzes_preview_row.dart';
@@ -244,8 +245,9 @@ class _TodayScreenState extends State<TodayScreen> {
         setState(() {
           _remindersEnabled = true;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reminders enabled (15 min before class).')),
+        UndoSnackBar.showSuccess(
+          context,
+          message: 'Reminders enabled (15 min before class).',
         );
       }
     } catch (_) {}

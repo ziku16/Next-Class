@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/next_class_colors.dart';
 
 enum NcBannerKind {
   info,
@@ -92,37 +91,34 @@ class NcBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final ncColors = context.ncColors;
-
     Color bg;
     Color fg;
     IconData icon;
 
     switch (kind) {
       case NcBannerKind.info:
-        bg = ncColors.infoContainer;
-        fg = ncColors.onInfoContainer;
+        bg = const Color(0xFF121212);
+        fg = Colors.white;
         icon = Icons.info_outline;
         break;
       case NcBannerKind.warning:
-        bg = ncColors.warningContainer;
-        fg = ncColors.onWarningContainer;
+        bg = const Color(0xFFFFDE59);
+        fg = Colors.black;
         icon = Icons.warning_amber_rounded;
         break;
       case NcBannerKind.error:
-        bg = theme.colorScheme.errorContainer;
-        fg = theme.colorScheme.onErrorContainer;
+        bg = const Color(0xFFFF3333);
+        fg = Colors.white;
         icon = Icons.error_outline;
         break;
       case NcBannerKind.permission:
-        bg = theme.colorScheme.secondaryContainer;
-        fg = theme.colorScheme.onSecondaryContainer;
+        bg = const Color(0xFFFF6B00);
+        fg = Colors.white;
         icon = Icons.notifications_off_outlined;
         break;
       case NcBannerKind.offline:
-        bg = theme.colorScheme.inverseSurface;
-        fg = theme.colorScheme.onInverseSurface;
+        bg = const Color(0xFF121212);
+        fg = Colors.white;
         icon = Icons.wifi_off_rounded;
         break;
     }
@@ -131,11 +127,23 @@ class NcBanner extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: 16,
-        vertical: isDocked ? 8 : 12,
+        vertical: isDocked ? 10 : 12,
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: isDocked ? BorderRadius.zero : BorderRadius.circular(12),
+        borderRadius: isDocked ? BorderRadius.zero : BorderRadius.circular(8),
+        border: isDocked
+            ? const Border(bottom: BorderSide(color: Colors.black, width: 2.5))
+            : Border.all(color: Colors.black, width: 2.5),
+        boxShadow: isDocked
+            ? null
+            : const [
+                BoxShadow(
+                  color: Colors.black,
+                  offset: Offset(3, 3),
+                  blurRadius: 0,
+                ),
+              ],
       ),
       child: Row(
         crossAxisAlignment:
@@ -151,18 +159,23 @@ class NcBanner extends StatelessWidget {
                 if (title != null) ...[
                   Text(
                     title!,
-                    style: theme.textTheme.titleSmall?.copyWith(
+                    style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
                       color: fg,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                      letterSpacing: 0.2,
                     ),
                   ),
                   const SizedBox(height: 2),
                 ],
                 Text(
                   message,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: TextStyle(
+                    fontFamily: 'SpaceGrotesk',
                     color: fg,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -173,11 +186,21 @@ class NcBanner extends StatelessWidget {
             TextButton(
               onPressed: onAction,
               style: TextButton.styleFrom(
-                foregroundColor: fg,
+                backgroundColor: fg == Colors.black
+                    ? const Color(0xFF121212)
+                    : const Color(0xFFFFDE59),
+                foregroundColor: fg == Colors.black ? Colors.white : Colors.black,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 minimumSize: const Size(48, 48),
-                textStyle: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  side: const BorderSide(color: Colors.black, width: 1.5),
+                ),
+                textStyle: const TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                  letterSpacing: 0.4,
                 ),
               ),
               child: Text(actionLabel!),

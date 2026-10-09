@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/theme/next_class_colors.dart';
 import '../../data/models/scan_quota.dart';
 import '../../data/models/user_settings.dart';
@@ -7,6 +6,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../domain/services/notification_service.dart';
 import '../../state/settings_provider.dart';
 import '../shared/confirmation_dialogs.dart';
+import '../shared/undo_snackbar.dart';
 import 'reminder_picker_dialog.dart';
 import 'replace_timetable_dialog.dart';
 import 'privacy_policy_screen.dart';
@@ -236,13 +236,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   final label = res == null
                                       ? 'Class reminders turned off'
                                       : 'Class reminders set to $res min before class';
-                                  ScaffoldMessenger.of(context).clearSnackBars();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(label),
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: const Duration(seconds: 2),
-                                    ),
+                                  UndoSnackBar.showMessage(
+                                    context,
+                                    message: label,
+                                    duration: const Duration(seconds: 2),
                                   );
                                 }
                               }
@@ -372,13 +369,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 final label = selected == null
                                     ? 'Class reminders turned off'
                                     : 'Class reminders set to $selected min before class';
-                                ScaffoldMessenger.of(context).clearSnackBars();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(label),
-                                    behavior: SnackBarBehavior.floating,
-                                    duration: const Duration(seconds: 2),
-                                  ),
+                                UndoSnackBar.showMessage(
+                                  context,
+                                  message: label,
+                                  duration: const Duration(seconds: 2),
                                 );
                               }
                             },
@@ -506,13 +500,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       if (granted) {
                         await NotificationService().rescheduleAll();
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).clearSnackBars();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Notifications enabled and scheduled.'),
-                              behavior: SnackBarBehavior.floating,
-                              duration: Duration(seconds: 2),
-                            ),
+                          UndoSnackBar.showSuccess(
+                            context,
+                            message: 'Notifications enabled and scheduled.',
+                            duration: const Duration(seconds: 2),
                           );
                         }
                       }
@@ -520,13 +511,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _provider.toggleNotifications(false);
                       await NotificationService().cancelAll();
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).clearSnackBars();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Notifications turned off.'),
-                            behavior: SnackBarBehavior.floating,
-                            duration: Duration(seconds: 2),
-                          ),
+                        UndoSnackBar.showMessage(
+                          context,
+                          message: 'Notifications turned off.',
+                          duration: const Duration(seconds: 2),
                         );
                       }
                     }
@@ -603,10 +591,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ================= APPEARANCE =================
-            _buildSectionHeader(theme, 'APPEARANCE', stamp: 'THM01 / REVO'),
-            _buildThemeSelector(theme),
-            const SizedBox(height: 24),
 
             // ================= ABOUT =================
             _buildSectionHeader(theme, 'ABOUT', stamp: 'NC100 / REL 01'),
@@ -639,12 +623,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   trailing: Icon(Icons.open_in_new_rounded, size: 20, color: nc.icon),
                   onTap: widget.onContactSupport ??
                       () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Support contact: support@nextclass.app',
-                            ),
-                          ),
+                        UndoSnackBar.showMessage(
+                          context,
+                          message: 'Support contact: support@nextclass.app',
                         );
                       },
                 ),
@@ -741,7 +722,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: enabled ? bgColor : (nc.isDark ? const Color(0xFF333333) : const Color(0xFFE0E0E0)),
+        color: enabled ? bgColor : const Color(0xFFE0E0E0),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: nc.border, width: 2.0),
       ),
@@ -794,109 +775,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildThemeSelector(ThemeData theme) {
-    final nc = context.ncColors;
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: AppTheme.themeModeNotifier,
-      builder: (context, currentMode, _) {
-        return _buildCardGroup(
-          theme,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _buildLeadingIcon(Icons.palette_outlined, const Color(0xFF00E5FF)),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'App theme',
-                              style: TextStyle(
-                                fontFamily: 'SpaceGrotesk',
-                                fontWeight: FontWeight.w900,
-                                fontSize: 15,
-                                color: nc.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              currentMode == ThemeMode.system
-                                  ? 'System Default'
-                                  : (currentMode == ThemeMode.light ? 'Light Mode' : 'Dark Mode'),
-                              style: TextStyle(
-                                fontFamily: 'SpaceGrotesk',
-                                color: nc.textSecondary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      _buildThemeChip('SYSTEM', ThemeMode.system, currentMode, nc),
-                      const SizedBox(width: 8),
-                      _buildThemeChip('LIGHT', ThemeMode.light, currentMode, nc),
-                      const SizedBox(width: 8),
-                      _buildThemeChip('DARK', ThemeMode.dark, currentMode, nc),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildThemeChip(String label, ThemeMode mode, ThemeMode currentMode, NextClassColors nc) {
-    final isSelected = currentMode == mode;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => AppTheme.setThemeMode(mode),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFFFE500) : nc.surface,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: nc.border, width: 2.0),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: nc.shadow,
-                      offset: const Offset(2, 2),
-                      blurRadius: 0,
-                    ),
-                  ]
-                : null,
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontWeight: FontWeight.w900,
-              fontSize: 12,
-              letterSpacing: 0.5,
-              color: isSelected ? Colors.black : nc.textPrimary,
-            ),
-          ),
-        ),
       ),
     );
   }

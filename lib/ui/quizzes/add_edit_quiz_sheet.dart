@@ -8,6 +8,7 @@ import '../../data/repositories/timetable_repository.dart';
 import '../../domain/services/notification_service.dart';
 import '../../state/quiz_provider.dart';
 import '../shared/nc_banner.dart';
+import '../shared/undo_snackbar.dart';
 
 /// Modal bottom sheet for adding or editing a quiz (Flow 6).
 /// Features:
@@ -277,8 +278,9 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save quiz: $e')),
+        UndoSnackBar.showError(
+          context,
+          message: 'Failed to save quiz: $e',
         );
       }
     }

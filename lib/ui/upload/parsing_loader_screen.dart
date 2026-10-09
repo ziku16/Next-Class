@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 import '../../state/upload_provider.dart';
 
@@ -21,9 +20,10 @@ class ParsingLoaderScreen extends StatefulWidget {
 
 class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
   static const List<String> _rotatingCopy = [
-    'Sending to AI vision parser...',
-    'Extracting subjects & class times...',
-    'Formatting your timetable...',
+    'PROCESSING TIMETABLE...',
+    'PARSING SCHEDULE...',
+    'EXTRACTING CLASSES...',
+    'ORGANIZING SLOTS...',
   ];
 
   int _currentCopyIndex = 0;
@@ -66,93 +66,112 @@ class _ParsingLoaderScreenState extends State<ParsingLoaderScreen> {
   @override
   Widget build(BuildContext context) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
-    final nc = context.ncColors;
 
     return Scaffold(
-      backgroundColor: nc.background,
+      backgroundColor: const Color(0xFFFFFDF0),
       body: SafeArea(
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: SizedBox(
+            width: 300,
+            height: 230,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               decoration: BoxDecoration(
-                color: nc.surface,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: nc.border, width: 3.5),
-                boxShadow: [
+                color: const Color(0xFFFFFDF0),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.black, width: 3.0),
+                boxShadow: const [
                   BoxShadow(
-                    color: nc.shadow,
-                    offset: const Offset(4.5, 4.5),
+                    color: Colors.black,
+                    offset: Offset(4, 4),
                     blurRadius: 0,
                   ),
                 ],
               ),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Brutalist status badge
+                  // Monospace brutalist header tag
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFE500),
+                      color: const Color(0xFFFFDE59),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: nc.border, width: 2),
+                      border: Border.all(color: Colors.black, width: 2.0),
                     ),
                     child: const Text(
-                      'AI VISION PARSER',
+                      'TIMETABLE PARSER',
                       style: TextStyle(
-                        fontFamily: 'SpaceGrotesk',
+                        fontFamily: 'monospace',
                         fontWeight: FontWeight.w900,
                         fontSize: 11,
-                        letterSpacing: 1.0,
+                        letterSpacing: 1.2,
                         color: Colors.black,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 18),
 
-                  // High-energy circular progress indicator
+                  // Bold high-contrast loading indicator
                   SizedBox(
-                    width: 68,
-                    height: 68,
+                    width: 50,
+                    height: 50,
                     child: CircularProgressIndicator(
-                      strokeWidth: 5.0,
+                      strokeWidth: 4.5,
                       value: disableAnimations ? 0.75 : null,
-                      color: const Color(0xFFFF5500),
-                      backgroundColor: const Color(0xFFFFE500),
+                      color: const Color(0xFFFF6B00),
+                      backgroundColor: const Color(0xFFFFDE59),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 18),
 
-                  // Rotating Copy with 150 ms crossfade
-                  AnimatedSwitcher(
-                    duration: disableAnimations
-                        ? Duration.zero
-                        : const Duration(milliseconds: 150),
-                    child: Text(
-                      _rotatingCopy[_currentCopyIndex],
-                      key: ValueKey<int>(_currentCopyIndex),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'SpaceGrotesk',
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: nc.textPrimary,
-                        letterSpacing: -0.3,
+                  // Fixed-height rotating status text container (zero layout shift)
+                  SizedBox(
+                    height: 26,
+                    width: double.infinity,
+                    child: Center(
+                      child: AnimatedSwitcher(
+                        duration: disableAnimations
+                            ? Duration.zero
+                            : const Duration(milliseconds: 150),
+                        child: Text(
+                          _rotatingCopy[_currentCopyIndex],
+                          key: ValueKey<int>(_currentCopyIndex),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
 
-                  // Subtitle
-                  Text(
-                    'Cloudflare AI • Meta Llama 3.2 Vision',
-                    style: TextStyle(
-                      fontFamily: 'SpaceGrotesk',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: nc.textSecondary,
+                  // Fixed neutral hint text
+                  const SizedBox(
+                    height: 18,
+                    width: double.infinity,
+                    child: Center(
+                      child: Text(
+                        'PLEASE WAIT A MOMENT...',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF666666),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ),
                   ),
                 ],

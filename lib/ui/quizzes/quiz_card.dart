@@ -42,12 +42,10 @@ class QuizCard extends StatelessWidget {
     final subjectColor =
         ncColors.getSubjectColor(quiz.subject.hashCode.abs() % 8);
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     final cardWidget = Container(
       decoration: BoxDecoration(
         color: isUrgent
-            ? (isDark ? const Color(0xFF332010) : const Color(0xFFFFF8E1))
+            ? const Color(0xFFFFF8E1)
             : ncColors.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(

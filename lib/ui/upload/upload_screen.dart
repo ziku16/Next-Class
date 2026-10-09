@@ -10,6 +10,7 @@ import '../../state/upload_provider.dart';
 import '../main_navigation_screen.dart';
 import '../review/review_screen.dart';
 import '../shared/offline_banner.dart';
+import '../shared/fluid_page_route.dart';
 import 'parsing_loader_screen.dart';
 import 'source_picker_sheet.dart';
 
@@ -80,7 +81,7 @@ class _UploadScreenState extends State<UploadScreen> {
     } catch (_) {}
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+      FluidPageRoute(builder: (_) => const MainNavigationScreen()),
       (route) => false,
     );
   }
@@ -111,7 +112,7 @@ class _UploadScreenState extends State<UploadScreen> {
   Future<void> _startExtraction() async {
     // Launch full-screen parsing loader
     final result = await Navigator.of(context).push<List<ClassItem>?>(
-      MaterialPageRoute(
+      FluidPageRoute(
         builder: (_) => ParsingLoaderScreen(
           uploadProvider: _provider,
         ),
@@ -125,7 +126,7 @@ class _UploadScreenState extends State<UploadScreen> {
         widget.onClassesExtracted!(result);
       } else {
         final saved = await Navigator.of(context).push<bool>(
-          MaterialPageRoute(
+          FluidPageRoute(
             builder: (_) => ReviewScreen(
               initialClasses: result,
               onSaved: _navigateToHome,
@@ -236,7 +237,7 @@ class _UploadScreenState extends State<UploadScreen> {
       return;
     }
     final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
+      FluidPageRoute(
         builder: (_) => ReviewScreen(
           initialClasses: const [],
           onSaved: _navigateToHome,
@@ -718,7 +719,7 @@ class _UploadScreenState extends State<UploadScreen> {
                           ),
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFFFF5500),
-                            disabledBackgroundColor: nc.isDark ? const Color(0xFF333333) : const Color(0xFFDCE2E6),
+                            disabledBackgroundColor: const Color(0xFFDCE2E6),
                             foregroundColor: Colors.white,
                             disabledForegroundColor: nc.textSecondary,
                             elevation: 0,

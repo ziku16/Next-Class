@@ -12,6 +12,7 @@ import 'quizzes/quizzes_screen.dart';
 import 'review/review_screen.dart';
 import 'settings/settings_screen.dart';
 import 'upload/upload_screen.dart';
+import 'shared/fluid_page_route.dart';
 import 'week/class_detail_sheet.dart';
 import 'week/week_screen.dart';
 
@@ -78,7 +79,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   void _openSettings() {
     Navigator.of(context).push(
-      MaterialPageRoute(
+      FluidPageRoute(
         builder: (_) => SettingsScreen(
           settingsRepository: _settingsRepo,
           onUploadTimetable: _openUpload,
@@ -86,7 +87,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             final classes = await _timetableRepo.getAllClasses();
             if (mounted) {
               Navigator.of(context).push(
-                MaterialPageRoute(
+                FluidPageRoute(
                   builder: (_) => ReviewScreen(
                     initialClasses: classes,
                     onSaved: () async {
@@ -109,11 +110,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   void _openUpload() {
     Navigator.of(context).push(
-      MaterialPageRoute(
+      FluidPageRoute(
         builder: (_) => UploadScreen(
           onClassesExtracted: (classes) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
+              FluidPageRoute(
                 builder: (_) => ReviewScreen(
                   initialClasses: classes,
                   onSaved: () async {
@@ -130,7 +131,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           },
           onManualEdit: () {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
+              FluidPageRoute(
                 builder: (_) => ReviewScreen(
                   initialClasses: const [],
                   onSaved: () async {
@@ -174,7 +175,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         final classes = await _timetableRepo.getAllClasses();
         if (mounted) {
           Navigator.of(context).push(
-            MaterialPageRoute(
+            FluidPageRoute(
               builder: (_) => ReviewScreen(
                 initialClasses: classes,
                 onSaved: () {
@@ -189,12 +190,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return IndexedStack(
-      index: _currentIndex,
-      children: [
-        TodayScreen(
+  Widget _buildCurrentTab() {
+    switch (_currentIndex) {
+      case 0:
+        return TodayScreen(
           key: const PageStorageKey('tab_today'),
           timetableRepository: _timetableRepo,
           quizRepository: _quizRepo,
@@ -205,16 +204,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           onUploadTimetable: _openUpload,
           onAddQuiz: () => _openAddQuiz(),
           onClassTap: _openClassDetail,
-        ),
-        WeekScreen(
+        );
+      case 1:
+        return WeekScreen(
           key: const PageStorageKey('tab_week'),
           timetableRepository: _timetableRepo,
           onNavigateToTab: _onTabSelected,
           onOpenSettings: _openSettings,
           onUploadTimetable: _openUpload,
           onAddQuizForClass: (cls) => _openAddQuiz(cls),
-        ),
-        QuizzesScreen(
+        );
+      case 2:
+      default:
+        return QuizzesScreen(
           key: const PageStorageKey('tab_quizzes'),
           quizProvider: _quizProvider,
           quizRepository: _quizRepo,
@@ -222,8 +224,38 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           onNavigateToTab: _onTabSelected,
           onOpenSettings: _openSettings,
           onUploadTimetable: _openUpload,
-        ),
-      ],
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 240),
+      reverseDuration: const Duration(milliseconds: 200),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        final offsetAnimation = Tween<Offset>(
+          begin: const Offset(0.0, 0.02),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        ));
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: offsetAnimation,
+            child: child,
+          ),
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey<int>(_currentIndex),
+        child: _buildCurrentTab(),
+      ),
     );
   }
 }

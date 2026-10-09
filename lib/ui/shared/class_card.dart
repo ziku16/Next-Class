@@ -89,12 +89,11 @@ class ClassCard extends StatelessWidget {
     NextClassColors ncColors,
     Color subjectColor,
   ) {
-    final isDark = theme.brightness == Brightness.dark;
     final cardBg = state == ClassCardState.past
-        ? (isDark ? const Color(0xFF242424) : const Color(0xFFECEFF1))
+        ? const Color(0xFFECEFF1)
         : ncColors.surface;
     final textColor = state == ClassCardState.past
-        ? (isDark ? const Color(0xFFAAAAAA) : const Color(0xFF555555))
+        ? const Color(0xFF555555)
         : ncColors.textPrimary;
 
     return Container(
@@ -186,26 +185,25 @@ class ClassCard extends StatelessWidget {
     NextClassColors ncColors,
     Color subjectColor,
   ) {
-    final isDark = theme.brightness == Brightness.dark;
     final Color cardBg;
     final Color textColor;
     final Color metaColor;
 
     switch (state) {
       case ClassCardState.current:
-        cardBg = isDark ? const Color(0xFF4A4215) : const Color(0xFFFFF9C4); // Safety yellow tint
-        textColor = isDark ? Colors.white : Colors.black;
-        metaColor = isDark ? const Color(0xFFE0E0E0) : const Color(0xFF333333);
+        cardBg = const Color(0xFFFFF9C4); // Safety yellow tint
+        textColor = Colors.black;
+        metaColor = const Color(0xFF333333);
         break;
       case ClassCardState.next:
-        cardBg = isDark ? const Color(0xFF4D2A18) : const Color(0xFFFFE0B2); // Vivid orange tint
-        textColor = isDark ? Colors.white : Colors.black;
-        metaColor = isDark ? const Color(0xFFE0E0E0) : const Color(0xFF333333);
+        cardBg = const Color(0xFFFFE0B2); // Vivid orange tint
+        textColor = Colors.black;
+        metaColor = const Color(0xFF333333);
         break;
       case ClassCardState.past:
-        cardBg = isDark ? const Color(0xFF242424) : const Color(0xFFECEFF1); // Muted ticket grey
-        textColor = isDark ? const Color(0xFFAAAAAA) : const Color(0xFF555555);
-        metaColor = isDark ? const Color(0xFF888888) : const Color(0xFF777777);
+        cardBg = const Color(0xFFECEFF1); // Muted ticket grey
+        textColor = const Color(0xFF555555);
+        metaColor = const Color(0xFF777777);
         break;
       default:
         cardBg = ncColors.surface;

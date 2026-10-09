@@ -8,6 +8,7 @@ import '../main_navigation_screen.dart';
 import '../shared/class_card.dart';
 import '../shared/nc_banner.dart';
 import '../shared/undo_snackbar.dart';
+import '../shared/fluid_page_route.dart';
 import 'discard_dialog.dart';
 import 'edit_class_sheet.dart';
 
@@ -85,15 +86,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
             Navigator.of(context).pop(true);
           } else {
             Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+              FluidPageRoute(builder: (_) => const MainNavigationScreen()),
               (route) => false,
             );
           }
         }
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save timetable. Try again.')),
+      UndoSnackBar.showError(
+        context,
+        message: 'Failed to save timetable. Try again.',
       );
     }
   }
@@ -249,7 +251,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                           activeThumbColor: Colors.black,
                           activeTrackColor: const Color(0xFFFF5500),
                           inactiveThumbColor: Colors.black,
-                          inactiveTrackColor: nc.isDark ? const Color(0xFF333333) : const Color(0xFFDCE2E6),
+                          inactiveTrackColor: const Color(0xFFDCE2E6),
                           trackOutlineColor: WidgetStateProperty.all(nc.border),
                           trackOutlineWidth: WidgetStateProperty.all(2.0),
                           onChanged: (val) => _provider.setHideEmptyDays(val),

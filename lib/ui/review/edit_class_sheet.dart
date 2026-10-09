@@ -747,7 +747,7 @@ class _EditClassSheetState extends State<EditClassSheet> {
                     style: FilledButton.styleFrom(
                       backgroundColor: _canSave
                           ? const Color(0xFFFF5500)
-                          : (nc.isDark ? const Color(0xFF333333) : const Color(0xFFDCE2E6)),
+                          : const Color(0xFFDCE2E6),
                       foregroundColor:
                           _canSave ? Colors.white : nc.textSecondary,
                       elevation: 0,
