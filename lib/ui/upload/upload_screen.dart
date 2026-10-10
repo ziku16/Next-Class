@@ -147,19 +147,27 @@ class _UploadScreenState extends State<UploadScreen> {
       TimetableScanErrorCode.rateLimitExceeded => "WEEKLY LIMIT REACHED",
       TimetableScanErrorCode.parserFormatError => "FORMAT ERROR",
       TimetableScanErrorCode.emptyResult => "NO CLASSES FOUND",
-      _ => "CONNECTION ERROR",
+      TimetableScanErrorCode.serverError => "EXTRACTION ERROR",
+      TimetableScanErrorCode.networkError => "CONNECTION ERROR",
+      _ => "ERROR",
     };
 
-    final contentText = switch (code) {
-      TimetableScanErrorCode.rateLimitExceeded =>
-        "Weekly limit reached (2 scans max per week).",
-      TimetableScanErrorCode.parserFormatError =>
-        "Could not parse timetable format. Please try again.",
-      TimetableScanErrorCode.emptyResult =>
-        "No classes could be identified from this image. Please ensure your photo is clear and legible.",
-      _ =>
-        "Request timed out or connection lost. Please check your internet.",
-    };
+    final contentText = message.isNotEmpty
+        ? message
+        : switch (code) {
+            TimetableScanErrorCode.rateLimitExceeded =>
+              "Weekly limit reached (2 scans max per week).",
+            TimetableScanErrorCode.parserFormatError =>
+              "Could not parse timetable format. Please try again.",
+            TimetableScanErrorCode.emptyResult =>
+              "No classes could be identified from this image. Please ensure your photo is clear and legible.",
+            TimetableScanErrorCode.serverError =>
+              "AI extraction failed. Please ensure photo is clear and try again.",
+            TimetableScanErrorCode.networkError =>
+              "Request timed out or connection lost. Please check your internet.",
+            _ =>
+              "An error occurred while scanning timetable. Please try again.",
+          };
 
     final isRateLimit = code == TimetableScanErrorCode.rateLimitExceeded;
     final nc = context.ncColors;

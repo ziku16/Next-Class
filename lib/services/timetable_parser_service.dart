@@ -19,10 +19,10 @@ class ScanLimitException implements Exception {
 
 class TimetableParserService {
   static const String _geminiApiKey =
-      'AQ.Ab8RN6JrQFmyYNWAeRh5xQngnwxWpO8IW_fnAyO3YyR4FWjDTg';
+      'AQ.Ab8RN6L-HBULBjk9cgCbsfRH-T5Q8NvMfW752bqVzAYQFMLdcw';
   static const List<String> _candidateModels = [
-    'gemini-1.5-flash',
-    'gemini-2.0-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
   ];
 
   static const String _scanHistoryKey = 'timetable_scan_timestamps';
