@@ -49,8 +49,6 @@ app.*.map.json
 
 # Documentation & design assets
 *.pdf
-*.md
-**/*.md
 
 # Android package artifacts
 *.apk

@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NextClass — Never Miss a Class or Quiz | AI University Timetable Assistant</title>
+  <meta name="description" content="NextClass turns messy university timetables into dynamic daily agendas using Gemini AI Vision. Features exact class alarms, quiz countdowns, and 100% offline privacy. Get it on Google Play.">
+  <meta name="keywords" content="NextClass, university timetable, student schedule, class reminder, timetable scanner, AI timetable, quiz reminder, flutter app">
+  <meta name="theme-color" content="#FFE500">
+
+  <!-- Open Graph & Twitter Cards -->
+  <meta property="og:title" content="NextClass — University Timetable & Quiz Assistant">
+  <meta property="og:description" content="Snap a photo of your schedule. Gemini AI organizes your classes with exact alarms, live room counters, and 100% offline privacy.">
+  <meta property="og:image" content="assets/images/app_icon.png">
+  <meta property="og:type" content="website">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/images/app_icon.png">
+
+  <!-- Google Fonts: Space Grotesk (Neo-Brutalist Display) & Inter (Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ======================================================================
+       Navigation Bar
+       ====================================================================== -->
+  <header class="navbar" id="site-header">
+    <div class="container nav-container">
+      <a href="#hero" class="nav-brand" id="nav-brand-link" aria-label="NextClass Home">
+        <div class="brand-icon">
+          <img src="assets/images/app_icon.png" alt="NextClass Icon" width="44" height="44">
+        </div>
+        <span class="brand-name">NextClass</span>
+        <span class="brand-version">v1.0</span>
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links" id="nav-menu">
+          <li><a href="#features" id="nav-link-features">Features</a></li>
+          <li><a href="#interactive-simulator" id="nav-link-demo">Live Preview</a></li>
+          <li><a href="#screens" id="nav-link-screens">App Screens</a></li>
+          <li><a href="#how-it-works" id="nav-link-how">How It Works</a></li>
+          <li><a href="#comparison" id="nav-link-compare">Why NextClass</a></li>
+          <li><a href="#faq" id="nav-link-faq">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="#download" class="btn btn-yellow btn-sm" id="nav-cta-download">
+          <span>Get App</span> ➔
+        </a>
+        <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle navigation menu">
+          ☰
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ====================================================================
+         Hero Section
+         ==================================================================== -->
+    <section class="hero" id="hero">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <div class="hero-badge-wrap">
+            <span class="sticker sticker-slanted">
+              ⚡ REVO BRUTALIST ACADEMIC ENGINE
+            </span>
+          </div>
+
+          <h1 class="hero-title">
+            Never miss a <span class="highlight-yellow">class</span><br>
+            or a <span class="highlight-orange">quiz</span> again.
+          </h1>
+
+          <p class="hero-desc">
+            The zero-friction university schedule companion. Snap a photo of your crumpled paper timetable or whiteboard, and <strong>Gemini Multimodal AI</strong> organizes your entire semester in seconds. Exact alarms, live progress bars, and 100% offline privacy.
+          </p>
+
+          <div class="hero-cta-group">
+            <!-- Google Play Store Button -->
+            <a href="https://play.google.com/store/apps/details?id=com.nextclass.app" class="play-store-btn" id="hero-playstore-btn" target="_blank" rel="noopener noreferrer" onclick="handlePlayStoreClick(event)">
+              <svg class="play-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.6 1.8C3.3 2.1 3.1 2.6 3.1 3.2V20.8C3.1 21.4 3.3 21.9 3.6 22.2L3.7 22.3L13.8 12.2V11.8L3.7 1.7L3.6 1.8Z" fill="#00D2FF"/>
+                <path d="M17.2 15.6L13.8 12.2V11.8L17.2 8.4L17.3 8.5L21.4 10.8C22.6 11.5 22.6 12.6 21.4 13.3L17.3 15.5L17.2 15.6Z" fill="#FFCF00"/>
+                <path d="M17.3 15.5L13.8 12L3.6 22.2C4.1 22.7 4.9 22.8 5.7 22.3L17.3 15.5Z" fill="#FF3A44"/>
+                <path d="M17.3 8.5L5.7 1.7C4.9 1.2 4.1 1.3 3.6 1.8L13.8 12L17.3 8.5Z" fill="#00E676"/>
+              </svg>
+              <div class="btn-text-wrap">
+                <span class="sub-text">GET IT ON</span>
+                <span class="main-text">Google Play</span>
+              </div>
+            </a>
+
+            <a href="#interactive-simulator" class="btn btn-yellow" id="hero-explore-btn">
+              <span>Interactive Demo</span> 👁️
+            </a>
+          </div>
+
+          <div class="hero-stats-row">
+            <div class="stat-item">
+              <span class="stat-icon">🔒</span>
+              <span>100% Offline SQLite</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">🚫</span>
+              <span>Zero Ads &amp; No Login</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">🤖</span>
+              <span>Gemini 3.8 AI Vision</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">⏰</span>
+              <span>Exact Android Alarms</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Interactive Phone Simulator Frame -->
+        <div class="phone-showcase-container" id="interactive-simulator">
+          <div class="floating-tag tag-top-right">
+            🔥 "That's a wrap. Shabash!"
+          </div>
+          <div class="floating-tag tag-bottom-left">
+            🎯 99.8% Vision Accuracy
+          </div>
+
+          <!-- Smartphone Shell Mockup -->
+          <div class="phone-mockup">
+            <div class="phone-inner-screen">
+              <!-- Status Bar -->
+              <div class="phone-status-bar">
+                <span id="phone-live-clock">10:14</span>
+                <div class="phone-notch"></div>
+                <div class="phone-status-icons">
+                  <span>5G</span>
+                  <span>📶</span>
+                  <span>🔋 98%</span>
+                </div>
+              </div>
+
+              <!-- Live Dynamic Screen Area -->
+              <div class="phone-scroll-area" id="phone-scroll-content">
+                <!-- Dynamically populated by script.js -->
+              </div>
+
+              <!-- Phone Bottom Navigation Bar -->
+              <div class="phone-bottom-nav">
+                <div class="mock-nav-item active" data-screen="today" id="mock-nav-today">
+                  <span class="mock-nav-icon">📅</span>
+                  <span>Today</span>
+                </div>
+                <div class="mock-nav-item" data-screen="week" id="mock-nav-week">
+                  <span class="mock-nav-icon">🗓️</span>
+                  <span>Week</span>
+                </div>
+                <div class="mock-nav-item" data-screen="scan" id="mock-nav-scan">
+                  <span class="mock-nav-icon">📷</span>
+                  <span>Scan</span>
+                </div>
+                <div class="mock-nav-item" data-screen="quizzes" id="mock-nav-quizzes">
+                  <span class="mock-nav-icon">⏰</span>
+                  <span>Quizzes</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Screen Switcher Buttons beneath Phone -->
+          <div class="phone-tab-controls" aria-label="Interactive Screen Controls">
+            <button class="screen-switch-btn active" data-screen="today" id="tab-btn-today">
+              📅 Today Agenda
+            </button>
+            <button class="screen-switch-btn" data-screen="scan" id="tab-btn-scan">
+              📷 AI Scan
+            </button>
+            <button class="screen-switch-btn" data-screen="review" id="tab-btn-review">
+              ✍️ Review &amp; Edit
+            </button>
+            <button class="screen-switch-btn" data-screen="week" id="tab-btn-week">
+              🗓️ Week View
+            </button>
+            <button class="screen-switch-btn" data-screen="quizzes" id="tab-btn-quizzes">
+              ⏰ Quizzes Radar
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         Marquee Ticker
+         ==================================================================== -->
+    <div class="ticker-wrap" aria-hidden="true">
+      <div class="ticker-move">
+        <div class="ticker-item"><span>⚡ SNAP YOUR TIMETABLE</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>GEMINI MULTIMODAL AI VISION</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>EXACT ANDROID ALARMS</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>ZERO ADS · ZERO TRACKING</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>100% OFFLINE SQLITE</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>NEVER SPRINT TO THE WRONG ROOM</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>EVENING QUIZ HEADS-UP</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>THAT'S A WRAP TODAY. SHABASH!</span><span class="separator">★</span></div>
+        <!-- Duplicate for seamless loop -->
+        <div class="ticker-item"><span>⚡ SNAP YOUR TIMETABLE</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>GEMINI MULTIMODAL AI VISION</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>EXACT ANDROID ALARMS</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>ZERO ADS · ZERO TRACKING</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>100% OFFLINE SQLITE</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>NEVER SPRINT TO THE WRONG ROOM</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>EVENING QUIZ HEADS-UP</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>THAT'S A WRAP TODAY. SHABASH!</span><span class="separator">★</span></div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         Features Section
+         ==================================================================== -->
+    <section class="section-padding" id="features">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-tag">
+            <span class="sticker">ENGINEERED FOR REAL CAMPUS LIFE</span>
+          </div>
+          <h2 class="section-title">Why students are ditching clunky calendar apps</h2>
+          <p class="section-subtitle">
+            Most timetable apps are either bloated with intrusive ads or require 45 minutes of manual calendar typing. NextClass was built from scratch to fix every single point of friction.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <!-- Feature 1 -->
+          <article class="feature-card" id="feat-ai-vision">
+            <div class="feature-icon-box">📷</div>
+            <h3 class="feature-title">AI Vision Extraction</h3>
+            <p class="feature-text">
+              Point your camera at any printed timetable sheet, crumpled syllabus, or whiteboard. Google Gemini Vision scans the grid, detects subjects, times, and room numbers automatically in under 4 seconds.
+            </p>
+            <div class="feature-tag-bottom">GEMINI 3.8 FLASH ENGINE</div>
+          </article>
+
+          <!-- Feature 2 -->
+          <article class="feature-card" id="feat-live-agenda">
+            <div class="feature-icon-box">⚡</div>
+            <h3 class="feature-title">Live Glanceable Agenda</h3>
+            <p class="feature-text">
+              Always know where you belong. The Today view highlights your active lecture with a live progress bar, shows the exact countdown to your next class, and keeps room numbers front and center.
+            </p>
+            <div class="feature-tag-bottom">REAL-TIME COUNTDOWN</div>
+          </article>
+
+          <!-- Feature 3 -->
+          <article class="feature-card" id="feat-bulletproof-alarms">
+            <div class="feature-icon-box">🔔</div>
+            <h3 class="feature-title">Bulletproof Exact Alarms</h3>
+            <p class="feature-text">
+              Dual-channel system sends a gentle heads-up 15 minutes before your lecture, plus evening reminders at 8:00 PM before quizzes. Survives deep Android Doze mode and auto-restores on device reboot.
+            </p>
+            <div class="feature-tag-bottom">EXACT ALARM SCHEDULER</div>
+          </article>
+
+          <!-- Feature 4 -->
+          <article class="feature-card" id="feat-offline-privacy">
+            <div class="feature-icon-box">🔒</div>
+            <h3 class="feature-title">100% Offline &amp; Private</h3>
+            <p class="feature-text">
+              Zero accounts, zero logins, and zero servers tracking your location. All timetable and quiz data is encrypted in a local SQLite database on your device. Works completely offline with no network needed.
+            </p>
+            <div class="feature-tag-bottom">ZERO ADS · ZERO TRACKING</div>
+          </article>
+
+          <!-- Feature 5 -->
+          <article class="feature-card" id="feat-quiz-radar">
+            <div class="feature-icon-box">⏰</div>
+            <h3 class="feature-title">Quiz &amp; Deadline Radar</h3>
+            <p class="feature-text">
+              Never get blindsided by an unexpected pop quiz. View upcoming deadlines by urgency: TODAY, TOMORROW, and THIS WEEK. Includes swipe-to-delete with undo and customizable reminder times.
+            </p>
+            <div class="feature-tag-bottom">URGENCY TIERS &amp; WEIGHTS</div>
+          </article>
+
+          <!-- Feature 6 -->
+          <article class="feature-card" id="feat-neo-brutalism">
+            <div class="feature-icon-box">🎨</div>
+            <h3 class="feature-title">REVO Brutalist Aesthetic</h3>
+            <p class="feature-text">
+              Tired of sterile, soulless enterprise calendars? NextClass features bold typography, architectural rhythm, high-contrast badges, and tactile micro-animations designed to make academic life vibrant.
+            </p>
+            <div class="feature-tag-bottom">SPACE GROTESK DESIGN</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         Showcase of Useful Screens (Requested explicitly by user)
+         ==================================================================== -->
+    <section class="section-padding screens-showcase-section" id="screens">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-tag">
+            <span class="sticker sticker-orange">SCREEN-BY-SCREEN TOUR</span>
+          </div>
+          <h2 class="section-title">The useful screens that power your day</h2>
+          <p class="section-subtitle">
+            Every screen in NextClass is engineered for instant glanceability, high contrast in harsh sunlight, and zero cognitive load between lectures.
+          </p>
+        </div>
+
+        <!-- Screen 1: Today Screen -->
+        <div class="screen-card-row" id="screen-today-detail">
+          <div class="screen-visual-box">
+            <span class="sticker sticker-yellow screen-visual-badge">FLOW 4 · PRIMARY DASHBOARD</span>
+            <div class="screen-mock-frame">
+              <!-- Visual representation of Today screen components -->
+              <div style="background: var(--bg); padding: 16px; border: 2px solid #000; border-radius: 6px; box-shadow: 3px 3px 0px #000;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <div>
+                    <span style="font-family: var(--font-display); font-size: 0.7rem; font-weight: 800; background: var(--yellow); padding: 2px 6px; border: 1.5px solid #000; border-radius: 3px;">WEDNESDAY, OCT 10</span>
+                    <h4 style="font-size: 1.25rem; font-weight: 900; margin-top: 4px;">Good morning</h4>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Your day at COMSATS</p>
+                  </div>
+                  <div style="width: 32px; height: 32px; background: #FFF; border: 2px solid #000; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: bold;">⚙️</div>
+                </div>
+
+                <div class="agenda-pill" style="margin-bottom: 12px;">
+                  <span class="pill-dot"></span>
+                  <span>2 classes remaining · Data Structures ends at 11:30 AM</span>
+                </div>
+
+                <!-- Active class card with yellow background -->
+                <div class="mock-class-card active-class" style="margin-bottom: 10px;">
+                  <div class="mock-card-inner">
+                    <div class="mock-card-stripe" style="background-color: var(--yellow); width: 10px;"></div>
+                    <div class="mock-card-body">
+                      <div class="mock-card-top">
+                        <div class="mock-card-title">Data Structures &amp; Algorithms</div>
+                        <span class="mock-status-tag" style="background: var(--yellow);">LIVE NOW</span>
+                      </div>
+                      <div class="mock-card-meta">
+                        <span>⏱️ 10:00 – 11:30 AM</span>
+                        <span>📍 CS-301</span>
+                        <span>👨‍🏫 Dr. Vance</span>
+                      </div>
+                      <div class="mock-progress-wrap">
+                        <div class="mock-progress-fill" style="width: 68%;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Next class card -->
+                <div class="mock-class-card next-class">
+                  <div class="mock-card-inner">
+                    <div class="mock-card-stripe" style="background-color: var(--orange); width: 10px;"></div>
+                    <div class="mock-card-body">
+                      <div class="mock-card-top">
+                        <div class="mock-card-title">Operating Systems</div>
+                        <span class="mock-status-tag tag-urgent">NEXT IN 30M</span>
+                      </div>
+                      <div class="mock-card-meta">
+                        <span>⏱️ 12:00 – 01:30 PM</span>
+                        <span>📍 Lab LB-204</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-details-box">
+            <span class="sticker sticker-green screen-badge-label">GLANCEABLE MISSION CONTROL</span>
+            <h3 class="screen-heading">Today Screen — Your Real-Time Campus Radar</h3>
+            <p class="screen-desc">
+              The moment you open NextClass, you get immediate answers without navigating submenus. No asking friends what room you're in or checking photos in your camera roll.
+            </p>
+            <ul class="screen-features-list">
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Dynamic Context Pill:</strong> Automatically computes "Next class in 15m", active lecture countdown, or the celebratory "That's a wrap. Shabash!" when your day finishes.</div>
+              </li>
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Live Progress Bar:</strong> Visually tracks how much of your current 90-minute lecture is left so you can plan your break.</div>
+              </li>
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Urgent Quiz Previews:</strong> Integrates upcoming assessments due today or tomorrow directly into your morning view.</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Screen 2: AI Timetable Scan Screen -->
+        <div class="screen-card-row" id="screen-scan-detail">
+          <div class="screen-visual-box">
+            <span class="sticker sticker-green screen-visual-badge">FLOW 2 · GEMINI VISION EXTRACTION</span>
+            <div class="screen-mock-frame">
+              <div class="scanner-graphic">
+                <div class="scanner-laser"></div>
+                <div class="timetable-paper-mock">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 0.75rem; font-weight: 900; text-transform: uppercase;">PHOTO_UPLOAD_094.JPG</span>
+                    <span style="font-size: 0.65rem; background: var(--green); padding: 2px 6px; border: 1px solid #000; font-weight: 800; border-radius: 3px;">1600x1600 Q85 COMPRESSED</span>
+                  </div>
+                  <div class="paper-grid" style="margin-bottom: 10px;">
+                    <div class="paper-cell detected">CS-301<br>10:00 - 11:30</div>
+                    <div class="paper-cell detected">OS-204<br>12:00 - 01:30</div>
+                    <div class="paper-cell detected">SE-Lab<br>02:00 - 04:00</div>
+                    <div class="paper-cell">FREE</div>
+                  </div>
+                  <div style="background: #000; color: #FFF; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.72rem;">
+                    &gt; Running Gemini 3.8 Flash Multimodal OCR...<br>
+                    &gt; Parsed 14 lecture blocks across 5 days.<br>
+                    &gt; Normalized 24h timestamps and room codes.<br>
+                    &gt; Quota Guard: 2/2 daily remaining.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-details-box">
+            <span class="sticker sticker-orange screen-badge-label">ZERO MANUAL TYPING</span>
+            <h3 class="screen-heading">AI Timetable Scan — Paper to Schedule in 3 Seconds</h3>
+            <p class="screen-desc">
+              University schedules are notoriously messy: weird PDF tables, printed paper handouts taped to bulletin boards, or phone photos of whiteboard announcements. NextClass eats them for breakfast.
+            </p>
+            <ul class="screen-features-list">
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Native Hardware Compression:</strong> Automatically scales heavy 20MB camera photos to 1600x1600 Q85 natively, saving battery and data without losing character sharpness.</div>
+              </li>
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Gemini Multimodal Intelligence:</strong> Intelligently infers messy day column headers, handles abbreviations (e.g., "DS Lab", "Algo"), and extracts instructors.</div>
+              </li>
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Auto-Retry Architecture:</strong> Features automatic 1s backoff resilience to catch cold-start network drops seamlessly without crashing.</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Screen 3: Review & Edit Screen -->
+        <div class="screen-card-row" id="screen-review-detail">
+          <div class="screen-visual-box">
+            <span class="sticker sticker-blue screen-visual-badge" style="color: #FFF;">FLOW 3 · VERIFICATION &amp; AUDIT</span>
+            <div class="screen-mock-frame">
+              <div style="background: var(--bg); padding: 16px; border: 2px solid #000; border-radius: 6px; box-shadow: 3px 3px 0px #000; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-family: var(--font-display); font-weight: 900; font-size: 1rem;">14 Classes Extracted</span>
+                  <span class="sticker sticker-yellow" style="font-size: 0.65rem; padding: 2px 6px;">READY TO AUDIT</span>
+                </div>
+
+                <!-- Verified class -->
+                <div class="mock-class-card" style="border: 2px solid #000;">
+                  <div class="mock-card-inner">
+                    <div class="mock-card-stripe" style="background-color: var(--yellow); width: 8px;"></div>
+                    <div class="mock-card-body" style="padding: 8px 10px;">
+                      <div class="mock-card-top">
+                        <div class="mock-card-title" style="font-size: 0.85rem;">Data Structures</div>
+                        <span style="font-size: 0.65rem; font-weight: 800; color: #2E7D32;">✓ 100% CONFIDENT</span>
+                      </div>
+                      <div class="mock-card-meta" style="font-size: 0.68rem;">
+                        <span>Monday · 10:00 – 11:30 · Room CS-301</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Flagged for review -->
+                <div class="mock-class-card" style="border: 2px solid var(--coral-urgent); background: #FFEBEE;">
+                  <div class="mock-card-inner">
+                    <div class="mock-card-stripe" style="background-color: var(--orange); width: 8px;"></div>
+                    <div class="mock-card-body" style="padding: 8px 10px;">
+                      <div class="mock-card-top">
+                        <div class="mock-card-title" style="font-size: 0.85rem;">Operating Systems</div>
+                        <span class="mock-status-tag tag-urgent" style="font-size: 0.65rem;">AI UNSURE ?</span>
+                      </div>
+                      <div class="mock-card-meta" style="font-size: 0.68rem; color: #C62828;">
+                        <span>Monday · 12:00 – 01:30 · Room: LB-204? (Tap to edit)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="btn btn-primary btn-sm" style="margin-top: 6px; text-align: center;">
+                  Confirm &amp; Commit to SQLite ➔
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-details-box">
+            <span class="sticker sticker-yellow screen-badge-label">HUMAN-IN-THE-LOOP</span>
+            <h3 class="screen-heading">Review Screen — You Retain Total Control</h3>
+            <p class="screen-desc">
+              AI shouldn't guess silently. If a crumpled corner makes a room number ambiguous, NextClass explicitly flags it with an <strong>AI Unsure</strong> badge for quick one-tap verification.
+            </p>
+            <ul class="screen-features-list">
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Uncertainty Highlighting:</strong> Ambiguous slots are highlighted with high-contrast red borders and badges so you never walk to the wrong classroom.</div>
+              </li>
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>8-Color Subject Assignment:</strong> Automatically maps distinct subjects to high-energy brutalist colors (Safety Yellow, Vivid Orange, Electric Cyan, Hot Pink, etc.).</div>
+              </li>
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Atomic SQLite Transactions:</strong> Guarantees all classes and scheduled alarms are persisted safely without partial database corruption.</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Screen 4: Week View Screen -->
+        <div class="screen-card-row" id="screen-week-detail">
+          <div class="screen-visual-box">
+            <span class="sticker sticker-yellow screen-visual-badge">FLOW 5 · SEMESTER TIMETABLE</span>
+            <div class="screen-mock-frame">
+              <div style="background: var(--bg); padding: 16px; border: 2px solid #000; border-radius: 6px; box-shadow: 3px 3px 0px #000;">
+                <div style="display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto;">
+                  <div style="padding: 6px 10px; border: 2px solid #000; border-radius: 4px; background: #FFF; font-size: 0.75rem; font-weight: 800;">MON (3)</div>
+                  <div style="padding: 6px 10px; border: 2px solid #000; border-radius: 4px; background: #FFF; font-size: 0.75rem; font-weight: 800;">TUE (4)</div>
+                  <div style="padding: 6px 10px; border: 2px solid #000; border-radius: 4px; background: var(--yellow); font-size: 0.75rem; font-weight: 900; box-shadow: 2px 2px 0px #000;">WED (3) ★</div>
+                  <div style="padding: 6px 10px; border: 2px solid #000; border-radius: 4px; background: #FFF; font-size: 0.75rem; font-weight: 800;">THU (2)</div>
+                  <div style="padding: 6px 10px; border: 2px solid #000; border-radius: 4px; background: #FFF; font-size: 0.75rem; font-weight: 800;">FRI (3)</div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <div class="mock-class-card" style="border: 2px solid #000;">
+                    <div class="mock-card-inner">
+                      <div class="mock-card-stripe" style="background-color: var(--blue); width: 8px;"></div>
+                      <div class="mock-card-body" style="padding: 8px 10px;">
+                        <div class="mock-card-top">
+                          <div class="mock-card-title" style="font-size: 0.85rem;">Computer Networks</div>
+                          <span style="font-size: 0.68rem; font-weight: 800;">09:00 – 10:30 AM</span>
+                        </div>
+                        <div class="mock-card-meta" style="font-size: 0.68rem;">
+                          <span>📍 Room NET-01 · Prof. Tariq</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mock-class-card" style="border: 2px solid #000;">
+                    <div class="mock-card-inner">
+                      <div class="mock-card-stripe" style="background-color: var(--green); width: 8px;"></div>
+                      <div class="mock-card-body" style="padding: 8px 10px;">
+                        <div class="mock-card-top">
+                          <div class="mock-card-title" style="font-size: 0.85rem;">Algorithms Lab</div>
+                          <span style="font-size: 0.68rem; font-weight: 800;">11:00 – 01:00 PM</span>
+                        </div>
+                        <div class="mock-card-meta" style="font-size: 0.68rem;">
+                          <span>📍 Lab-4 · Engr. Sarah</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-details-box">
+            <span class="sticker sticker-blue screen-badge-label" style="color: #FFF;">WEEKLY ARCHITECTURE</span>
+            <h3 class="screen-heading">Week View — Your Semester at a Glance</h3>
+            <p class="screen-desc">
+              Need to see what your Thursdays look like or figure out if you have free time on Friday afternoon? The Week View organizes your schedule into a fast, responsive day-by-day strip.
+            </p>
+            <ul class="screen-features-list">
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Day Selector Strip:</strong> Tap any day pill (Mon–Sun) to view class counts, start/end windows, and room itineraries.</div>
+              </li>
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Compact Cards:</strong> Optimized vertical space prevents endless scrolling even if you have 6 lectures in a single day.</div>
+              </li>
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Detailed Bottom Sheet:</strong> Tap any class card to inspect teacher office hours, room buildings, or make instant edits.</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Screen 5: Quizzes Screen -->
+        <div class="screen-card-row" id="screen-quizzes-detail">
+          <div class="screen-visual-box">
+            <span class="sticker sticker-orange screen-visual-badge">FLOW 6 · ASSESSMENT RADAR</span>
+            <div class="screen-mock-frame">
+              <div style="background: var(--bg); padding: 16px; border: 2px solid #000; border-radius: 6px; box-shadow: 3px 3px 0px #000; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-family: var(--font-display); font-weight: 900; font-size: 1rem;">Upcoming Assessments</span>
+                  <span class="mock-status-tag tag-urgent">3 ACTIVE</span>
+                </div>
+
+                <!-- Urgent Quiz Card -->
+                <div class="mock-class-card" style="background: #FFF8E1; border: 2.5px solid #000;">
+                  <div class="mock-card-inner">
+                    <div class="mock-card-stripe" style="background-color: var(--coral-urgent); width: 10px;"></div>
+                    <div class="mock-card-body" style="padding: 10px;">
+                      <div class="mock-card-top">
+                        <div class="mock-card-title" style="font-size: 0.9rem;">Algorithms Midterm</div>
+                        <span class="mock-status-tag tag-urgent">TOMORROW ⚡</span>
+                      </div>
+                      <div class="mock-card-meta" style="font-size: 0.72rem;">
+                        <span>📅 Thu, Oct 11 · 09:00 AM</span>
+                        <span>🔔 Alarm: 8:00 PM Tonight</span>
+                      </div>
+                      <div style="font-size: 0.7rem; color: #555; margin-top: 4px;">Topics: Red-Black Trees, Greedy Algorithms</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Upcoming Quiz Card -->
+                <div class="mock-class-card" style="border: 2px solid #000;">
+                  <div class="mock-card-inner">
+                    <div class="mock-card-stripe" style="background-color: var(--orange); width: 10px;"></div>
+                    <div class="mock-card-body" style="padding: 10px;">
+                      <div class="mock-card-top">
+                        <div class="mock-card-title" style="font-size: 0.9rem;">Database Normalization Quiz</div>
+                        <span class="mock-status-tag" style="background: #FFE0B2;">IN 4 DAYS</span>
+                      </div>
+                      <div class="mock-card-meta" style="font-size: 0.72rem;">
+                        <span>📅 Mon, Oct 15 · 10:00 AM</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-details-box">
+            <span class="sticker sticker-orange screen-badge-label">DUAL NOTIFICATION SYSTEM</span>
+            <h3 class="screen-heading">Quizzes Screen — Never Get Blindsided</h3>
+            <p class="screen-desc">
+              Standard calendar apps send a notification 10 minutes before a quiz — which is useless if you haven't studied. NextClass alerts you the evening before at 8:00 PM and on the morning of the exam.
+            </p>
+            <ul class="screen-features-list">
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Urgency Buckets:</strong> Automatically categorized into TODAY, TOMORROW, THIS WEEK, and LATER.</div>
+              </li>
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Evening-Before Alarms:</strong> Configurable 8:00 PM reminder gives you time to do your final review session before sleeping.</div>
+              </li>
+              <li>
+                <span class="screen-check-bullet">✓</span>
+                <div><strong>Swipe-to-Complete:</strong> Swipe cards to archive or delete with an immediate undo toast banner.</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         How It Works (3 Steps)
+         ==================================================================== -->
+    <section class="section-padding" id="how-it-works">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-tag">
+            <span class="sticker">HOW IT WORKS</span>
+          </div>
+          <h2 class="section-title">Zero setup. Up and running in 30 seconds</h2>
+          <p class="section-subtitle">
+            No registration, no university IT department integration, and no manual calendar typing required.
+          </p>
+        </div>
+
+        <div class="steps-container">
+          <div class="step-card" id="step-1">
+            <div class="step-number">01</div>
+            <h3 class="step-title">Snap Your Timetable</h3>
+            <p class="step-desc">
+              Open NextClass and take a photo of your schedule — printed paper, PDF screenshot, or whiteboard. Native compression handles high-res files instantly.
+            </p>
+          </div>
+
+          <div class="step-card" id="step-2">
+            <div class="step-number">02</div>
+            <h3 class="step-title">Verify &amp; Confirm</h3>
+            <p class="step-desc">
+              Gemini Vision extracts every lecture, room code, and timing. Inspect the preview, adjust any flagged items in one tap, and click "Save".
+            </p>
+          </div>
+
+          <div class="step-card" id="step-3">
+            <div class="step-number">03</div>
+            <h3 class="step-title">Cruise Through Your Semester</h3>
+            <p class="step-desc">
+              Sit back and relax. NextClass rings exact alarms 15 minutes before lectures, keeps your live room number visible, and tracks upcoming exams.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         Comparison Table: NextClass vs Alternatives
+         ==================================================================== -->
+    <section class="section-padding comparison-section" id="comparison">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-tag">
+            <span class="sticker sticker-green">THE UNFAIR ADVANTAGE</span>
+          </div>
+          <h2 class="section-title">Why NextClass is built different</h2>
+          <p class="section-subtitle">
+            Comparing NextClass with Google Calendar and generic timetable apps.
+          </p>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="brutalist-table" id="comparison-table">
+            <thead>
+              <tr>
+                <th>Feature / Capability</th>
+                <th class="col-highlight">NextClass ⚡</th>
+                <th>Google Calendar</th>
+                <th>Generic Schedule Apps</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Timetable Photo-to-Schedule AI</strong></td>
+                <td class="cell-highlight"><span class="check-green">✓ Instant (Gemini 3.8)</span></td>
+                <td><span class="cross-red">✗ Manual entry only</span></td>
+                <td><span class="cross-red">✗ None or paid paywall</span></td>
+              </tr>
+              <tr>
+                <td><strong>Live In-Progress Class Progress Bar</strong></td>
+                <td class="cell-highlight"><span class="check-green">✓ Yes (Real-time)</span></td>
+                <td><span class="cross-red">✗ Standard line</span></td>
+                <td><span class="cross-red">✗ None</span></td>
+              </tr>
+              <tr>
+                <td><strong>Evening-Before Quiz Reminders (8 PM)</strong></td>
+                <td class="cell-highlight"><span class="check-green">✓ Built-in Smart Default</span></td>
+                <td><span class="cross-red">✗ Manual setup per event</span></td>
+                <td><span class="cross-red">✗ Basic same-day only</span></td>
+              </tr>
+              <tr>
+                <td><strong>Exact Alarms (Android Doze &amp; Reboot)</strong></td>
+                <td class="cell-highlight"><span class="check-green">✓ Guaranteed Delivery</span></td>
+                <td><span class="cross-red">~ Delayed by battery saver</span></td>
+                <td><span class="cross-red">✗ Missed after reboot</span></td>
+              </tr>
+              <tr>
+                <td><strong>100% On-Device SQLite Privacy</strong></td>
+                <td class="cell-highlight"><span class="check-green">✓ Zero Tracking / No Cloud</span></td>
+                <td><span class="cross-red">✗ Cloud synced &amp; profiled</span></td>
+                <td><span class="cross-red">✗ Ad trackers &amp; analytics</span></td>
+              </tr>
+              <tr>
+                <td><strong>Account or Sign-in Required</strong></td>
+                <td class="cell-highlight"><span class="check-green">✓ None (Instant start)</span></td>
+                <td><span class="cross-red">✗ Mandatory Google Login</span></td>
+                <td><span class="cross-red">✗ Mandatory signup</span></td>
+              </tr>
+              <tr>
+                <td><strong>Intrusive Banner / Video Ads</strong></td>
+                <td class="cell-highlight"><span class="check-green">✓ 100% Free &amp; Ad-Free</span></td>
+                <td><span class="check-green">✓ Ad-Free</span></td>
+                <td><span class="cross-red">✗ Flooded with ads</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         FAQ Section
+         ==================================================================== -->
+    <section class="section-padding" id="faq">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-tag">
+            <span class="sticker">FREQUENTLY ASKED QUESTIONS</span>
+          </div>
+          <h2 class="section-title">Got questions? We've got answers.</h2>
+        </div>
+
+        <div class="faq-grid">
+          <div class="faq-card open" id="faq-item-1">
+            <div class="faq-question">
+              <span>How does the AI timetable scanning work?</span>
+              <span class="faq-icon">+</span>
+            </div>
+            <div class="faq-answer">
+              When you snap or upload a photo of your schedule, NextClass natively compresses it and sends it securely to Google Gemini 3.8 Flash Vision API. Gemini analyzes the grid structure, detects lecture subjects, start and end times, and room locations, outputting clean structured data for you to verify.
+            </div>
+          </div>
+
+          <div class="faq-card" id="faq-item-2">
+            <div class="faq-question">
+              <span>Is my schedule data stored on external servers?</span>
+              <span class="faq-icon">+</span>
+            </div>
+            <div class="faq-answer">
+              No. Aside from the transient photo scan request processed by Gemini Vision, 100% of your timetable classes, quiz dates, and personal settings are stored locally on your device in an encrypted SQLite database. We do not track your location, and there is no user tracking.
+            </div>
+          </div>
+
+          <div class="faq-card" id="faq-item-3">
+            <div class="faq-question">
+              <span>Will notifications still ring if my phone restarts or enters battery saver mode?</span>
+              <span class="faq-icon">+</span>
+            </div>
+            <div class="faq-answer">
+              Yes! NextClass implements Android's Exact Alarm APIs (`exactAllowWhileIdle`) and an automatic `BOOT_COMPLETED` broadcast receiver. When your device restarts, NextClass automatically calculates and restores all weekly lecture and quiz alarms in the background.
+            </div>
+          </div>
+
+          <div class="faq-card" id="faq-item-4">
+            <div class="faq-question">
+              <span>Can I edit or add classes manually without scanning?</span>
+              <span class="faq-icon">+</span>
+            </div>
+            <div class="faq-answer">
+              Yes! You have full control. You can edit any class, add new slots manually, change room numbers, assign different color tags, or adjust start and end times at any point from the Review or Week screen.
+            </div>
+          </div>
+
+          <div class="faq-card" id="faq-item-5">
+            <div class="faq-question">
+              <span>Is NextClass completely free? Are there in-app purchases or ads?</span>
+              <span class="faq-icon">+</span>
+            </div>
+            <div class="faq-answer">
+              NextClass is 100% free with zero ads, zero subscriptions, and zero paywalls. It was created by students, for students, to eliminate academic chaos.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         Final CTA & Google Play Store Section (Requested: in the end showing playstore button)
+         ==================================================================== -->
+    <section class="playstore-section" id="download">
+      <div class="container">
+        <div class="playstore-box">
+          <div class="sticker sticker-orange playstore-badge-top">
+            🚀 READY FOR A STRESS-FREE SEMESTER?
+          </div>
+
+          <div class="playstore-left">
+            <h2 class="playstore-title">
+              Download NextClass on Google Play today.
+            </h2>
+            <p class="playstore-desc">
+              Stop stressing over class timings and surprise quizzes. Get the high-energy schedule assistant that keeps your semester on track. Zero ads, no account needed, and 100% free forever.
+            </p>
+
+            <div class="playstore-cta-group">
+              <div class="playstore-cta-row">
+                <!-- Large Primary Google Play Store Button -->
+                <a href="https://play.google.com/store/apps/details?id=com.nextclass.app" class="play-store-btn" id="footer-playstore-btn" target="_blank" rel="noopener noreferrer" style="padding: 16px 32px;" onclick="handlePlayStoreClick(event)">
+                  <svg class="play-icon" style="width: 34px; height: 34px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.6 1.8C3.3 2.1 3.1 2.6 3.1 3.2V20.8C3.1 21.4 3.3 21.9 3.6 22.2L3.7 22.3L13.8 12.2V11.8L3.7 1.7L3.6 1.8Z" fill="#00D2FF"/>
+                    <path d="M17.2 15.6L13.8 12.2V11.8L17.2 8.4L17.3 8.5L21.4 10.8C22.6 11.5 22.6 12.6 21.4 13.3L17.3 15.5L17.2 15.6Z" fill="#FFCF00"/>
+                    <path d="M17.3 15.5L13.8 12L3.6 22.2C4.1 22.7 4.9 22.8 5.7 22.3L17.3 15.5Z" fill="#FF3A44"/>
+                    <path d="M17.3 8.5L5.7 1.7C4.9 1.2 4.1 1.3 3.6 1.8L13.8 12L17.3 8.5Z" fill="#00E676"/>
+                  </svg>
+                  <div class="btn-text-wrap">
+                    <span class="sub-text" style="font-size: 0.75rem;">GET IT ON</span>
+                    <span class="main-text" style="font-size: 1.45rem;">Google Play</span>
+                  </div>
+                </a>
+
+                <a href="#hero" class="btn btn-yellow" id="scroll-to-top-btn">
+                  Back to Top ↑
+                </a>
+              </div>
+
+              <div class="playstore-guarantees">
+                <span>⭐ 5.0 Star Rating</span>
+                <span>•</span>
+                <span>🔒 100% Offline SQLite</span>
+                <span>•</span>
+                <span>🚫 0 Ads &amp; No Login</span>
+                <span>•</span>
+                <span>📱 Android 7.0+</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Play Store Scan / Direct QR Box -->
+          <div class="playstore-right-box" id="qr-download-box">
+            <div class="qr-code-graphic">
+              <!-- Inline Neo-Brutalist QR Code SVG Illustration -->
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Outer Corners -->
+                <rect x="5" y="5" width="30" height="30" fill="black"/>
+                <rect x="10" y="10" width="20" height="20" fill="white"/>
+                <rect x="14" y="14" width="12" height="12" fill="black"/>
+
+                <rect x="65" y="5" width="30" height="30" fill="black"/>
+                <rect x="70" y="10" width="20" height="20" fill="white"/>
+                <rect x="74" y="14" width="12" height="12" fill="black"/>
+
+                <rect x="5" y="65" width="30" height="30" fill="black"/>
+                <rect x="10" y="70" width="20" height="20" fill="white"/>
+                <rect x="14" y="74" width="12" height="12" fill="black"/>
+
+                <!-- QR Grid Data Dots -->
+                <rect x="42" y="8" width="6" height="6" fill="black"/>
+                <rect x="52" y="8" width="6" height="6" fill="black"/>
+                <rect x="42" y="18" width="16" height="6" fill="black"/>
+                <rect x="48" y="28" width="10" height="6" fill="black"/>
+
+                <rect x="8" y="42" width="6" height="16" fill="black"/>
+                <rect x="18" y="48" width="12" height="6" fill="black"/>
+                <rect x="24" y="42" width="6" height="6" fill="black"/>
+
+                <rect x="42" y="42" width="8" height="8" fill="#FF5500"/>
+                <rect x="54" y="42" width="6" height="6" fill="black"/>
+                <rect x="42" y="54" width="6" height="6" fill="black"/>
+                <rect x="52" y="52" width="8" height="8" fill="#FFE500"/>
+
+                <rect x="65" y="42" width="6" height="6" fill="black"/>
+                <rect x="75" y="48" width="12" height="6" fill="black"/>
+                <rect x="85" y="42" width="8" height="8" fill="black"/>
+
+                <rect x="42" y="68" width="6" height="12" fill="black"/>
+                <rect x="52" y="68" width="14" height="6" fill="black"/>
+                <rect x="52" y="78" width="6" height="14" fill="black"/>
+                <rect x="68" y="68" width="8" height="8" fill="black"/>
+                <rect x="80" y="74" width="12" height="6" fill="black"/>
+                <rect x="72" y="84" width="18" height="8" fill="black"/>
+              </svg>
+            </div>
+            <div>
+              <div class="qr-label">Scan to Install on Android</div>
+              <div class="qr-subtext">Direct Google Play Store link</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======================================================================
+       Footer
+       ====================================================================== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand-wrap">
+          <div class="footer-logo-row">
+            <div class="brand-icon">
+              <img src="assets/images/app_icon.png" alt="NextClass Logo" width="44" height="44">
+            </div>
+            <span class="brand-name">NextClass</span>
+          </div>
+          <p class="footer-desc">
+            The intelligent university timetable and class schedule assistant. Photo-to-schedule AI extraction, exact Android alarms, and 100% offline privacy.
+          </p>
+          <div style="font-family: var(--font-display); font-weight: 800; font-size: 0.85rem; color: #000;">
+            Package: <code style="background: var(--yellow); padding: 2px 6px; border: 1px solid #000; border-radius: 3px;">com.nextclass.app</code>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#screens">App Screens</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#comparison">Comparison</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Screens</h4>
+          <ul>
+            <li><a href="#screen-today-detail">Today Agenda</a></li>
+            <li><a href="#screen-scan-detail">AI Vision Scanner</a></li>
+            <li><a href="#screen-review-detail">Review &amp; Edit</a></li>
+            <li><a href="#screen-week-detail">Week Timetable</a></li>
+            <li><a href="#screen-quizzes-detail">Quizzes Radar</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Legal &amp; Privacy</h4>
+          <ul>
+            <li><a href="privacy_policy.html">Privacy Policy</a></li>
+            <li><a href="https://play.google.com/store/apps/details?id=com.nextclass.app" target="_blank" rel="noopener noreferrer">Google Play Store</a></li>
+            <li><a href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub Repository</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          © 2026 NextClass. All rights reserved. Built with pride for university students worldwide.
+        </div>
+        <div>
+          "That's a wrap for today. Shabash! 🚀"
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="script.js"></script>
+</body>
+</html>
