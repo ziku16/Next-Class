@@ -57,3 +57,11 @@ app.*.map.json
 *.aab
 /NextClass*.apk
 
+# Android release signing keys and configurations
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
+
+# Obfuscation symbol mappings
+build/app/outputs/symbols/
+

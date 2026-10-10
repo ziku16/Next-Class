@@ -1,3 +1,15 @@
+# Flutter Engine and Plugin Keep Rules
+-keep class io.flutter.app.** { *; }
+-keep class io.flutter.plugin.** { *; }
+-keep class io.flutter.util.** { *; }
+-keep class io.flutter.view.** { *; }
+-keep class io.flutter.** { *; }
+-keep class io.flutter.plugins.** { *; }
+-dontwarn io.flutter.embedding.**
+
+# Keep SQLite and database helpers
+-keep class com.tekartik.sqflite.** { *; }
+
 # Flutter Local Notifications keep rules
 -keep class com.dexterous.flutterlocalnotifications.** { *; }
 -keep class com.dexterous.flutterlocalnotifications.models.** { *; }
@@ -46,8 +58,4 @@
 -dontwarn retrofit2.**
 
 # NextClass app keep rules
--keep class com.nextclass.app.nextclass.** { *; }
-
-# SQLite plugin keep rules
--keep class com.tekartik.sqflite.** { *; }
-
+-keep class com.nextclass.app.** { *; }

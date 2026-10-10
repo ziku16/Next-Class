@@ -1,4 +1,4 @@
-package com.nextclass.app.nextclass
+package com.nextclass.app
 
 import androidx.annotation.Keep
 import io.flutter.embedding.android.FlutterActivity
