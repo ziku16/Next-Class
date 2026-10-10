@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/next_class_colors.dart';
-import '../shared/bounceable.dart';
+import '../shared/bouncy_tap.dart';
 
 /// Revo-Brutalist Bottom Navigation Bar for NextClass:
 /// - Surface bar with 3px border
@@ -73,9 +73,8 @@ class AppBottomNav extends StatelessWidget {
     final nc = context.ncColors;
 
     return Expanded(
-      child: GestureDetector(
+      child: BouncyTap(
         onTap: () => onDestinationSelected(index),
-        behavior: HitTestBehavior.opaque,
         child: Container(
           height: 52,
           decoration: BoxDecoration(
@@ -133,7 +132,7 @@ class AppBottomNav extends StatelessWidget {
     final bgColor = hasTimetable ? const Color(0xFFFF5500) : const Color(0xFFFFE500);
     final fgColor = hasTimetable ? Colors.white : Colors.black;
 
-    return Bounceable(
+    return BouncyTap(
       onTap: onPressed,
       child: Container(
         decoration: BoxDecoration(

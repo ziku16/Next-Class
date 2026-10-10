@@ -11,6 +11,8 @@ import '../main_navigation_screen.dart';
 import '../review/review_screen.dart';
 import '../shared/offline_banner.dart';
 import '../shared/fluid_page_route.dart';
+import '../shared/bouncy_tap.dart';
+import '../../services/timetable_parser_service.dart';
 import 'parsing_loader_screen.dart';
 import 'source_picker_sheet.dart';
 
@@ -39,11 +41,33 @@ class _UploadScreenState extends State<UploadScreen> {
   bool _isOffline = false;
   StreamSubscription<bool>? _connectivitySubscription;
 
+  int _dailyUsed = 0;
+  int _weeklyUsed = 0;
+
+  bool get _isDailyLimitReached => _dailyUsed >= TimetableParserService.maxScansPerDay;
+  bool get _isWeeklyLimitReached => _weeklyUsed >= TimetableParserService.maxScansPerWeek;
+  bool get _isQuotaExhausted => _isDailyLimitReached || _isWeeklyLimitReached;
+
+  int get _dailyRemaining =>
+      (TimetableParserService.maxScansPerDay - _dailyUsed).clamp(0, TimetableParserService.maxScansPerDay);
+  int get _weeklyRemaining =>
+      (TimetableParserService.maxScansPerWeek - _weeklyUsed).clamp(0, TimetableParserService.maxScansPerWeek);
+
+  String get _exhaustedButtonText {
+    if (_isDailyLimitReached) {
+      return 'LIMIT REACHED • RESETS TOMORROW';
+    } else {
+      return 'LIMIT REACHED • RESETS IN 7 DAYS';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _provider = widget.uploadProvider ?? UploadProvider();
     _provider.addListener(_onProviderUpdate);
+
+    _loadScanQuota();
 
     _isOffline = widget.isOffline ?? ConnectivityService().isOffline;
     if (widget.isOffline == null) {
@@ -52,6 +76,64 @@ class _UploadScreenState extends State<UploadScreen> {
         if (mounted) setState(() => _isOffline = offline);
       });
     }
+  }
+
+  Future<void> _loadScanQuota() async {
+    try {
+      final quota = await TimetableParserService.getRemainingScans();
+      if (mounted) {
+        setState(() {
+          _dailyUsed = quota['dailyUsed'] ?? 0;
+          _weeklyUsed = quota['weeklyUsed'] ?? 0;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Widget _buildQuotaBadge(BuildContext context) {
+    final isExhausted = _isQuotaExhausted;
+    final bgColor = isExhausted ? const Color(0xFFF3F3F3) : const Color(0xFFFFFFFF);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.black, width: 2.0),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(2, 2),
+            blurRadius: 0,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            isExhausted ? Icons.lock_clock_outlined : Icons.bolt_rounded,
+            size: 16,
+            color: isExhausted ? const Color(0xFF757575) : const Color(0xFFFF5500),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              'DAILY QUOTA: $_dailyRemaining/${TimetableParserService.maxScansPerDay} REMAINING • WEEKLY: $_weeklyRemaining/${TimetableParserService.maxScansPerWeek} REMAINING',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.w900,
+                fontSize: 11,
+                letterSpacing: 0.3,
+                color: isExhausted ? const Color(0xFF555555) : Colors.black,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -140,6 +222,7 @@ class _UploadScreenState extends State<UploadScreen> {
     } else if (_provider.errorMessage != null) {
       _showExtractionErrorDialog(_provider.errorCode, _provider.errorMessage!);
     }
+    await _loadScanQuota();
   }
 
   void _showExtractionErrorDialog(TimetableScanErrorCode? code, String message) {
@@ -426,21 +509,22 @@ class _UploadScreenState extends State<UploadScreen> {
                     // Image Selection Area
                     if (_provider.selectedImage == null) ...[
                       // Empty Picker Box
-                      InkWell(
-                        onTap: _openSourcePicker,
+                      BouncyTap(
+                        enabled: !_isQuotaExhausted,
+                        onTap: _isQuotaExhausted ? null : _openSourcePicker,
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
                           decoration: BoxDecoration(
-                            color: nc.surface,
+                            color: _isQuotaExhausted ? const Color(0xFFF7F7F7) : nc.surface,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: nc.border,
+                              color: _isQuotaExhausted ? nc.border.withValues(alpha: 0.4) : nc.border,
                               width: 3.0,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: nc.shadow,
+                                color: _isQuotaExhausted ? Colors.transparent : nc.shadow,
                                 offset: const Offset(4, 4),
                                 blurRadius: 0,
                               ),
@@ -453,34 +537,46 @@ class _UploadScreenState extends State<UploadScreen> {
                                 width: 64,
                                 height: 64,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFF5500),
+                                  color: _isQuotaExhausted ? const Color(0xFFB0BEC5) : const Color(0xFFFF5500),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(color: nc.border, width: 2.5),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: nc.shadow,
+                                      color: _isQuotaExhausted ? Colors.transparent : nc.shadow,
                                       offset: const Offset(2.5, 2.5),
                                       blurRadius: 0,
                                     ),
                                   ],
                                 ),
-                                child: const Icon(
-                                  Icons.add_a_photo_outlined,
+                                child: Icon(
+                                  _isQuotaExhausted ? Icons.lock_clock_outlined : Icons.add_a_photo_outlined,
                                   size: 32,
                                   color: Colors.white,
                                 ),
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'Take or choose a photo',
+                                _isQuotaExhausted ? 'Scan limit reached' : 'Take or choose a photo',
                                 style: TextStyle(
                                   fontFamily: 'SpaceGrotesk',
-                                  color: nc.textPrimary,
+                                  color: _isQuotaExhausted ? nc.textSecondary : nc.textPrimary,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -0.2,
                                 ),
                               ),
+                              if (_isQuotaExhausted) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  _exhaustedButtonText,
+                                  style: TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    color: nc.textSecondary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -570,46 +666,52 @@ class _UploadScreenState extends State<UploadScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: () => _pickImage(ImageSource.camera),
-                                    style: OutlinedButton.styleFrom(
-                                      backgroundColor: nc.surface,
-                                      foregroundColor: nc.textPrimary,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(6),
-                                        side: BorderSide(color: nc.border, width: 2),
+                                  child: BouncyTap(
+                                    enabled: !_isQuotaExhausted,
+                                    child: OutlinedButton.icon(
+                                      onPressed: _isQuotaExhausted ? null : () => _pickImage(ImageSource.camera),
+                                      style: OutlinedButton.styleFrom(
+                                        backgroundColor: nc.surface,
+                                        foregroundColor: nc.textPrimary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(6),
+                                          side: BorderSide(color: nc.border, width: 2),
+                                        ),
                                       ),
-                                    ),
-                                    icon: Icon(Icons.refresh, size: 18, color: nc.icon),
-                                    label: Text(
-                                      'Retake',
-                                      style: TextStyle(
-                                        fontFamily: 'SpaceGrotesk',
-                                        fontWeight: FontWeight.w800,
-                                        color: nc.textPrimary,
+                                      icon: Icon(Icons.refresh, size: 18, color: nc.icon),
+                                      label: Text(
+                                        'Retake',
+                                        style: TextStyle(
+                                          fontFamily: 'SpaceGrotesk',
+                                          fontWeight: FontWeight.w800,
+                                          color: nc.textPrimary,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: () => _pickImage(ImageSource.gallery),
-                                    style: OutlinedButton.styleFrom(
-                                      backgroundColor: nc.surface,
-                                      foregroundColor: nc.textPrimary,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(6),
-                                        side: BorderSide(color: nc.border, width: 2),
+                                  child: BouncyTap(
+                                    enabled: !_isQuotaExhausted,
+                                    child: OutlinedButton.icon(
+                                      onPressed: _isQuotaExhausted ? null : () => _pickImage(ImageSource.gallery),
+                                      style: OutlinedButton.styleFrom(
+                                        backgroundColor: nc.surface,
+                                        foregroundColor: nc.textPrimary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(6),
+                                          side: BorderSide(color: nc.border, width: 2),
+                                        ),
                                       ),
-                                    ),
-                                    icon: Icon(Icons.image, size: 18, color: nc.icon),
-                                    label: Text(
-                                      'Choose another',
-                                      style: TextStyle(
-                                        fontFamily: 'SpaceGrotesk',
-                                        fontWeight: FontWeight.w800,
-                                        color: nc.textPrimary,
+                                      icon: Icon(Icons.image, size: 18, color: nc.icon),
+                                      label: Text(
+                                        'Choose another',
+                                        style: TextStyle(
+                                          fontFamily: 'SpaceGrotesk',
+                                          fontWeight: FontWeight.w800,
+                                          color: nc.textPrimary,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -691,53 +793,66 @@ class _UploadScreenState extends State<UploadScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
+
+                    // Retro-brutalist Quota Counter Card
+                    _buildQuotaBadge(context),
+
+                    const SizedBox(height: 14),
 
                     // Primary Action: Extract classes
-                    Container(
-                      decoration: BoxDecoration(
-                        boxShadow: (_provider.selectedImage != null && !_isOffline)
-                            ? [
-                                BoxShadow(
-                                  color: nc.shadow,
-                                  offset: const Offset(3.5, 3.5),
-                                  blurRadius: 0,
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: FilledButton.icon(
-                          onPressed: (_provider.selectedImage != null && !_isOffline)
-                              ? () => _startExtraction()
+                    BouncyTap(
+                      enabled: (_provider.selectedImage != null && !_isOffline && !_isQuotaExhausted),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          boxShadow: (_provider.selectedImage != null && !_isOffline && !_isQuotaExhausted)
+                              ? [
+                                  BoxShadow(
+                                    color: nc.shadow,
+                                    offset: const Offset(3.5, 3.5),
+                                    blurRadius: 0,
+                                  ),
+                                ]
                               : null,
-                          icon: const Icon(Icons.auto_awesome, size: 20),
-                          label: Text(
-                            _isOffline
-                                ? 'Offline — Extraction unavailable'
-                                : 'Extract classes',
-                            style: const TextStyle(
-                              fontFamily: 'SpaceGrotesk',
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                              letterSpacing: 0.5,
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: FilledButton.icon(
+                            onPressed: (_provider.selectedImage != null && !_isOffline && !_isQuotaExhausted)
+                                ? () => _startExtraction()
+                                : null,
+                            icon: Icon(
+                              _isQuotaExhausted ? Icons.lock_outline : Icons.auto_awesome,
+                              size: 20,
                             ),
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF5500),
-                            disabledBackgroundColor: const Color(0xFFDCE2E6),
-                            foregroundColor: Colors.white,
-                            disabledForegroundColor: nc.textSecondary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
-                              side: BorderSide(
-                                color: (_provider.selectedImage != null && !_isOffline)
-                                    ? nc.border
-                                    : nc.border.withValues(alpha: 0.3),
-                                width: 2.5,
+                            label: Text(
+                              _isQuotaExhausted
+                                  ? _exhaustedButtonText
+                                  : _isOffline
+                                      ? 'Offline — Extraction unavailable'
+                                      : 'Extract classes',
+                              style: const TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF5500),
+                              disabledBackgroundColor: const Color(0xFFDCE2E6),
+                              foregroundColor: Colors.white,
+                              disabledForegroundColor: nc.textSecondary,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                                side: BorderSide(
+                                  color: (_provider.selectedImage != null && !_isOffline && !_isQuotaExhausted)
+                                      ? nc.border
+                                      : nc.border.withValues(alpha: 0.3),
+                                  width: 2.5,
+                                ),
                               ),
                             ),
                           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/next_class_colors.dart';
 import '../../data/models/quiz_item.dart';
+import '../shared/bouncy_tap.dart';
 
 /// Card component representing a single quiz item (Flow 6).
 /// Features:
@@ -239,11 +240,17 @@ class QuizCard extends StatelessWidget {
           ),
         ),
         onDismissed: (_) => onDelete!(),
-        child: cardWidget,
+        child: BouncyTap(
+          enabled: onTap != null,
+          child: cardWidget,
+        ),
       );
     }
 
-    return cardWidget;
+    return BouncyTap(
+      enabled: onTap != null,
+      child: cardWidget,
+    );
   }
 
   Widget _buildUrgencyBadge(

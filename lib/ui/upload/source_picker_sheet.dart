@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/next_class_colors.dart';
+import '../shared/bouncy_tap.dart';
 
 /// Modal bottom sheet allowing selection between Camera and Gallery sources.
 class SourcePickerSheet extends StatelessWidget {
@@ -67,25 +68,24 @@ class SourcePickerSheet extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Camera Option
-            Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: nc.shadow,
-                    offset: const Offset(3, 3),
-                    blurRadius: 0,
-                  ),
-                ],
-              ),
-              child: Material(
-                color: nc.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(color: nc.border, width: 2.5),
+            BouncyTap(
+              onTap: () => Navigator.of(context).pop(ImageSource.camera),
+              child: Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: nc.shadow,
+                      offset: const Offset(3, 3),
+                      blurRadius: 0,
+                    ),
+                  ],
                 ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => Navigator.of(context).pop(ImageSource.camera),
+                child: Material(
+                  color: nc.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: nc.border, width: 2.5),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     child: Row(
@@ -142,25 +142,24 @@ class SourcePickerSheet extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Gallery Option
-            Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: nc.shadow,
-                    offset: const Offset(3, 3),
-                    blurRadius: 0,
-                  ),
-                ],
-              ),
-              child: Material(
-                color: nc.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(color: nc.border, width: 2.5),
+            BouncyTap(
+              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+              child: Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: nc.shadow,
+                      offset: const Offset(3, 3),
+                      blurRadius: 0,
+                    ),
+                  ],
                 ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+                child: Material(
+                  color: nc.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: nc.border, width: 2.5),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     child: Row(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
+import 'bouncy_tap.dart';
 import 'live_progress_bar.dart';
 
 enum ClassCardState {
@@ -75,11 +76,17 @@ class ClassCard extends StatelessWidget {
           ),
         ),
         onDismissed: (_) => onDelete!(),
-        child: cardWidget,
+        child: BouncyTap(
+          enabled: onTap != null,
+          child: cardWidget,
+        ),
       );
     }
 
-    return cardWidget;
+    return BouncyTap(
+      enabled: onTap != null,
+      child: cardWidget,
+    );
   }
 
   /// Compact 1-line card representation for Week view

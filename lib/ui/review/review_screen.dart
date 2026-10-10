@@ -376,7 +376,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   color: nc.textPrimary,
                 ),
               ),
-              GestureDetector(
+              BouncyTap(
                 onTap: () => _handleAddClass(day),
                 child: Container(
                   width: 32,

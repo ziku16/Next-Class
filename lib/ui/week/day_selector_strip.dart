@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/next_class_colors.dart';
+import '../shared/bouncy_tap.dart';
 
 /// Horizontal selector strip of 7 day chips (Monday through Sunday) for the Week view.
 /// Shows short day abbreviation and day-of-month number.
@@ -145,9 +146,8 @@ class _DaySelectorStripState extends State<DaySelectorStrip> {
 
     return Container(
       key: Key('day_chip_$index'),
-      child: GestureDetector(
+      child: BouncyTap(
         onTap: () => widget.onDaySelected(index),
-        behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: chipWidth,

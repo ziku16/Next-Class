@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
@@ -18,8 +19,7 @@ class ScanLimitException implements Exception {
 }
 
 class TimetableParserService {
-  static const String _geminiApiKey =
-      'AQ.Ab8RN6L-HBULBjk9cgCbsfRH-T5Q8NvMfW752bqVzAYQFMLdcw';
+  static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY');
   static const List<String> _candidateModels = [
     'gemini-3.5-flash-lite',
     'gemini-3.1-flash-lite',
@@ -45,6 +45,24 @@ class TimetableParserService {
       }
     }
     return valid;
+  }
+
+  /// Returns the current quota usage:
+  /// - `dailyUsed`: count of successful scans today (out of [maxScansPerDay]).
+  /// - `weeklyUsed`: count of successful scans in the rolling 7-day window (out of [maxScansPerWeek]).
+  static Future<Map<String, int>> getRemainingScans([SharedPreferences? testPrefs]) async {
+    final prefs = testPrefs ?? await SharedPreferences.getInstance();
+    final history = await getRecentScanTimestamps(prefs);
+    final now = DateTime.now();
+
+    final dailyUsed = history.where((dt) =>
+        dt.year == now.year && dt.month == now.month && dt.day == now.day).length;
+    final weeklyUsed = history.length;
+
+    return {
+      'dailyUsed': dailyUsed,
+      'weeklyUsed': weeklyUsed,
+    };
   }
 
   /// Checks on-device scan quota before initiating a scan.
@@ -147,13 +165,12 @@ class TimetableParserService {
 
       return compressedFile;
     } catch (e) {
-      // ignore: avoid_print
-      print("IMAGE PREPROCESSING ERROR: $e");
+      debugPrint("IMAGE PREPROCESSING ERROR: $e");
       return originalFile;
     }
   }
 
-  /// Parses timetable directly via Gemini 1.5 Flash.
+  /// Parses timetable directly via Gemini Generative AI SDK.
   static Future<Map<String, dynamic>> parseTimetable(
     File imageFile, {
     GenerativeModel? customModel,
@@ -161,6 +178,18 @@ class TimetableParserService {
   }) async {
     // 1. Enforce on-device rate limiting
     await checkScanQuota(customPrefs);
+
+    if (customModel == null) {
+      assert(
+        _apiKey.isNotEmpty,
+        'GEMINI_API_KEY is not defined. Please run with --dart-define=GEMINI_API_KEY=<your_key>',
+      );
+      if (_apiKey.isEmpty) {
+        throw StateError(
+          'Missing GEMINI_API_KEY environment configuration. Pass via --dart-define=GEMINI_API_KEY=<key>.',
+        );
+      }
+    }
 
     File? preprocessedFile;
 
@@ -211,7 +240,7 @@ Rules:
           try {
             final model = GenerativeModel(
               model: modelName,
-              apiKey: _geminiApiKey,
+              apiKey: _apiKey,
               generationConfig: GenerationConfig(
                 responseMimeType: 'application/json',
                 temperature: 0.0,
@@ -226,8 +255,7 @@ Rules:
             }
           } catch (e) {
             lastError = e;
-            // ignore: avoid_print
-            print("Model $modelName attempt failed: $e. Trying next candidate...");
+            debugPrint("Model $modelName attempt failed: $e. Trying next candidate...");
           }
         }
       }
@@ -261,20 +289,16 @@ Rules:
     } on ScanLimitException {
       rethrow;
     } on TimeoutException catch (e) {
-      // ignore: avoid_print
-      print("REQUEST TIMEOUT: $e");
+      debugPrint("REQUEST TIMEOUT: $e");
       throw Exception("NETWORK_TIMEOUT: Request timed out. The server took too long to respond.");
     } on SocketException catch (e) {
-      // ignore: avoid_print
-      print("SOCKET ERROR: $e");
+      debugPrint("SOCKET ERROR: $e");
       throw Exception("NETWORK_ERROR: Unable to connect to timetable server. Please check your internet.");
     } on FormatException catch (e) {
-      // ignore: avoid_print
-      print("JSON PARSE ERROR: $e");
+      debugPrint("JSON PARSE ERROR: $e");
       throw Exception("PARSER_FORMAT_ERROR: Failed to parse schedule from AI response: $e");
     } catch (e) {
-      // ignore: avoid_print
-      print("GEMINI INFERENCE ERROR: $e");
+      debugPrint("GEMINI INFERENCE ERROR: $e");
       final errStr = e.toString();
       if (errStr.contains('429') || errStr.contains('quota') || errStr.contains('QUOTA')) {
         throw const ScanLimitException("Daily or weekly scan limit reached.");

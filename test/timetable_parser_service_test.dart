@@ -286,6 +286,26 @@ void main() {
       // Only the 2-day-old scan and the newly recorded scan should be present
       expect(timestamps.length, 2);
     });
+
+    test('getRemainingScans returns accurate dailyUsed and weeklyUsed', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final now = DateTime.now();
+
+      // Initial empty state
+      final initial = await TimetableParserService.getRemainingScans(prefs);
+      expect(initial['dailyUsed'], 0);
+      expect(initial['weeklyUsed'], 0);
+
+      // Record 1 scan today and 1 scan 2 days ago
+      await prefs.setStringList('timetable_scan_timestamps', [
+        now.subtract(const Duration(hours: 1)).toIso8601String(),
+        now.subtract(const Duration(days: 2)).toIso8601String(),
+      ]);
+
+      final updated = await TimetableParserService.getRemainingScans(prefs);
+      expect(updated['dailyUsed'], 1);
+      expect(updated['weeklyUsed'], 2);
+    });
   });
 
   group('Database Clean State and debugResetDatabase Tests', () {

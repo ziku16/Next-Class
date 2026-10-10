@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/next_class_colors.dart';
+import '../shared/bouncy_tap.dart';
 
 /// Modal dialog warning before replacing existing timetable data (Flows 7 & 8).
 /// Enforces:
@@ -79,33 +80,36 @@ class ReplaceTimetableDialog extends StatelessWidget {
             ),
           ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: nc.shadow,
-                offset: const Offset(2.5, 2.5),
-                blurRadius: 0,
-              ),
-            ],
-          ),
-          child: FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFF5500),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-                side: BorderSide(color: nc.border, width: 2.0),
-              ),
+        BouncyTap(
+          onTap: () => Navigator.of(context).pop(true),
+          child: Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: nc.shadow,
+                  offset: const Offset(2.5, 2.5),
+                  blurRadius: 0,
+                ),
+              ],
             ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(
-              'Replace timetable',
-              style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFFF5500),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  side: BorderSide(color: nc.border, width: 2.0),
+                ),
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Replace timetable',
+                style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),

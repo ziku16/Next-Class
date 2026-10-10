@@ -14,7 +14,7 @@ enum TimetableScanErrorCode {
   emptyResult,
 }
 
-/// State management for timetable upload and Cloudflare AI Vision parsing pipeline.
+/// State management for timetable upload and Gemini Generative AI parsing pipeline.
 class UploadProvider extends ChangeNotifier {
   final SettingsRepository _settingsRepository;
 
@@ -63,7 +63,7 @@ class UploadProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Executes Cloudflare AI Vision timetable parsing.
+  /// Executes client-side Gemini Generative AI timetable parsing.
   Future<List<ClassItem>?> extractClasses() async {
     if (_selectedImage == null) {
       _errorMessage = 'Please select a photo first.';

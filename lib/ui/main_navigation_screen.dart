@@ -231,18 +231,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 250),
-      reverseDuration: const Duration(milliseconds: 200),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
+      duration: const Duration(milliseconds: 280),
+      reverseDuration: const Duration(milliseconds: 240),
+      switchInCurve: Curves.fastOutSlowIn,
+      switchOutCurve: Curves.fastOutSlowIn,
       transitionBuilder: (Widget child, Animation<double> animation) {
         final offsetAnimation = Tween<Offset>(
-          begin: const Offset(0.0, 0.02),
+          begin: const Offset(0.0, 0.03),
           end: Offset.zero,
         ).animate(CurvedAnimation(
           parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
+          curve: Curves.fastOutSlowIn,
+          reverseCurve: Curves.fastOutSlowIn,
         ));
         return FadeTransition(
           opacity: animation,

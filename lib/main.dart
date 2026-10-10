@@ -88,6 +88,16 @@ Future<void> _initNonCriticalServices() async {
   }
 }
 
+/// Global scroll behavior enforcing Framer-Motion-style BouncingScrollPhysics across all scroll views.
+class BouncingScrollBehavior extends MaterialScrollBehavior {
+  const BouncingScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+  }
+}
+
 /// Root Application Widget for NextClass.
 /// Strictly locked to Light theme to prevent Android dark mode inversion.
 class NextClassApp extends StatelessWidget {
@@ -102,6 +112,7 @@ class NextClassApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       themeMode: ThemeMode.light,
+      scrollBehavior: const BouncingScrollBehavior(),
       home: home ?? const SplashScreen(),
     );
   }
