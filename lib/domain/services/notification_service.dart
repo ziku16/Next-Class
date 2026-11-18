@@ -8,11 +8,14 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../data/models/class_item.dart';
+import '../../data/models/exam_item.dart';
 import '../../data/models/quiz_item.dart';
 import '../../data/models/user_settings.dart';
 import '../../data/repositories/quiz_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/timetable_repository.dart';
+import '../../data/repositories/exam_repository.dart';
+import 'academic_schedule_service.dart';
 
 /// Notification management service for NextClass (Flow 9 / Phase 10).
 /// Handles:
@@ -54,6 +57,10 @@ class NotificationService {
   static const String quizChannelName = 'Quiz reminders';
   static const String quizChannelDescription =
       'Notifications sent the evening before upcoming quizzes';
+  static const String examChannelId = 'exam_reminders_v1';
+  static const String examChannelName = 'Exam reminders';
+  static const String examChannelDescription =
+      'Notifications before upcoming examinations';
 
   /// Initializes timezone data and local notifications plugin
   Future<void> initialize() async {
@@ -128,6 +135,17 @@ class NotificationService {
               classChannelId,
               classChannelName,
               description: classChannelDescription,
+              importance: Importance.high,
+              playSound: true,
+              enableVibration: true,
+            ),
+          );
+
+          await androidPlatform.createNotificationChannel(
+            const AndroidNotificationChannel(
+              examChannelId,
+              examChannelName,
+              description: examChannelDescription,
               importance: Importance.high,
               playSound: true,
               enableVibration: true,
@@ -476,6 +494,61 @@ class NotificationService {
     }
   }
 
+  Future<void> scheduleExamReminder({
+    required int id,
+    required String examId,
+    required String subject,
+    required DateTime examDate,
+    String? startTime,
+    String? venue,
+    required tz.TZDateTime scheduledDate,
+  }) async {
+    final date = DateFormat('EEE, d MMM').format(examDate);
+    final title = 'Upcoming exam: $subject';
+    final body = '$date${startTime == null ? '' : ' · $startTime'}${venue == null ? '' : ' · $venue'}';
+    final details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        examChannelId,
+        examChannelName,
+        channelDescription: examChannelDescription,
+        importance: Importance.high,
+        priority: Priority.high,
+        category: AndroidNotificationCategory.reminder,
+        visibility: NotificationVisibility.public,
+        icon: 'ic_notification',
+        color: const Color(0xFFFF5500),
+        styleInformation: BigTextStyleInformation(
+          '$subject\nDate: $date${startTime == null ? '' : '\nTime: $startTime'}${venue == null ? '' : '\nVenue: $venue'}',
+          contentTitle: title,
+          summaryText: 'Exam Reminder',
+        ),
+      ),
+      iOS: const DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
+      macOS: const DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
+    );
+    final canExact = await checkExactAlarmPermission();
+    final mode = canExact
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
+    final payload = jsonEncode({'type': 'exam', 'examId': examId});
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        id, title, body, scheduledDate, details,
+        androidScheduleMode: mode,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+    } catch (_) {
+      if (mode != AndroidScheduleMode.exactAllowWhileIdle) rethrow;
+      await _notificationsPlugin.zonedSchedule(
+        id, title, body, scheduledDate, details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+    }
+  }
+
   /// Cancels an individual notification by ID
   Future<void> cancel(int id) async {
     try {
@@ -516,6 +589,25 @@ class NotificationService {
     return 100000 + (hash % 100000);
   }
 
+  static int getExamNotificationId(String examId) {
+    int hash = 0x811c9dc5;
+    for (final code in examId.codeUnits) {
+      hash ^= code;
+      hash = (hash * 0x01000193) & 0x7FFFFFFF;
+    }
+    return 200000 + hash % 100000;
+  }
+
+  static int getClassOccurrenceNotificationId(String classId, DateTime date) {
+    final key = '$classId:${date.year}-${date.month}-${date.day}';
+    int hash = 0x811c9dc5;
+    for (final code in key.codeUnits) {
+      hash ^= code;
+      hash = (hash * 0x01000193) & 0x7FFFFFFF;
+    }
+    return 300000 + hash % 100000;
+  }
+
   /// Cancels reminder for a specific class
   Future<void> cancelClassReminder(String classId) async {
     final id = getClassNotificationId(classId);
@@ -542,9 +634,11 @@ class NotificationService {
     DateTime? now,
     List<ClassItem>? classes,
     List<QuizItem>? quizzes,
+    List<ExamItem>? exams,
     UserSettings? settings,
     TimetableRepository? timetableRepo,
     QuizRepository? quizRepo,
+    ExamRepository? examRepo,
     SettingsRepository? settingsRepo,
   }) async {
     if (_isRescheduling) {
@@ -569,6 +663,14 @@ class NotificationService {
       final userSettings = settings ?? await (settingsRepo ?? SettingsRepository()).getUserSettings();
       final classList = classes ?? await (timetableRepo ?? TimetableRepository()).getAllClasses();
       final quizList = quizzes ?? await (quizRepo ?? QuizRepository()).getUpcomingQuizzes(referenceDate: currentTime);
+      List<ExamItem> examList = exams ?? const [];
+      if (exams == null) {
+        try {
+          examList = await (examRepo ?? ExamRepository()).getExams();
+        } catch (error) {
+          debugPrint('[NotificationService] Could not load exam schedule: $error');
+        }
+      }
 
       // Cancel all existing scheduled notifications first to prevent stale alarms
       await cancelAll();
@@ -576,9 +678,19 @@ class NotificationService {
       int scheduledCount = 0;
       int failedCount = 0;
 
-      // 1. Schedule class reminders
+      // 1. Schedule class reminders, excluding every date inside the active exam period.
       final offsetMinutes = userSettings.classReminderMinutes;
       if (offsetMinutes != null && offsetMinutes > 0) {
+        final today = AcademicScheduleService.calendarDate(currentTime);
+        final examPeriod = AcademicScheduleService.periodFor(examList);
+        final hasUpcomingExamPeriod = examPeriod != null &&
+            !examPeriod.endDate.isBefore(today);
+        final examStart = hasUpcomingExamPeriod ? examPeriod.startDate : null;
+        final examEnd = hasUpcomingExamPeriod ? examPeriod.endDate : null;
+
+        bool isInExamPeriod(DateTime date) =>
+            hasUpcomingExamPeriod && examPeriod!.contains(date);
+
         // Group classes by day to compute "Next class after this"
         final Map<String, List<ClassItem>> dayGroups = {};
         for (final c in classList) {
@@ -597,27 +709,88 @@ class NotificationService {
                 : null;
 
             final notificationId = getClassNotificationId(classItem.id);
-            final scheduledTZ = calculateNextClassReminderTZ(
-              dayIndex: classItem.dayIndex,
-              startTime: classItem.startTime,
-              offsetMinutes: offsetMinutes,
-              now: currentTime,
-            );
+            if (!hasUpcomingExamPeriod) {
+              final scheduledTZ = calculateNextClassReminderTZ(
+                dayIndex: classItem.dayIndex,
+                startTime: classItem.startTime,
+                offsetMinutes: offsetMinutes,
+                now: currentTime,
+              );
+              await scheduleClassReminder(
+                id: notificationId,
+                subject: classItem.subject,
+                minutesBefore: offsetMinutes,
+                startTime: classItem.startTime,
+                endTime: classItem.endTime,
+                room: classItem.room,
+                teacher: classItem.teacher,
+                nextSubject: nextClass?.subject,
+                nextTime: nextClass?.startTime,
+                scheduledDate: scheduledTZ,
+                matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+              );
+              scheduledCount++;
+              continue;
+            }
 
-            await scheduleClassReminder(
-              id: notificationId,
-              subject: classItem.subject,
-              minutesBefore: offsetMinutes,
-              startTime: classItem.startTime,
-              endTime: classItem.endTime,
-              room: classItem.room,
-              teacher: classItem.teacher,
-              nextSubject: nextClass?.subject,
-              nextTime: nextClass?.startTime,
-              scheduledDate: scheduledTZ,
-              matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-            );
-            scheduledCount++;
+            final periodEnd = DateTime(examEnd!.year, examEnd.month, examEnd.day, 23, 59, 59);
+            final daysBeforeStart = examStart!.difference(today).inDays.clamp(0, 730);
+            for (var dayOffset = 0; dayOffset < daysBeforeStart; dayOffset++) {
+              final occurrenceDate = today.add(Duration(days: dayOffset));
+              if (occurrenceDate.weekday != classItem.dayIndex + 1 || isInExamPeriod(occurrenceDate)) continue;
+              final occurrence = DateTime(
+                occurrenceDate.year, occurrenceDate.month, occurrenceDate.day,
+                classItem.startMinutes ~/ 60, classItem.startMinutes % 60,
+              );
+              final reminder = occurrence.subtract(Duration(minutes: offsetMinutes));
+              if (!reminder.isAfter(currentTime) || isInExamPeriod(reminder)) continue;
+              await scheduleClassReminder(
+                id: getClassOccurrenceNotificationId(classItem.id, occurrenceDate),
+                subject: classItem.subject,
+                minutesBefore: offsetMinutes,
+                startTime: classItem.startTime,
+                endTime: classItem.endTime,
+                room: classItem.room,
+                teacher: classItem.teacher,
+                nextSubject: nextClass?.subject,
+                nextTime: nextClass?.startTime,
+                scheduledDate: _toTZDateTime(reminder),
+              );
+              scheduledCount++;
+            }
+
+            DateTime? nextClassDate;
+            DateTime? nextReminder;
+            for (var dayOffset = 1; dayOffset <= 14; dayOffset++) {
+              final occurrenceDate = AcademicScheduleService.calendarDate(examEnd).add(Duration(days: dayOffset));
+              if (occurrenceDate.weekday != classItem.dayIndex + 1) continue;
+              final occurrence = DateTime(
+                occurrenceDate.year, occurrenceDate.month, occurrenceDate.day,
+                classItem.startMinutes ~/ 60, classItem.startMinutes % 60,
+              );
+              final reminder = occurrence.subtract(Duration(minutes: offsetMinutes));
+              if (reminder.isAfter(periodEnd) && reminder.isAfter(currentTime)) {
+                nextClassDate = occurrenceDate;
+                nextReminder = reminder;
+                break;
+              }
+            }
+            if (nextClassDate != null && nextReminder != null) {
+              await scheduleClassReminder(
+                id: notificationId,
+                subject: classItem.subject,
+                minutesBefore: offsetMinutes,
+                startTime: classItem.startTime,
+                endTime: classItem.endTime,
+                room: classItem.room,
+                teacher: classItem.teacher,
+                nextSubject: nextClass?.subject,
+                nextTime: nextClass?.startTime,
+                scheduledDate: _toTZDateTime(nextReminder),
+                matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+              );
+              scheduledCount++;
+            }
           } catch (e) {
             failedCount++;
             debugPrint('[NotificationService] Error scheduling class "${classItem.subject}": $e');
@@ -625,7 +798,39 @@ class NotificationService {
         }
       }
 
-      // 2. Schedule quiz reminders
+      // 2. Schedule independent exam reminders for all future exam occurrences.
+      if (userSettings.examReminderEnabled) {
+        for (final exam in examList) {
+          final date = AcademicScheduleService.calendarDate(exam.examDate);
+          final nowDate = AcademicScheduleService.calendarDate(currentTime);
+          if (date.isBefore(nowDate)) continue;
+          final parts = (exam.startTime ?? '09:00').split(':');
+          final examAnchor = DateTime(
+            date.year, date.month, date.day,
+            int.tryParse(parts.first) ?? 9,
+            parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0,
+          );
+          final reminder = examAnchor.subtract(Duration(minutes: userSettings.examReminderOffsetMinutes));
+          if (!reminder.isAfter(currentTime)) continue;
+          try {
+            await scheduleExamReminder(
+              id: getExamNotificationId(exam.id),
+              examId: exam.id,
+              subject: exam.subject,
+              examDate: date,
+              startTime: exam.startTime,
+              venue: exam.venue,
+              scheduledDate: _toTZDateTime(reminder),
+            );
+            scheduledCount++;
+          } catch (e) {
+            failedCount++;
+            debugPrint('[NotificationService] Error scheduling exam "${exam.subject}": $e');
+          }
+        }
+      }
+
+      // 3. Quiz reminders remain independent from Exam Mode.
       if (userSettings.quizReminderEnabled) {
         final parts = userSettings.quizReminderTime.split(':');
         final defaultHour = int.tryParse(parts[0]) ?? 20;
@@ -634,22 +839,10 @@ class NotificationService {
         for (final quiz in quizList) {
           if (quiz.isCompleted) continue;
           try {
-            int targetHour = defaultHour;
-            int targetMinute = defaultMinute;
-            if (quiz.reminderTime != null && quiz.reminderTime!.isNotEmpty) {
-              final p = quiz.reminderTime!.split(':');
-              targetHour = int.tryParse(p[0]) ?? defaultHour;
-              targetMinute = p.length > 1 ? (int.tryParse(p[1]) ?? 0) : 0;
-            } else if (quiz.reminderType == 'morning_of') {
-              targetHour = 8;
-              targetMinute = 0;
-            }
-
             final reminderDateTime = calculateQuizReminderDateTime(
               dueDate: quiz.dueDate,
-              reminderHour: targetHour,
-              reminderMinute: targetMinute,
-              reminderType: quiz.reminderType,
+              reminderHour: defaultHour,
+              reminderMinute: defaultMinute,
             );
 
             if (reminderDateTime.isAfter(currentTime)) {
@@ -665,7 +858,7 @@ class NotificationService {
                 formattedDate: formattedDue,
                 note: quiz.note,
                 scheduledDate: scheduledTZ,
-                isDayOf: quiz.reminderType == 'morning_of' || quiz.reminderType == 'day_of',
+                isDayOf: false,
               );
               scheduledCount++;
             }

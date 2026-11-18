@@ -72,11 +72,8 @@ class TimetableRepository {
   /// Inserts a new class.
   Future<void> insertClass(ClassItem item) async {
     final db = await _dbManager.database;
-    await db.insert(
-      'classes',
-      item.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    final updated = await db.update('classes', item.toMap(), where: 'id = ?', whereArgs: [item.id]);
+    if (updated == 0) await db.insert('classes', item.toMap());
     await _notifyListeners();
   }
 
@@ -85,11 +82,8 @@ class TimetableRepository {
     final db = await _dbManager.database;
     await db.transaction((txn) async {
       for (final item in items) {
-        await txn.insert(
-          'classes',
-          item.toMap(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        final updated = await txn.update('classes', item.toMap(), where: 'id = ?', whereArgs: [item.id]);
+        if (updated == 0) await txn.insert('classes', item.toMap());
       }
     });
     await _notifyListeners();
@@ -98,16 +92,31 @@ class TimetableRepository {
   /// Updates an existing class.
   Future<void> updateClass(ClassItem item) async {
     final db = await _dbManager.database;
-    await db.update(
-      'classes',
-      item.toMap(),
-      where: 'id = ?',
-      whereArgs: [item.id],
-    );
+    await db.transaction((txn) async {
+      await txn.update(
+        'classes',
+        item.toMap(),
+        where: 'id = ?',
+        whereArgs: [item.id],
+      );
+      final linked = await txn.query('quizzes', where: 'classId = ?', whereArgs: [item.id]);
+      for (final row in linked) {
+        final quiz = QuizItem.fromMap(row);
+        final occurrence = DateTime(
+          quiz.dueDate.year,
+          quiz.dueDate.month,
+          quiz.dueDate.day,
+          item.startMinutes ~/ 60,
+          item.startMinutes % 60,
+        );
+        await txn.update('quizzes', quiz.copyWith(dueDate: occurrence).toMap(),
+            where: 'id = ?', whereArgs: [quiz.id]);
+      }
+    });
     await _notifyListeners();
   }
 
-  /// Deletes a class by ID. Due to SQLite foreign key cascade, linked quizzes are also purged.
+  /// Deletes a class while preserving linked quizzes as unlinked records.
   Future<void> deleteClass(String id) async {
     final db = await _dbManager.database;
     await db.delete(
@@ -123,12 +132,12 @@ class TimetableRepository {
   Future<void> replaceAllClasses(List<ClassItem> newClasses) async {
     final db = await _dbManager.database;
     await db.transaction((txn) async {
-      // 1. Backup existing quizzes before foreign key cascade deletes them
+      // 1. Backup quizzes before removing old class references.
       final quizMaps = await txn.query('quizzes');
       final existingQuizzes =
           quizMaps.map((m) => QuizItem.fromMap(m)).toList();
 
-      // 2. Clear old classes (cascades to delete old quiz foreign key rows)
+      // 2. Clear old classes (foreign keys detach the linked quizzes).
       await txn.delete('classes');
 
       // 3. Insert new classes
@@ -140,26 +149,39 @@ class TimetableRepository {
         );
       }
 
-      // 4. Restore quizzes, re-linking classId if a class with the same subject exists
-      if (newClasses.isNotEmpty) {
-        for (final quiz in existingQuizzes) {
-          final matchingClass = newClasses.cast<ClassItem?>().firstWhere(
-            (c) =>
-                c != null &&
-                c.subject.trim().toLowerCase() ==
-                    quiz.subject.trim().toLowerCase(),
-            orElse: () => null,
-          );
-
-          final targetClassId = matchingClass?.id ?? newClasses.first.id;
-          final updatedQuiz = quiz.copyWith(classId: targetClassId);
-
-          await txn.insert(
-            'quizzes',
-            updatedQuiz.toMap(),
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
+      // 4. Re-link same-subject quizzes and leave unmatched records unlinked.
+      for (final quiz in existingQuizzes) {
+        final subjectMatches = newClasses.where(
+          (item) => item.subject.trim().toLowerCase() ==
+              quiz.subject.trim().toLowerCase(),
+        ).toList();
+        ClassItem? matchingClass;
+        for (final candidate in subjectMatches) {
+          if (candidate.id == quiz.classId) {
+            matchingClass = candidate;
+            break;
+          }
         }
+        if (matchingClass == null && subjectMatches.length == 1) {
+          matchingClass = subjectMatches.single;
+        }
+        final updatedQuiz = matchingClass == null
+            ? quiz.copyWith(clearClassId: true)
+            : quiz.copyWith(
+                classId: matchingClass.id,
+                dueDate: DateTime(
+                  quiz.dueDate.year,
+                  quiz.dueDate.month,
+                  quiz.dueDate.day,
+                  matchingClass.startMinutes ~/ 60,
+                  matchingClass.startMinutes % 60,
+                ),
+              );
+        await txn.insert(
+          'quizzes',
+          updatedQuiz.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
     });
     await _notifyListeners();

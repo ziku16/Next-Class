@@ -457,6 +457,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ? _handleQuizTimePicker
                       : null,
                 ),
+                Divider(height: 1, thickness: 1.5, color: nc.border.withValues(alpha: 0.2)),
+                SwitchListTile(
+                  key: const Key('exam_reminder_switch'),
+                  secondary: _buildLeadingIcon(Icons.edit_calendar_outlined, const Color(0xFFFF5500)),
+                  title: Text('Exam reminder', style: TextStyle(
+                    fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.w900,
+                    fontSize: 15, color: nc.textPrimary,
+                  )),
+                  subtitle: Text('Independent of class and quiz alerts', style: TextStyle(
+                    fontFamily: 'SpaceGrotesk', color: nc.textSecondary,
+                    fontWeight: FontWeight.w700, fontSize: 13,
+                  )),
+                  value: _provider.examReminderEnabled,
+                  onChanged: _provider.toggleExamReminder,
+                ),
+                ListTile(
+                  key: const Key('exam_reminder_offset_tile'),
+                  enabled: _provider.examReminderEnabled,
+                  leading: _buildLeadingIcon(Icons.alarm_outlined, const Color(0xFFFFE500), enabled: _provider.examReminderEnabled),
+                  title: Text('Exam reminder timing', style: TextStyle(
+                    fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.w900,
+                    fontSize: 15, color: _provider.examReminderEnabled ? nc.textPrimary : nc.textSecondary,
+                  )),
+                  trailing: DropdownButton<int>(
+                    value: const [60, 180, 720, 1440].contains(_provider.examReminderOffsetMinutes)
+                        ? _provider.examReminderOffsetMinutes : 1440,
+                    onChanged: _provider.examReminderEnabled
+                        ? (value) { if (value != null) _provider.updateExamReminderOffset(value); }
+                        : null,
+                    items: const [
+                      DropdownMenuItem(value: 60, child: Text('1 hour before')),
+                      DropdownMenuItem(value: 180, child: Text('3 hours before')),
+                      DropdownMenuItem(value: 720, child: Text('12 hours before')),
+                      DropdownMenuItem(value: 1440, child: Text('1 day before')),
+                    ],
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -483,7 +520,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   subtitle: Text(
-                    'Required for class and quiz reminders',
+                    'Required for class, quiz, and exam reminders',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       color: nc.textSecondary,

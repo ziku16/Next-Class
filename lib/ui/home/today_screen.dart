@@ -8,14 +8,16 @@ import '../../data/models/user_settings.dart';
 import '../../data/repositories/quiz_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/timetable_repository.dart';
+import '../../domain/services/academic_schedule_service.dart';
 import '../../state/quiz_provider.dart';
+import '../../state/exam_provider.dart';
+import '../../data/models/exam_item.dart';
 import '../shared/class_card.dart';
 import '../shared/nc_banner.dart';
 import '../shared/offline_banner.dart';
 import '../shared/undo_snackbar.dart';
 import '../../core/theme/next_class_colors.dart';
 import 'app_bottom_nav.dart';
-import 'quizzes_preview_row.dart';
 import 'today_header.dart';
 
 /// The primary daily view for NextClass (Flow 4).
@@ -30,6 +32,7 @@ class TodayScreen extends StatefulWidget {
   final QuizRepository? quizRepository;
   final SettingsRepository? settingsRepository;
   final QuizProvider? quizProvider;
+  final ExamProvider? examProvider;
 
   final DateTime? currentTime;
   final bool? isOffline;
@@ -41,6 +44,7 @@ class TodayScreen extends StatefulWidget {
 
   final ValueChanged<int>? onNavigateToTab;
   final VoidCallback? onAddQuiz;
+  final VoidCallback? onAddExam;
   final VoidCallback? onUploadTimetable;
   final VoidCallback? onOpenSettings;
   final ValueChanged<ClassItem>? onClassTap;
@@ -51,6 +55,7 @@ class TodayScreen extends StatefulWidget {
     this.quizRepository,
     this.settingsRepository,
     this.quizProvider,
+    this.examProvider,
     this.currentTime,
     this.isOffline,
     this.remindersEnabled,
@@ -60,6 +65,7 @@ class TodayScreen extends StatefulWidget {
     this.userName = '',
     this.onNavigateToTab,
     this.onAddQuiz,
+    this.onAddExam,
     this.onUploadTimetable,
     this.onOpenSettings,
     this.onClassTap,
@@ -109,6 +115,7 @@ class _TodayScreenState extends State<TodayScreen> {
     } else if (widget.initialQuizzes != null) {
       _upcomingQuizzes = widget.initialQuizzes!;
     }
+    widget.examProvider?.addListener(_onExamProviderUpdated);
 
     if (widget.currentTime == null) {
       // Re-evaluate every minute for live progress and active class status
@@ -132,6 +139,10 @@ class _TodayScreenState extends State<TodayScreen> {
         _upcomingQuizzes = widget.quizProvider!.quizzes;
       });
     }
+  }
+
+  void _onExamProviderUpdated() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -164,11 +175,16 @@ class _TodayScreenState extends State<TodayScreen> {
         widget.initialQuizzes != null) {
       _upcomingQuizzes = widget.initialQuizzes!;
     }
+    if (widget.examProvider != oldWidget.examProvider) {
+      oldWidget.examProvider?.removeListener(_onExamProviderUpdated);
+      widget.examProvider?.addListener(_onExamProviderUpdated);
+    }
   }
 
   @override
   void dispose() {
     widget.quizProvider?.removeListener(_onQuizProviderUpdated);
+    widget.examProvider?.removeListener(_onExamProviderUpdated);
     _minuteTicker?.cancel();
     _connectivitySubscription?.cancel();
     super.dispose();
@@ -198,6 +214,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
   Future<void> _loadData() async {
     try {
+      await widget.examProvider?.loadData();
       if (widget.initialClasses == null) {
         final classes = await _timetableRepo.getAllClasses();
         _allClasses = classes;
@@ -258,6 +275,8 @@ class _TodayScreenState extends State<TodayScreen> {
     final theme = Theme.of(context);
     final nc = context.ncColors;
     final hasTimetable = _allClasses.isNotEmpty;
+    final examMode = widget.examProvider?.isExamMode(_now) ?? false;
+    final examsToday = widget.examProvider?.examsForDate(_now) ?? const <ExamItem>[];
 
     return Scaffold(
       backgroundColor: nc.background,
@@ -342,17 +361,8 @@ class _TodayScreenState extends State<TodayScreen> {
             widget.onNavigateToTab!(index);
           }
         },
-      ),
-      floatingActionButton: AppBottomNav.buildFab(
-        context: context,
-        hasTimetable: hasTimetable,
-        onPressed: () {
-          if (!hasTimetable) {
-            widget.onUploadTimetable?.call();
-          } else {
-            widget.onAddQuiz?.call();
-          }
-        },
+        onAddQuiz: widget.onAddQuiz,
+        onAddExam: widget.onAddExam,
       ),
       body: SafeArea(
         top: false,
@@ -383,36 +393,121 @@ class _TodayScreenState extends State<TodayScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
                         children: [
                           // Header (Greeting, Date, Schedule Pill)
-                          TodayHeader(
-                            userName: widget.userName,
-                            currentTime: _now,
-                            classesToday: _todayClasses,
-                            hasTimetable: hasTimetable,
-                          ),
+                          if (examMode)
+                            _examModeBanner(context)
+                          else
+                            TodayHeader(
+                              userName: widget.userName,
+                              currentTime: _now,
+                              classesToday: _todayClasses,
+                              hasTimetable: hasTimetable,
+                            ),
                           const SizedBox(height: 24),
 
+                          if (examMode)
+                            _buildExamsToday(context, theme, examsToday)
                           // Feed Content: Classes or Empty/Weekend state
-                          if (!hasTimetable)
+                          else if (!hasTimetable)
                             _buildFirstLaunchEmptyState(context, theme)
                           else if (_todayClasses.isEmpty)
                             _buildWeekendNoClassesState(context, theme)
                           else
                             _buildTodayClassFeed(context, theme),
 
-                          const SizedBox(height: 28),
-
-                          // Upcoming Quizzes Preview
-                          QuizzesPreviewRow(
-                            quizzes: _upcomingQuizzes,
-                            referenceDate: _now,
-                            onSeeAll: () => widget.onNavigateToTab?.call(2),
-                            onAddQuiz: widget.onAddQuiz,
-                          ),
+                          if (!examMode &&
+                              widget.examProvider != null &&
+                              widget.examProvider!.activeExams.isNotEmpty) ...[
+                            const SizedBox(height: 20),
+                            _buildNextExamPreview(context),
+                          ],
                         ],
                       ),
                     ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _examModeBanner(BuildContext context) {
+    final nc = context.ncColors;
+    return Container(
+      key: const Key('exam_mode_banner'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFE500),
+        border: Border.all(color: nc.border, width: 2.5),
+        boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(3, 3))],
+      ),
+      child: const Row(children: [
+        Icon(Icons.edit_calendar_rounded),
+        SizedBox(width: 10),
+        Expanded(child: Text('EXAM MODE', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2))),
+      ]),
+    );
+  }
+
+  Widget _buildExamsToday(BuildContext context, ThemeData theme, List<ExamItem> exams) {
+    final nc = context.ncColors;
+    if (exams.isEmpty) {
+      return Container(
+        key: const Key('exam_free_day_state'),
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(color: nc.surface, border: Border.all(color: nc.border, width: 2.5), boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(3, 3))]),
+        child: const Column(children: [
+          Icon(Icons.event_available_rounded, size: 36),
+          SizedBox(height: 10),
+          Text('No exam scheduled today', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+          SizedBox(height: 4),
+          Text('Your regular classes are paused during Exam Mode.', textAlign: TextAlign.center),
+        ]),
+      );
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('TODAY’S EXAMS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1, color: nc.textPrimary)),
+      const SizedBox(height: 10),
+      ...exams.map((exam) => Container(
+        key: Key('today_exam_${exam.id}'),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: nc.surface, border: Border.all(color: nc.border, width: 2.5), boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(3, 3))]),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(exam.subject, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 6),
+          Text([
+            if (exam.startTime != null) '${exam.startTime}${exam.endTime == null ? '' : '–${exam.endTime}'}',
+            if (exam.venue != null) exam.venue!,
+            if (exam.examType != null) exam.examType!,
+          ].join(' · ')),
+        ]),
+      )),
+    ]);
+  }
+
+  Widget _buildNextExamPreview(BuildContext context) {
+    final nc = context.ncColors;
+    final futureExams = widget.examProvider!.activeExams
+        .where((exam) => !AcademicScheduleService.calendarDate(exam.examDate).isBefore(AcademicScheduleService.calendarDate(_now)))
+        .toList()
+      ..sort((a, b) => a.localDate.compareTo(b.localDate));
+    if (futureExams.isEmpty) return const SizedBox.shrink();
+    final exam = futureExams.first;
+    return Semantics(
+      button: true,
+      child: InkWell(
+        key: const Key('next_exam_preview'),
+        onTap: widget.onAddExam,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: nc.surface, border: Border.all(color: nc.border, width: 2), boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(2, 2))]),
+          child: Row(children: [
+            const Icon(Icons.event_note_rounded),
+            const SizedBox(width: 10),
+            Expanded(child: Text('Next exam · ${exam.subject} · ${DateFormat('d MMM').format(exam.examDate)}', style: const TextStyle(fontWeight: FontWeight.w800))),
+            const Icon(Icons.chevron_right_rounded),
+          ]),
         ),
       ),
     );

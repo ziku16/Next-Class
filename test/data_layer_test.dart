@@ -180,7 +180,7 @@ void main() {
     });
   });
 
-  group('AppDatabase & Cascade Delete Integration Tests', () {
+  group('AppDatabase & Data Preservation Integration Tests', () {
     late AppDatabase dbManager;
     late TimetableRepository timetableRepo;
     late QuizRepository quizRepo;
@@ -197,7 +197,7 @@ void main() {
       await dbManager.close();
     });
 
-    test('Inserts, retrieves and cascades delete from Class to Quiz', () async {
+    test('Deleting a class preserves its quiz as an unlinked record', () async {
       const class1 = ClassItem(
         id: 'class_physics',
         subject: 'Physics',
@@ -232,9 +232,11 @@ void main() {
       final remainingClasses = await timetableRepo.getAllClasses();
       expect(remainingClasses, isEmpty);
 
-      // VERIFY CASCADE DELETE: Quiz linked to deleted class must be purged automatically by SQLite
+      // The quiz's subject and content remain available for later re-linking.
       final remainingQuizzes = await quizRepo.getAllQuizzes();
-      expect(remainingQuizzes, isEmpty);
+      expect(remainingQuizzes.length, 1);
+      expect(remainingQuizzes.single.subject, 'Physics');
+      expect(remainingQuizzes.single.classId, isNull);
     });
 
     test('replaceAllClasses preserves existing quizzes and re-links them to matching subjects', () async {
@@ -280,6 +282,48 @@ void main() {
       expect(quizzes.first.id, 'math_quiz_1');
       expect(quizzes.first.title, 'Midterm Exam');
       expect(quizzes.first.classId, 'new_math_extracted_999');
+      expect(quizzes.first.dueDate.hour, 10);
+      expect(quizzes.first.dueDate.minute, 0);
+    });
+
+    test('editing a class start time updates linked quiz occurrence times', () async {
+      const classItem = ClassItem(
+        id: 'class_physics', subject: 'Physics', subjectColorIndex: 0,
+        dayOfWeek: 'Thursday', startTime: '09:30', endTime: '10:20',
+      );
+      await timetableRepo.insertClass(classItem);
+      await quizRepo.insertQuiz(QuizItem(
+        id: 'quiz_physics_1', classId: classItem.id, subject: 'Physics',
+        title: 'Chapter 1', dueDate: DateTime(2026, 11, 26, 9, 30),
+      ));
+
+      await timetableRepo.updateClass(classItem.copyWith(startTime: '11:15'));
+
+      final savedQuiz = (await quizRepo.getAllQuizzes()).single;
+      expect(savedQuiz.dueDate.hour, 11);
+      expect(savedQuiz.dueDate.minute, 15);
+    });
+
+    test('replaceAllClasses keeps unmatched quizzes without assigning them to a different subject', () async {
+      const oldClass = ClassItem(
+        id: 'old_class', subject: 'Old subject', subjectColorIndex: 0,
+        dayOfWeek: 'Monday', startTime: '09:00', endTime: '10:00',
+      );
+      await timetableRepo.insertClass(oldClass);
+      await quizRepo.insertQuiz(QuizItem(
+        id: 'unmatched_quiz', classId: oldClass.id, subject: oldClass.subject,
+        title: 'Saved assessment', dueDate: DateTime(2026, 11, 20),
+      ));
+
+      await timetableRepo.replaceAllClasses(const [ClassItem(
+        id: 'new_class', subject: 'Different subject', subjectColorIndex: 1,
+        dayOfWeek: 'Tuesday', startTime: '10:00', endTime: '11:00',
+      )]);
+
+      final quizzes = await quizRepo.getAllQuizzes();
+      expect(quizzes, hasLength(1));
+      expect(quizzes.single.subject, 'Old subject');
+      expect(quizzes.single.classId, isNull);
     });
 
     test('Settings and ScanQuota persist and update in SQLite', () async {

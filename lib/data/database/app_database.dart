@@ -23,7 +23,7 @@ class AppDatabase {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onConfigure: _onConfigure,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
@@ -39,7 +39,7 @@ class AppDatabase {
     final dbManager = AppDatabase._internal();
     _database = await openDatabase(
       inMemoryDatabasePath,
-      version: 2,
+      version: 3,
       onConfigure: dbManager._onConfigure,
       onCreate: dbManager._onCreate,
       onUpgrade: dbManager._onUpgrade,
@@ -56,10 +56,41 @@ class AppDatabase {
         await db.execute('ALTER TABLE quizzes ADD COLUMN reminderType TEXT;');
       } catch (_) {}
     }
+    if (oldVersion < 3) {
+      await db.execute(
+        'ALTER TABLE settings ADD COLUMN examReminderEnabled INTEGER NOT NULL DEFAULT 1',
+      );
+      await db.execute(
+        'ALTER TABLE settings ADD COLUMN examReminderOffsetMinutes INTEGER NOT NULL DEFAULT 1440',
+      );
+      await db.execute('''
+        CREATE TABLE quizzes_migration (
+          id TEXT PRIMARY KEY,
+          classId TEXT,
+          subject TEXT NOT NULL,
+          title TEXT NOT NULL,
+          dueDate TEXT NOT NULL,
+          note TEXT,
+          isCompleted INTEGER NOT NULL DEFAULT 0,
+          reminderTime TEXT,
+          reminderType TEXT,
+          FOREIGN KEY (classId) REFERENCES classes(id) ON DELETE SET NULL
+        )
+      ''');
+      await db.execute('''
+        INSERT INTO quizzes_migration
+          (id, classId, subject, title, dueDate, note, isCompleted, reminderTime, reminderType)
+        SELECT id, classId, subject, title, dueDate, note, isCompleted, reminderTime, reminderType
+        FROM quizzes
+      ''');
+      await db.execute('DROP TABLE quizzes');
+      await db.execute('ALTER TABLE quizzes_migration RENAME TO quizzes');
+      await _createExamTables(db);
+    }
   }
 
   Future<void> _onConfigure(Database db) async {
-    // Enforce foreign key constraints so that deleting a class cascades to its quizzes
+    // Preserve quizzes as unlinked records when a referenced class is removed.
     await db.execute('PRAGMA foreign_keys = ON;');
   }
 
@@ -81,7 +112,7 @@ class AppDatabase {
     await db.execute('''
       CREATE TABLE quizzes (
         id TEXT PRIMARY KEY,
-        classId TEXT NOT NULL,
+        classId TEXT,
         subject TEXT NOT NULL,
         title TEXT NOT NULL,
         dueDate TEXT NOT NULL,
@@ -89,7 +120,7 @@ class AppDatabase {
         isCompleted INTEGER NOT NULL DEFAULT 0,
         reminderTime TEXT,
         reminderType TEXT,
-        FOREIGN KEY (classId) REFERENCES classes(id) ON DELETE CASCADE
+        FOREIGN KEY (classId) REFERENCES classes(id) ON DELETE SET NULL
       )
     ''');
 
@@ -100,7 +131,9 @@ class AppDatabase {
         quizReminderEnabled INTEGER NOT NULL,
         quizReminderTime TEXT NOT NULL,
         exactAlarmsGranted INTEGER NOT NULL,
-        hideEmptyDays INTEGER NOT NULL
+        hideEmptyDays INTEGER NOT NULL,
+        examReminderEnabled INTEGER NOT NULL DEFAULT 1,
+        examReminderOffsetMinutes INTEGER NOT NULL DEFAULT 1440
       )
     ''');
 
@@ -114,12 +147,47 @@ class AppDatabase {
       )
     ''');
 
+    await _createExamTables(db);
+
     // Insert default settings and quota rows
     final defaultSettings = UserSettings.defaults();
     await db.insert('settings', defaultSettings.toMap());
 
     final initialQuota = ScanQuota.initial();
     await db.insert('quota', initialQuota.toMap());
+  }
+
+  Future<void> _createExamTables(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS exam_schedules (
+        id TEXT PRIMARY KEY,
+        program TEXT NOT NULL,
+        semester TEXT NOT NULL,
+        section TEXT NOT NULL,
+        isActive INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS exams (
+        id TEXT PRIMARY KEY,
+        scheduleId TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        examDate TEXT NOT NULL,
+        startTime TEXT,
+        endTime TEXT,
+        venue TEXT,
+        examType TEXT,
+        isAiUnsure INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (scheduleId) REFERENCES exam_schedules(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_exams_schedule_date ON exams(scheduleId, examDate, startTime)',
+    );
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_exam_schedule ON exam_schedules(isActive) WHERE isActive = 1',
+    );
   }
 
   /// Closes database connection
@@ -138,6 +206,8 @@ class AppDatabase {
       await txn.delete('classes');
       await txn.delete('settings');
       await txn.delete('quota');
+      await txn.delete('exams');
+      await txn.delete('exam_schedules');
 
       await txn.insert('settings', UserSettings.defaults().toMap(),
           conflictAlgorithm: ConflictAlgorithm.replace);

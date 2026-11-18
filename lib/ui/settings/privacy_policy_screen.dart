@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/next_class_colors.dart';
 
 /// Privacy Policy Screen for NextClass.
-/// Outlines local-only data architecture, permissions, and zero-tracking commitment.
+/// Explains local schedule storage, AI document processing, and permissions.
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
@@ -50,7 +50,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             context,
             title: '1. OVERVIEW',
             content:
-                'NextClass is an offline-first university timetable and schedule companion designed to help students keep track of their lectures, laboratories, and quizzes. We respect your personal privacy. NextClass does not track you, does not require an account, and stores your timetable data locally on your device.',
+                'NextClass is an offline-first university timetable and schedule companion. It does not require an account. Saved class, exam, and quiz records are stored on your device. AI document scanning requires internet access and sends selected document content to Google Gemini as described below.',
           ),
           const SizedBox(height: 14),
 
@@ -65,7 +65,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 '• Teacher / Instructor Names: Names of professors or instructors.\n'
                 '• Quiz Dates & Topics: Scheduled quiz/exam dates, times, and topics.\n'
                 '• Notification Settings: User preferences for reminder offsets and quiz alerts.\n\n'
-                'This information never leaves your device and is never stored on external company servers.',
+                'Confirmed class, exam, and quiz records and reminder preferences are stored in the app’s local SQLite database. NextClass does not sync these records to a NextClass server. When you use AI scanning, the selected source content is sent to Google Gemini for extraction.',
           ),
           const SizedBox(height: 14),
 
@@ -79,12 +79,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
           _buildSectionCard(
             context,
-            title: '4. 100% ON-DEVICE TIMETABLE SCANNING',
+            title: '4. AI DOCUMENT SCANNING',
             content:
-                'NextClass offers a timetable scanning feature allowing you to scan or upload a photo of your printed or digital schedule:\n\n'
-                '• All timetable image scanning and schedule reading runs 100% locally and offline on your device.\n'
-                '• Your timetable photos and schedule data are NEVER uploaded to any cloud server, external server, or third-party service.\n'
-                '• NextClass does not transmit, retain, view, share, or sell your schedule photos. All data remains exclusively on your phone.',
+                'AI scanning is optional and requires an internet connection. When you scan a timetable or exam date sheet, the selected photo or PDF is sent to Google Gemini. For XLSX exam sheets, workbook cells are read and normalized locally, then the extracted text is sent to Gemini for interpretation.\n\n'
+                'Google processes the submitted content under its own terms and privacy practices. Do not scan documents you are not comfortable sending to that service.\n\n'
+                'After review and confirmation, the resulting class or exam records are saved locally in the app’s SQLite database and remain available offline. The scan quota is stored on your device.',
           ),
           const SizedBox(height: 14),
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nextclass/data/models/class_item.dart';
+import 'package:nextclass/data/models/exam_item.dart';
 import 'package:nextclass/data/models/quiz_item.dart';
 import 'package:nextclass/data/models/user_settings.dart';
 import 'package:nextclass/data/repositories/quiz_repository.dart';
@@ -321,6 +322,53 @@ void main() {
 
       expect(classCalls.length, 2);
       expect(quizCalls.length, 1);
+    });
+
+    test('rescheduleAll suppresses class alerts across the exam period and schedules exam alerts', () async {
+      tz.initializeTimeZones();
+      tz.setLocalLocation(tz.getLocation('Asia/Karachi'));
+      final plugin = FakeFlutterLocalNotificationsPlugin();
+      final service = NotificationService.test(plugin);
+      final classItem = sampleClasses.first; // Monday 08:30
+      final exams = [
+        ExamItem(
+          id: 'exam-monday', scheduleId: 'schedule-1', subject: 'Algorithms',
+          examDate: DateTime(2026, 11, 23), startTime: '09:00', venue: 'Hall A',
+        ),
+        ExamItem(
+          id: 'exam-wednesday', scheduleId: 'schedule-1', subject: 'Databases',
+          examDate: DateTime(2026, 11, 25), startTime: '13:00',
+        ),
+      ];
+
+      await service.rescheduleAll(
+        now: DateTime(2026, 11, 20, 8),
+        classes: [classItem],
+        quizzes: const [],
+        exams: exams,
+        settings: const UserSettings(
+          classReminderMinutes: 15,
+          quizReminderEnabled: false,
+          examReminderEnabled: true,
+          examReminderOffsetMinutes: 1440,
+        ),
+      );
+
+      final examCalls = plugin.scheduledCalls.where((call) {
+        final details = call['notificationDetails'] as NotificationDetails;
+        return details.android?.channelId == NotificationService.examChannelId;
+      }).toList();
+      final classCalls = plugin.scheduledCalls.where((call) {
+        final details = call['notificationDetails'] as NotificationDetails;
+        return details.android?.channelId == NotificationService.classChannelId;
+      }).toList();
+
+      expect(examCalls, hasLength(2));
+      expect(classCalls, hasLength(1));
+      expect(classCalls.single['matchDateTimeComponents'], DateTimeComponents.dayOfWeekAndTime);
+      final classReminderDate = (classCalls.single['scheduledDate'] as tz.TZDateTime).toLocal();
+      expect(classReminderDate.isAfter(DateTime(2026, 11, 25, 23, 59)), isTrue);
+      expect(plugin.scheduledCalls.map((call) => call['id']).toSet().length, plugin.scheduledCalls.length);
     });
 
     test('Disables class reminders when classReminderMinutes is null (Off)', () async {

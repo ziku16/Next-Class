@@ -8,7 +8,7 @@ enum QuizUrgency {
 /// Domain model representing an upcoming quiz or assessment.
 class QuizItem {
   final String id;
-  final String classId; // FK to ClassItem
+  final String? classId; // Null when the referenced timetable class is removed
   final String subject;
   final String title;
   final DateTime dueDate;
@@ -62,6 +62,7 @@ class QuizItem {
   QuizItem copyWith({
     String? id,
     String? classId,
+    bool clearClassId = false,
     String? subject,
     String? title,
     DateTime? dueDate,
@@ -72,7 +73,7 @@ class QuizItem {
   }) {
     return QuizItem(
       id: id ?? this.id,
-      classId: classId ?? this.classId,
+      classId: clearClassId ? null : classId ?? this.classId,
       subject: subject ?? this.subject,
       title: title ?? this.title,
       dueDate: dueDate ?? this.dueDate,
@@ -100,7 +101,7 @@ class QuizItem {
   factory QuizItem.fromMap(Map<String, dynamic> map) {
     return QuizItem(
       id: map['id'] as String,
-      classId: map['classId'] as String,
+      classId: map['classId'] as String?,
       subject: map['subject'] as String,
       title: map['title'] as String,
       dueDate: DateTime.parse(map['dueDate'] as String),

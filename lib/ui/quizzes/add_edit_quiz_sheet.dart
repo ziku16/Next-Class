@@ -88,10 +88,6 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
   late DateTime _selectedDate;
   bool _isSaving = false;
 
-  late String _reminderType;
-  late TimeOfDay _reminderTime;
-  String _customDay = 'day_of';
-
   @override
   void initState() {
     super.initState();
@@ -102,54 +98,13 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    _selectedDate = widget.initialQuiz?.dueDate ?? today;
+    _selectedDate = DateTime(today.year, today.month, today.day);
 
     _selectedClassId = widget.initialQuiz?.classId ?? widget.preselectedClassId;
 
-    final initialReminderType =
-        widget.initialQuiz?.reminderType ?? 'evening_before';
-    _reminderType = (initialReminderType == 'morning_of' ||
-            initialReminderType == 'day_of')
-        ? 'morning_of'
-        : (initialReminderType == 'custom' ? 'custom' : 'evening_before');
-    if (initialReminderType == 'day_of') {
-      _customDay = 'day_of';
-    }
-
-    if (widget.initialQuiz?.reminderTime != null &&
-        widget.initialQuiz!.reminderTime!.isNotEmpty) {
-      final parts = widget.initialQuiz!.reminderTime!.split(':');
-      final hour = int.tryParse(parts[0]) ?? 20;
-      final minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
-      _reminderTime = TimeOfDay(hour: hour, minute: minute);
-    } else {
-      _reminderTime = _reminderType == 'morning_of'
-          ? const TimeOfDay(hour: 8, minute: 0)
-          : const TimeOfDay(hour: 20, minute: 0);
-    }
+    _selectedDate = widget.initialQuiz?.dueDate ?? today;
 
     _resolveClasses();
-  }
-
-  String _formatTimeOfDay(TimeOfDay time) {
-    final hour = time.hour;
-    final minute = time.minute;
-    final period = hour >= 12 ? 'PM' : 'AM';
-    final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-    final displayMinute = minute.toString().padLeft(2, '0');
-    return '$displayHour:$displayMinute $period';
-  }
-
-  Future<void> _pickReminderTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _reminderTime,
-    );
-    if (picked != null && mounted) {
-      setState(() {
-        _reminderTime = picked;
-      });
-    }
   }
 
   @override
@@ -203,17 +158,50 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
     if (!exists) {
       _selectedClassId = _availableClasses.first.id;
     }
+    _normalizeDateForSelectedClass();
+  }
+
+  ClassItem? get _selectedClass => _availableClasses.cast<ClassItem?>().firstWhere(
+        (item) => item?.id == _selectedClassId,
+        orElse: () => null,
+      );
+
+  DateTime _nextOccurrence(ClassItem item, DateTime from) {
+    var date = DateTime(from.year, from.month, from.day);
+    while (date.weekday != item.dayIndex + 1) {
+      date = date.add(const Duration(days: 1));
+    }
+    return date;
+  }
+
+  void _normalizeDateForSelectedClass() {
+    final selected = _selectedClass;
+    if (selected == null) return;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final pickedDate = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    if (_selectedDate.weekday != selected.dayIndex + 1 || pickedDate.isBefore(today)) {
+      _selectedDate = _nextOccurrence(selected, today);
+    } else {
+      _selectedDate = pickedDate;
+    }
   }
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final selectedClass = _selectedClass;
+    if (selectedClass == null) return;
+    final validInitialDate = _selectedDate.weekday == selectedClass.dayIndex + 1 && !_selectedDate.isBefore(today)
+        ? _selectedDate
+        : _nextOccurrence(selectedClass, today);
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate.isBefore(today) ? today : _selectedDate,
+      initialDate: validInitialDate,
       firstDate: today,
       lastDate: today.add(const Duration(days: 365 * 2)),
+      selectableDayPredicate: (date) => date.weekday == selectedClass.dayIndex + 1,
     );
 
     if (picked != null && mounted) {
@@ -227,15 +215,19 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedClassId == null) return;
 
-    final selectedClass =
-        _availableClasses.firstWhere((c) => c.id == _selectedClassId);
+    final selectedClass = _selectedClass;
+    if (selectedClass == null) return;
 
     setState(() => _isSaving = true);
 
-    final timeStr =
-        '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}';
-    final effectiveReminderType =
-        _reminderType == 'custom' ? _customDay : _reminderType;
+    final startParts = selectedClass.startTime.split(':');
+    final dueAt = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      int.tryParse(startParts.first) ?? 8,
+      startParts.length > 1 ? int.tryParse(startParts[1]) ?? 0 : 0,
+    );
 
     final quiz = QuizItem(
       id: widget.initialQuiz?.id ??
@@ -243,13 +235,11 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
       classId: selectedClass.id,
       subject: selectedClass.subject,
       title: _titleController.text.trim(),
-      dueDate: _selectedDate,
+      dueDate: dueAt,
       note: _noteController.text.trim().isNotEmpty
           ? _noteController.text.trim()
           : null,
       isCompleted: widget.initialQuiz?.isCompleted ?? false,
-      reminderTime: timeStr,
-      reminderType: effectiveReminderType,
     );
 
     try {
@@ -566,12 +556,27 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                           onChanged: (val) {
                             setState(() {
                               _selectedClassId = val;
+                              _normalizeDateForSelectedClass();
                             });
                           },
                           validator: (val) =>
                               val == null ? 'Please select a class' : null,
                         ),
                       ),
+                      if (_selectedClass != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            'Class occurrence time: ${_selectedClass!.startTime}–${_selectedClass!.endTime}',
+                            key: const Key('quiz_inherited_class_time'),
+                            style: TextStyle(
+                              fontFamily: 'SpaceGrotesk',
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                              color: ncColors.textSecondary,
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 16),
 
                       // Quiz Topic / Title (Required)
@@ -762,199 +767,6 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Reminder Timing Section
-                      Text(
-                        'Reminder Time',
-                        style: TextStyle(
-                          fontFamily: 'SpaceGrotesk',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                          color: ncColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Standalone Retro-Brutalist Toggle Buttons: Night before, Morning, Specific time
-                      Row(
-                        key: const Key('quiz_reminder_type_segmented'),
-                        children: [
-                          _buildReminderToggleOption(
-                            value: 'evening_before',
-                            label: 'Night before',
-                            icon: Icons.nights_stay_rounded,
-                            ncColors: ncColors,
-                          ),
-                          const SizedBox(width: 8),
-                          _buildReminderToggleOption(
-                            value: 'morning_of',
-                            label: 'Morning',
-                            icon: Icons.wb_sunny_rounded,
-                            ncColors: ncColors,
-                          ),
-                          const SizedBox(width: 8),
-                          _buildReminderToggleOption(
-                            value: 'custom',
-                            label: 'Specific time',
-                            icon: Icons.access_time_filled_rounded,
-                            ncColors: ncColors,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // If Specific time chosen, show toggle for Day of Quiz vs Night Before
-                      if (_reminderType == 'custom') ...[
-                        Row(
-                          children: [
-                            Text(
-                              'Remind on:',
-                              style: TextStyle(
-                                fontFamily: 'SpaceGrotesk',
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                                color: ncColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            ChoiceChip(
-                              label: const Text('Day of quiz'),
-                              selected: _customDay == 'day_of',
-                              backgroundColor: ncColors.inputBackground,
-                              selectedColor: const Color(0xFFFF5500),
-                              labelStyle: TextStyle(
-                                color: _customDay == 'day_of' ? Colors.white : ncColors.textPrimary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              side: BorderSide(color: ncColors.border, width: 2),
-                              onSelected: (selected) {
-                                if (selected) {
-                                  setState(() => _customDay = 'day_of');
-                                }
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            ChoiceChip(
-                              label: const Text('Night before'),
-                              selected: _customDay == 'evening_before',
-                              backgroundColor: ncColors.inputBackground,
-                              selectedColor: const Color(0xFFFF5500),
-                              labelStyle: TextStyle(
-                                color: _customDay == 'evening_before' ? Colors.white : ncColors.textPrimary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              side: BorderSide(color: ncColors.border, width: 2),
-                              onSelected: (selected) {
-                                if (selected) {
-                                  setState(() => _customDay = 'evening_before');
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-
-                      // Interactive Reminder Time Card with Edit Button
-                      InkWell(
-                        key: const Key('quiz_reminder_time_picker_button'),
-                        onTap: _pickReminderTime,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFE500),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: ncColors.border,
-                              width: 2.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: ncColors.shadow,
-                                offset: const Offset(2.5, 2.5),
-                                blurRadius: 0,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.notifications_active_outlined,
-                                size: 22,
-                                color: Colors.black,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _reminderType == 'morning_of'
-                                          ? 'Morning of quiz at ${_formatTimeOfDay(_reminderTime)}'
-                                          : (_reminderType == 'evening_before'
-                                              ? 'Night before quiz at ${_formatTimeOfDay(_reminderTime)}'
-                                              : 'Reminder set for ${_formatTimeOfDay(_reminderTime)} (${_customDay == 'day_of' ? 'Day of quiz' : 'Night before'})'),
-                                      style: const TextStyle(
-                                        fontFamily: 'SpaceGrotesk',
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    const Text(
-                                      'Tap to change time',
-                                      style: TextStyle(
-                                        fontFamily: 'SpaceGrotesk',
-                                        color: Colors.black87,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: ncColors.surface,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: ncColors.border,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      _formatTimeOfDay(_reminderTime),
-                                      style: TextStyle(
-                                        fontFamily: 'SpaceGrotesk',
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 12,
-                                        color: ncColors.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Icon(Icons.edit_outlined,
-                                        size: 14,
-                                        color: ncColors.textPrimary),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
                       // Save Button
                       Bounceable(
                         onTap: _isSaving ? null : _handleSave,
@@ -1018,69 +830,5 @@ class _AddEditQuizSheetState extends State<AddEditQuizSheet> {
     );
   }
 
-  Widget _buildReminderToggleOption({
-    required String value,
-    required String label,
-    required IconData icon,
-    required NextClassColors ncColors,
-  }) {
-    final isSelected = _reminderType == value;
-    // Bright accent fill (orange #FF6B00 / #FF5500) when selected; clean cream when unselected
-    const selectedBg = Color(0xFFFF6B00);
-    const unselectedBg = Color(0xFFFFFDF0);
 
-    return Expanded(
-      child: Bounceable(
-        onTap: () {
-          setState(() {
-            _reminderType = value;
-            if (_reminderType == 'morning_of') {
-              _reminderTime = const TimeOfDay(hour: 8, minute: 0);
-            } else if (_reminderType == 'evening_before') {
-              _reminderTime = const TimeOfDay(hour: 20, minute: 0);
-            }
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-          decoration: BoxDecoration(
-            color: isSelected ? selectedBg : unselectedBg,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Colors.black, width: 2.0),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black,
-                offset: Offset(2, 2),
-                blurRadius: 0,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 16,
-                color: isSelected ? Colors.white : Colors.black,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: 'SpaceGrotesk',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: isSelected ? Colors.white : Colors.black,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy - NextClass</title>
-  <meta name="description" content="NextClass Privacy Policy. Learn how your timetable and schedule data is kept 100% locally on your device with zero tracking and zero ads.">
+  <meta name="description" content="NextClass Privacy Policy. Saved schedules are stored locally. Optional AI document scanning sends selected content to Google Gemini for extraction.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -220,7 +220,7 @@
         <li><strong>Quizzes & Deadlines:</strong> Quiz titles, subjects, dates, and times.</li>
         <li><strong>Reminder Settings:</strong> Your configured notification offsets (e.g. 10 minutes before class) and daily digest preferences.</li>
       </ul>
-      <p>This information is stored strictly in your device's private application storage and is never uploaded to our servers.</p>
+      <p>Confirmed class, exam, and quiz records and reminder preferences are stored in the app's local SQLite database. NextClass does not sync these records to a NextClass server. When you use AI scanning, selected document content is sent to Google Gemini for extraction.</p>
     </section>
 
     <section class="section-card">
@@ -235,12 +235,12 @@
     </section>
 
     <section class="section-card">
-      <h2>4. 100% On-Device Timetable Scanning</h2>
-      <p>NextClass offers a timetable scanning feature allowing you to photograph or upload a schedule image for automated text extraction:</p>
+      <h2>4. AI Document Scanning</h2>
+      <p>AI scanning is optional and requires an internet connection. When you scan a timetable or exam date sheet, the selected photo or PDF is sent to Google Gemini. For XLSX exam sheets, workbook cells are read and normalized locally, then the extracted text is sent to Gemini for interpretation.</p>
       <ul>
-        <li>All image preprocessing, optical character recognition (OCR), and schedule parsing run 100% locally and offline on your device.</li>
-        <li>Your schedule photos and timetable details are NEVER uploaded to any cloud server, third-party AI model, or external service.</li>
-        <li>NextClass does not transmit, retain, archive, view, or sell your schedule images. All data stays strictly on your device.</li>
+        <li>Google processes submitted content under its own terms and privacy practices. Do not scan documents you are not comfortable sending to that service.</li>
+        <li>Review the extracted information before saving. Confirmed class and exam records are stored locally in the app's SQLite database and remain available offline.</li>
+        <li>NextClass does not sync confirmed schedules to a NextClass server. Scan quota history is stored on your device.</li>
       </ul>
     </section>
 

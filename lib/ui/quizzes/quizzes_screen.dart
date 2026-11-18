@@ -32,6 +32,8 @@ class QuizzesScreen extends StatefulWidget {
 
   final ValueChanged<int>? onNavigateToTab;
   final VoidCallback? onUploadTimetable;
+  final VoidCallback? onAddQuiz;
+  final VoidCallback? onAddExam;
   final VoidCallback? onOpenSettings;
   final bool? isOffline;
 
@@ -45,6 +47,8 @@ class QuizzesScreen extends StatefulWidget {
     this.initialClasses,
     this.onNavigateToTab,
     this.onUploadTimetable,
+    this.onAddQuiz,
+    this.onAddExam,
     this.onOpenSettings,
     this.isOffline,
   });
@@ -215,37 +219,8 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
         onDestinationSelected: (index) {
           widget.onNavigateToTab?.call(index);
         },
-      ),
-      floatingActionButton: Container(
-        decoration: const BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black,
-              offset: Offset(3.5, 3.5),
-              blurRadius: 0,
-            ),
-          ],
-        ),
-        child: FloatingActionButton.extended(
-          key: const Key('add_quiz_fab'),
-          onPressed: () => _openAddQuizSheet(),
-          backgroundColor: theme.colorScheme.tertiaryContainer,
-          foregroundColor: theme.colorScheme.onTertiaryContainer,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-            side: const BorderSide(color: Colors.black, width: 2.5),
-          ),
-          icon: const Icon(Icons.add_rounded),
-          label: const Text(
-            '+ Add quiz',
-            style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
+        onAddQuiz: widget.onAddQuiz ?? () => _openAddQuizSheet(),
+        onAddExam: widget.onAddExam,
       ),
       body: SafeArea(
         top: false,

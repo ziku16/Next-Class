@@ -5,6 +5,8 @@ class UserSettings {
   final String quizReminderTime; // default: '20:00' (8:00 pm)
   final bool exactAlarmsGranted; // Android 12+ permission flag
   final bool hideEmptyDays; // Review screen toggle
+  final bool examReminderEnabled;
+  final int examReminderOffsetMinutes;
 
   const UserSettings({
     this.classReminderMinutes = 15,
@@ -12,6 +14,8 @@ class UserSettings {
     this.quizReminderTime = '20:00',
     this.exactAlarmsGranted = false,
     this.hideEmptyDays = false,
+    this.examReminderEnabled = true,
+    this.examReminderOffsetMinutes = 1440,
   });
 
   /// Factory providing default application settings
@@ -45,6 +49,8 @@ class UserSettings {
     String? quizReminderTime,
     bool? exactAlarmsGranted,
     bool? hideEmptyDays,
+    bool? examReminderEnabled,
+    int? examReminderOffsetMinutes,
   }) {
     return UserSettings(
       classReminderMinutes: clearClassReminderMinutes
@@ -54,6 +60,9 @@ class UserSettings {
       quizReminderTime: quizReminderTime ?? this.quizReminderTime,
       exactAlarmsGranted: exactAlarmsGranted ?? this.exactAlarmsGranted,
       hideEmptyDays: hideEmptyDays ?? this.hideEmptyDays,
+      examReminderEnabled: examReminderEnabled ?? this.examReminderEnabled,
+      examReminderOffsetMinutes:
+          examReminderOffsetMinutes ?? this.examReminderOffsetMinutes,
     );
   }
 
@@ -65,6 +74,8 @@ class UserSettings {
       'quizReminderTime': quizReminderTime,
       'exactAlarmsGranted': exactAlarmsGranted ? 1 : 0,
       'hideEmptyDays': hideEmptyDays ? 1 : 0,
+      'examReminderEnabled': examReminderEnabled ? 1 : 0,
+      'examReminderOffsetMinutes': examReminderOffsetMinutes,
     };
   }
 
@@ -75,6 +86,9 @@ class UserSettings {
       quizReminderTime: map['quizReminderTime'] as String? ?? '20:00',
       exactAlarmsGranted: (map['exactAlarmsGranted'] as int? ?? 0) == 1,
       hideEmptyDays: (map['hideEmptyDays'] as int? ?? 0) == 1,
+      examReminderEnabled: (map['examReminderEnabled'] as int? ?? 1) == 1,
+      examReminderOffsetMinutes:
+          (map['examReminderOffsetMinutes'] as int? ?? 1440),
     );
   }
 
@@ -87,7 +101,9 @@ class UserSettings {
           quizReminderEnabled == other.quizReminderEnabled &&
           quizReminderTime == other.quizReminderTime &&
           exactAlarmsGranted == other.exactAlarmsGranted &&
-          hideEmptyDays == other.hideEmptyDays;
+          hideEmptyDays == other.hideEmptyDays &&
+          examReminderEnabled == other.examReminderEnabled &&
+          examReminderOffsetMinutes == other.examReminderOffsetMinutes;
 
   @override
   int get hashCode =>
@@ -95,7 +111,9 @@ class UserSettings {
       quizReminderEnabled.hashCode ^
       quizReminderTime.hashCode ^
       exactAlarmsGranted.hashCode ^
-      hideEmptyDays.hashCode;
+      hideEmptyDays.hashCode ^
+      examReminderEnabled.hashCode ^
+      examReminderOffsetMinutes.hashCode;
 
   @override
   String toString() {

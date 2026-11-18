@@ -3,6 +3,7 @@ import '../data/models/class_item.dart';
 import '../data/models/quiz_item.dart';
 import '../data/repositories/quiz_repository.dart';
 import '../data/repositories/timetable_repository.dart';
+import '../domain/services/notification_service.dart';
 
 /// State management for NextClass quizzes (Flow 6).
 /// Handles:
@@ -141,6 +142,7 @@ class QuizProvider extends ChangeNotifier {
       _allQuizzes.add(item);
 
       scheduleEveningBeforeReminder(item);
+      await NotificationService().rescheduleAll();
 
       notifyListeners();
     } catch (e) {
@@ -163,6 +165,7 @@ class QuizProvider extends ChangeNotifier {
       }
 
       scheduleEveningBeforeReminder(item);
+      await NotificationService().rescheduleAll();
 
       notifyListeners();
     } catch (e) {
@@ -180,6 +183,7 @@ class QuizProvider extends ChangeNotifier {
 
       await _quizRepo.deleteQuiz(id);
       _allQuizzes.removeWhere((q) => q.id == id);
+      await NotificationService().rescheduleAll();
 
       notifyListeners();
     } catch (e) {
@@ -198,6 +202,7 @@ class QuizProvider extends ChangeNotifier {
       await _quizRepo.insertQuiz(quiz);
       _allQuizzes.add(quiz);
       _recentlyDeletedQuiz = null;
+      await NotificationService().rescheduleAll();
       notifyListeners();
       return true;
     } catch (e) {
@@ -216,6 +221,7 @@ class QuizProvider extends ChangeNotifier {
         final current = _allQuizzes[index];
         _allQuizzes[index] = current.copyWith(isCompleted: !current.isCompleted);
       }
+      await NotificationService().rescheduleAll();
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();

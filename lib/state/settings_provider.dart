@@ -40,6 +40,8 @@ class SettingsProvider extends ChangeNotifier {
   String get formattedQuizReminderTime => _settings.formattedQuizReminderTime;
   bool get exactAlarmsGranted => _settings.exactAlarmsGranted;
   bool get hideEmptyDays => _settings.hideEmptyDays;
+  bool get examReminderEnabled => _settings.examReminderEnabled;
+  int get examReminderOffsetMinutes => _settings.examReminderOffsetMinutes;
 
   /// Formatted scan quota badge text (e.g. "2 of 2 left today · 3 of 3 this week")
   String get quotaDisplayText {
@@ -125,6 +127,26 @@ class SettingsProvider extends ChangeNotifier {
     } catch (_) {}
 
     try {
+      await NotificationService().rescheduleAll();
+    } catch (_) {}
+  }
+
+  Future<void> toggleExamReminder(bool enabled) async {
+    final updated = _settings.copyWith(examReminderEnabled: enabled);
+    _settings = updated;
+    notifyListeners();
+    try {
+      await _repo.updateUserSettings(updated);
+      await NotificationService().rescheduleAll();
+    } catch (_) {}
+  }
+
+  Future<void> updateExamReminderOffset(int minutes) async {
+    final updated = _settings.copyWith(examReminderOffsetMinutes: minutes);
+    _settings = updated;
+    notifyListeners();
+    try {
+      await _repo.updateUserSettings(updated);
       await NotificationService().rescheduleAll();
     } catch (_) {}
   }

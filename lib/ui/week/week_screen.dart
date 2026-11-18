@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
+import '../../data/models/exam_item.dart';
 import '../../data/repositories/timetable_repository.dart';
+import '../../domain/services/notification_service.dart';
+import '../../state/exam_provider.dart';
 import '../home/app_bottom_nav.dart';
 import '../review/edit_class_sheet.dart';
 import '../shared/class_card.dart';
@@ -19,10 +22,13 @@ import 'day_selector_strip.dart';
 /// - Fully responsive to 130% accessibility font scale
 class WeekScreen extends StatefulWidget {
   final TimetableRepository? timetableRepository;
+  final ExamProvider? examProvider;
   final DateTime? referenceDate;
   final List<ClassItem>? initialClasses;
   final ValueChanged<int>? onNavigateToTab;
   final ValueChanged<ClassItem>? onAddQuizForClass;
+  final VoidCallback? onAddQuiz;
+  final VoidCallback? onAddExam;
   final VoidCallback? onOpenSettings;
   final VoidCallback? onUploadTimetable;
   final bool? isOffline;
@@ -30,10 +36,13 @@ class WeekScreen extends StatefulWidget {
   const WeekScreen({
     super.key,
     this.timetableRepository,
+    this.examProvider,
     this.referenceDate,
     this.initialClasses,
     this.onNavigateToTab,
     this.onAddQuizForClass,
+    this.onAddQuiz,
+    this.onAddExam,
     this.onOpenSettings,
     this.onUploadTimetable,
     this.isOffline,
@@ -77,6 +86,7 @@ class _WeekScreenState extends State<WeekScreen> {
 
     // Default selected day is today's weekday index (0 = Mon, 6 = Sun)
     _selectedDayIndex = (_referenceDate.weekday - 1).clamp(0, 6);
+    widget.examProvider?.addListener(_onExamsUpdated);
 
     if (widget.initialClasses != null) {
       _allClasses = widget.initialClasses!;
@@ -84,6 +94,10 @@ class _WeekScreenState extends State<WeekScreen> {
     } else {
       _loadClasses();
     }
+  }
+
+  void _onExamsUpdated() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -94,6 +108,10 @@ class _WeekScreenState extends State<WeekScreen> {
       _referenceDate = widget.referenceDate!;
       _computeWeekDays();
     }
+    if (widget.examProvider != oldWidget.examProvider) {
+      oldWidget.examProvider?.removeListener(_onExamsUpdated);
+      widget.examProvider?.addListener(_onExamsUpdated);
+    }
     if (widget.initialClasses != oldWidget.initialClasses &&
         widget.initialClasses != null) {
       _allClasses = widget.initialClasses!;
@@ -103,6 +121,7 @@ class _WeekScreenState extends State<WeekScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    widget.examProvider?.removeListener(_onExamsUpdated);
     super.dispose();
   }
 
@@ -146,6 +165,14 @@ class _WeekScreenState extends State<WeekScreen> {
         alignment: 0.05,
       );
     }
+  }
+
+  void _changeWeek(int offset) {
+    setState(() {
+      _referenceDate = _referenceDate.add(Duration(days: offset * 7));
+      _computeWeekDays();
+      _selectedDayIndex = _selectedDayIndex.clamp(0, 6);
+    });
   }
 
   List<ClassItem> _classesForDay(String dayName) {
@@ -193,6 +220,7 @@ class _WeekScreenState extends State<WeekScreen> {
         );
         if (updated != null) {
           await _timetableRepo.updateClass(updated);
+          await NotificationService().rescheduleAll();
           _loadClasses();
         }
       },
@@ -203,8 +231,6 @@ class _WeekScreenState extends State<WeekScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final nc = context.ncColors;
-    final hasTimetable = _allClasses.isNotEmpty;
-
     final selectedDate = _weekDays[_selectedDayIndex];
     final dayNumStr = DateFormat('dd').format(selectedDate);
     final dayNameStr = DateFormat('EEE').format(selectedDate).toUpperCase();
@@ -282,17 +308,8 @@ class _WeekScreenState extends State<WeekScreen> {
             widget.onNavigateToTab!(idx);
           }
         },
-      ),
-      floatingActionButton: AppBottomNav.buildFab(
-        context: context,
-        hasTimetable: hasTimetable,
-        onPressed: () {
-          if (!hasTimetable) {
-            widget.onUploadTimetable?.call();
-          } else if (widget.onNavigateToTab != null) {
-            widget.onNavigateToTab!(2); // Route to Quizzes
-          }
-        },
+        onAddQuiz: widget.onAddQuiz,
+        onAddExam: widget.onAddExam,
       ),
       body: SafeArea(
         top: false,
@@ -306,6 +323,7 @@ class _WeekScreenState extends State<WeekScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Row(
                 children: [
+                  IconButton(tooltip: 'Previous week', onPressed: () => _changeWeek(-1), icon: const Icon(Icons.chevron_left_rounded)),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
@@ -376,6 +394,7 @@ class _WeekScreenState extends State<WeekScreen> {
                       ),
                     ],
                   ),
+                  IconButton(tooltip: 'Next week', onPressed: () => _changeWeek(1), icon: const Icon(Icons.chevron_right_rounded)),
                 ],
               ),
             ),
@@ -400,7 +419,9 @@ class _WeekScreenState extends State<WeekScreen> {
                         children: List.generate(7, (index) {
                           final dayName = _dayNames[index];
                           final dayDate = _weekDays[index];
-                          final classes = _classesForDay(dayName);
+                          final isExamDayInPeriod = widget.examProvider?.isExamMode(dayDate) ?? false;
+                          final classes = isExamDayInPeriod ? <ClassItem>[] : _classesForDay(dayName);
+                          final exams = widget.examProvider?.examsForDate(dayDate) ?? const <ExamItem>[];
 
                           return _buildDaySection(
                             context: context,
@@ -409,6 +430,8 @@ class _WeekScreenState extends State<WeekScreen> {
                             dayName: dayName,
                             dayDate: dayDate,
                             classes: classes,
+                            exams: exams,
+                            examMode: isExamDayInPeriod,
                           );
                         }),
                       ),
@@ -427,6 +450,8 @@ class _WeekScreenState extends State<WeekScreen> {
     required String dayName,
     required DateTime dayDate,
     required List<ClassItem> classes,
+    required List<ExamItem> exams,
+    required bool examMode,
   }) {
     final today = DateTime.now();
     final isToday = dayDate.year == today.year &&
@@ -437,7 +462,9 @@ class _WeekScreenState extends State<WeekScreen> {
     final monthShort = DateFormat('MMM').format(dayDate);
 
     final String countLabel;
-    if (classes.isEmpty) {
+    if (examMode) {
+      countLabel = exams.isEmpty ? 'exam break' : '${exams.length} ${exams.length == 1 ? 'exam' : 'exams'}';
+    } else if (classes.isEmpty) {
       countLabel = 'free';
     } else if (classes.length == 1) {
       countLabel = '1 class';
@@ -498,7 +525,17 @@ class _WeekScreenState extends State<WeekScreen> {
           const SizedBox(height: 10),
 
           // Cards or Empty Day State
-          if (classes.isEmpty)
+          if (examMode && exams.isEmpty)
+            _buildEmptyExamDayState(context)
+          else if (examMode)
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: exams.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (context, examIndex) => _buildExamCard(context, exams[examIndex]),
+            )
+          else if (classes.isEmpty)
             _buildEmptyDayState(context, theme, dayName)
           else
             ListView.separated(
@@ -526,6 +563,31 @@ class _WeekScreenState extends State<WeekScreen> {
       ),
     );
   }
+
+  Widget _buildExamCard(BuildContext context, ExamItem exam) {
+    final nc = context.ncColors;
+    return Container(
+      key: Key('week_exam_${exam.id}'),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: const Color(0xFFFFE500), border: Border.all(color: nc.border, width: 2.5), boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(3, 3))]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(exam.subject, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        const SizedBox(height: 5),
+        Text([
+          if (exam.startTime != null) '${exam.startTime}${exam.endTime == null ? '' : '–${exam.endTime}'}',
+          if (exam.venue != null) exam.venue!,
+          if (exam.examType != null) exam.examType!,
+        ].join(' · ')),
+      ]),
+    );
+  }
+
+  Widget _buildEmptyExamDayState(BuildContext context) => Container(
+    key: const Key('week_exam_free_day_state'),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    decoration: BoxDecoration(color: context.ncColors.surface, border: Border.all(color: context.ncColors.border, width: 2.5), boxShadow: [BoxShadow(color: context.ncColors.shadow, offset: const Offset(3, 3))]),
+    child: const Row(children: [Icon(Icons.event_available_rounded), SizedBox(width: 12), Expanded(child: Text('No exam scheduled today', style: TextStyle(fontWeight: FontWeight.w800)))]),
+  );
 
   Widget _buildEmptyDayState(
     BuildContext context,

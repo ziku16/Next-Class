@@ -10,11 +10,15 @@ import '../shared/bouncy_tap.dart';
 class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onDestinationSelected;
+  final VoidCallback? onAddQuiz;
+  final VoidCallback? onAddExam;
 
   const AppBottomNav({
     super.key,
     required this.currentIndex,
     required this.onDestinationSelected,
+    this.onAddQuiz,
+    this.onAddExam,
   });
 
   @override
@@ -39,7 +43,7 @@ class AppBottomNav extends StatelessWidget {
               icon: currentIndex == 0 ? Icons.home_rounded : Icons.home_outlined,
               label: 'Today',
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             _buildTabItem(
               context: context,
               index: 1,
@@ -48,6 +52,8 @@ class AppBottomNav extends StatelessWidget {
                   : Icons.calendar_month_outlined,
               label: 'Week',
             ),
+            const SizedBox(width: 8),
+            _buildAddButton(context),
             const SizedBox(width: 8),
             _buildTabItem(
               context: context,
@@ -58,6 +64,71 @@ class AppBottomNav extends StatelessWidget {
               label: 'Quizzes',
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddButton(BuildContext context) {
+    final nc = context.ncColors;
+    return Semantics(
+      button: true,
+      label: 'Add quiz or exam',
+      child: Tooltip(
+        message: 'Add quiz or exam',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: const Key('bottom_nav_add_button'),
+            customBorder: const CircleBorder(),
+            onTap: () async {
+              final action = await showModalBottomSheet<String>(
+                context: context,
+                backgroundColor: nc.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                  side: BorderSide(color: nc.border, width: 3),
+                ),
+                builder: (sheetContext) => SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 10, 18, 20),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Container(width: 42, height: 5, decoration: BoxDecoration(color: nc.border, borderRadius: BorderRadius.circular(4))),
+                      const SizedBox(height: 14),
+                      const Text('QUICK ADD', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+                      const SizedBox(height: 10),
+                      _QuickActionTile(
+                        icon: Icons.quiz_rounded,
+                        title: 'Add Quiz',
+                        color: const Color(0xFFFF5500),
+                        onTap: () => Navigator.pop(sheetContext, 'quiz'),
+                      ),
+                      const SizedBox(height: 8),
+                      _QuickActionTile(
+                        icon: Icons.edit_calendar_rounded,
+                        title: 'Add Exam',
+                        color: const Color(0xFFFFE500),
+                        onTap: () => Navigator.pop(sheetContext, 'exam'),
+                      ),
+                    ]),
+                  ),
+                ),
+              );
+              if (action == 'quiz') onAddQuiz?.call();
+              if (action == 'exam') onAddExam?.call();
+            },
+            child: Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: nc.accent,
+                shape: BoxShape.circle,
+                border: Border.all(color: nc.border, width: 3),
+                boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(3, 3))],
+              ),
+              child: Icon(Icons.add_rounded, color: nc.buttonText, size: 30),
+            ),
+          ),
         ),
       ),
     );
@@ -167,6 +238,32 @@ class AppBottomNav extends StatelessWidget {
               color: fgColor,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickActionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Color color;
+  final VoidCallback onTap;
+  const _QuickActionTile({required this.icon, required this.title, required this.color, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    final nc = context.ncColors;
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 54),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6), border: Border.all(color: nc.border, width: 2.5), boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(2, 2))]),
+          child: Row(children: [Icon(icon), const SizedBox(width: 12), Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))]),
         ),
       ),
     );

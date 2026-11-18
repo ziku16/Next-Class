@@ -46,6 +46,9 @@ dependencies:
   http: ^1.2.2
   uuid: ^4.5.1
   google_generative_ai: ^0.4.6
+  # ZIP/XML are used to read structured .xlsx workbooks without uploading the source file.
+  archive: ^4.3.0
+  xml: ^7.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

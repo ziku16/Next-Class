@@ -279,7 +279,7 @@ void main() {
   });
 
   group('Flow 4: Edge States & Warning Banners', () {
-    testWidgets('Weekend / No classes today shows break illustration with quizzes preview', (tester) async {
+    testWidgets('Weekend / No classes today stays uncluttered without the oversized quiz prompt', (tester) async {
       // Sunday, 4 Oct 2026
       final sundayNow = DateTime(2026, 10, 4, 11, 0);
 
@@ -299,9 +299,8 @@ void main() {
       expect(find.text('Take a breather or get ahead on upcoming quizzes.'), findsOneWidget);
       expect(find.byIcon(Icons.weekend_rounded), findsWidgets);
 
-      // Quizzes preview must still remain visible
-      expect(find.text('Upcoming quizzes'), findsOneWidget);
-      expect(find.text('Ch. 4–5'), findsOneWidget);
+      expect(find.text('Upcoming quizzes'), findsNothing);
+      expect(find.text('Ch. 4–5'), findsNothing);
     });
 
     testWidgets('First launch / No timetable renders welcome empty state and Upload button', (tester) async {
@@ -323,7 +322,7 @@ void main() {
 
       expect(find.text('Welcome, Ali. Nothing scheduled yet.'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Upload timetable'), findsOneWidget);
-      expect(find.widgetWithText(FloatingActionButton, 'Upload timetable'), findsOneWidget);
+      expect(find.byKey(const Key('bottom_nav_add_button')), findsOneWidget);
 
       await tester.tap(find.widgetWithText(FilledButton, 'Upload timetable'));
       await tester.pump();
@@ -387,6 +386,29 @@ void main() {
       await tester.tap(find.text('Quizzes'));
       await tester.pumpAndSettle();
       expect(selectedTab, 2);
+    });
+
+    testWidgets('Center plus menu offers Add Quiz and Add Exam actions', (tester) async {
+      var quizOpened = false;
+      var examOpened = false;
+      await tester.pumpWidget(_wrap(Scaffold(
+        bottomNavigationBar: AppBottomNav(
+          currentIndex: 0,
+          onDestinationSelected: (_) {},
+          onAddQuiz: () => quizOpened = true,
+          onAddExam: () => examOpened = true,
+        ),
+      )));
+
+      await tester.tap(find.byKey(const Key('bottom_nav_add_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Add Quiz'), findsOneWidget);
+      expect(find.text('Add Exam'), findsOneWidget);
+
+      await tester.tap(find.text('Add Exam'));
+      await tester.pumpAndSettle();
+      expect(examOpened, isTrue);
+      expect(quizOpened, isFalse);
     });
 
     testWidgets('AppBottomNav.buildFab builds Add quiz when timetable exists', (tester) async {

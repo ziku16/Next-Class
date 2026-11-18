@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NextClass — Never Miss a Class or Quiz | AI University Timetable Assistant</title>
-  <meta name="description" content="NextClass turns messy university timetables into dynamic daily agendas using Gemini AI Vision. Features exact class alarms, quiz countdowns, and 100% offline privacy. Get it on Google Play.">
+  <meta name="description" content="NextClass turns university timetables into daily agendas using Gemini AI Vision. Saved schedules stay on your device; AI scanning sends selected document content to Google Gemini. Get it on Google Play.">
   <meta name="keywords" content="NextClass, university timetable, student schedule, class reminder, timetable scanner, AI timetable, quiz reminder, flutter app">
   <meta name="theme-color" content="#FFE500">
 
   <!-- Open Graph & Twitter Cards -->
   <meta property="og:title" content="NextClass — University Timetable & Quiz Assistant">
-  <meta property="og:description" content="Snap a photo of your schedule. Gemini AI organizes your classes with exact alarms, live room counters, and 100% offline privacy.">
+  <meta property="og:description" content="Snap a photo of your schedule. Gemini AI organizes your classes; confirmed schedules are saved on your device. AI scanning requires internet access.">
   <meta property="og:image" content="assets/images/app_icon.png">
   <meta property="og:type" content="website">
 
@@ -81,7 +81,7 @@
           </h1>
 
           <p class="hero-desc">
-            The zero-friction university schedule companion. Snap a photo of your crumpled paper timetable or whiteboard, and <strong>Gemini Multimodal AI</strong> organizes your entire semester in seconds. Exact alarms, live progress bars, and 100% offline privacy.
+            The zero-friction university schedule companion. Snap a photo of your timetable and <strong>Gemini Multimodal AI</strong> extracts your classes for review. AI scanning needs internet access; confirmed schedules are saved locally on your device.
           </p>
 
           <div class="hero-cta-group">
@@ -107,7 +107,7 @@
           <div class="hero-stats-row">
             <div class="stat-item">
               <span class="stat-icon">🔒</span>
-              <span>100% Offline SQLite</span>
+              <span>Local SQLite Storage</span>
             </div>
             <div class="stat-item">
               <span class="stat-icon">🚫</span>
@@ -205,7 +205,7 @@
         <div class="ticker-item"><span>GEMINI MULTIMODAL AI VISION</span><span class="separator">★</span></div>
         <div class="ticker-item"><span>EXACT ANDROID ALARMS</span><span class="separator">★</span></div>
         <div class="ticker-item"><span>ZERO ADS · ZERO TRACKING</span><span class="separator">★</span></div>
-        <div class="ticker-item"><span>100% OFFLINE SQLITE</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>LOCAL SCHEDULE STORAGE</span><span class="separator">★</span></div>
         <div class="ticker-item"><span>NEVER SPRINT TO THE WRONG ROOM</span><span class="separator">★</span></div>
         <div class="ticker-item"><span>EVENING QUIZ HEADS-UP</span><span class="separator">★</span></div>
         <div class="ticker-item"><span>THAT'S A WRAP TODAY. SHABASH!</span><span class="separator">★</span></div>
@@ -214,7 +214,7 @@
         <div class="ticker-item"><span>GEMINI MULTIMODAL AI VISION</span><span class="separator">★</span></div>
         <div class="ticker-item"><span>EXACT ANDROID ALARMS</span><span class="separator">★</span></div>
         <div class="ticker-item"><span>ZERO ADS · ZERO TRACKING</span><span class="separator">★</span></div>
-        <div class="ticker-item"><span>100% OFFLINE SQLITE</span><span class="separator">★</span></div>
+        <div class="ticker-item"><span>LOCAL SCHEDULE STORAGE</span><span class="separator">★</span></div>
         <div class="ticker-item"><span>NEVER SPRINT TO THE WRONG ROOM</span><span class="separator">★</span></div>
         <div class="ticker-item"><span>EVENING QUIZ HEADS-UP</span><span class="separator">★</span></div>
         <div class="ticker-item"><span>THAT'S A WRAP TODAY. SHABASH!</span><span class="separator">★</span></div>
@@ -270,9 +270,9 @@
           <!-- Feature 4 -->
           <article class="feature-card" id="feat-offline-privacy">
             <div class="feature-icon-box">🔒</div>
-            <h3 class="feature-title">100% Offline &amp; Private</h3>
+            <h3 class="feature-title">Local Storage &amp; Privacy</h3>
             <p class="feature-text">
-              Zero accounts, zero logins, and zero servers tracking your location. All timetable and quiz data is encrypted in a local SQLite database on your device. Works completely offline with no network needed.
+              No account is required. Confirmed classes, exams, quizzes, and settings are stored in SQLite on your device and remain available offline. Optional AI scanning requires internet access and sends the selected timetable or exam document content to Google Gemini.
             </p>
             <div class="feature-tag-bottom">ZERO ADS · ZERO TRACKING</div>
           </article>
@@ -764,8 +764,8 @@
                 <td><span class="cross-red">✗ Missed after reboot</span></td>
               </tr>
               <tr>
-                <td><strong>100% On-Device SQLite Privacy</strong></td>
-                <td class="cell-highlight"><span class="check-green">✓ Zero Tracking / No Cloud</span></td>
+                <td><strong>Local Schedule Storage</strong></td>
+                <td class="cell-highlight"><span class="check-green">✓ Saved on device; no NextClass sync</span></td>
                 <td><span class="cross-red">✗ Cloud synced &amp; profiled</span></td>
                 <td><span class="cross-red">✗ Ad trackers &amp; analytics</span></td>
               </tr>
@@ -806,7 +806,7 @@
               <span class="faq-icon">+</span>
             </div>
             <div class="faq-answer">
-              When you snap or upload a photo of your schedule, NextClass natively compresses it and sends it securely to Google Gemini 3.8 Flash Vision API. Gemini analyzes the grid structure, detects lecture subjects, start and end times, and room locations, outputting clean structured data for you to verify.
+              AI scanning requires internet access. A compressed timetable photo or selected exam PDF/image is sent to Google Gemini for extraction. For an XLSX exam sheet, cells are read locally and the normalized text is sent to Gemini. Review the extracted details before saving; confirmed schedule records are stored locally.
             </div>
           </div>
 
@@ -816,7 +816,7 @@
               <span class="faq-icon">+</span>
             </div>
             <div class="faq-answer">
-              No. Aside from the transient photo scan request processed by Gemini Vision, 100% of your timetable classes, quiz dates, and personal settings are stored locally on your device in an encrypted SQLite database. We do not track your location, and there is no user tracking.
+              NextClass does not sync confirmed class, exam, or quiz records to a NextClass server. Those records and settings are stored locally in SQLite. If you use AI scanning, the selected timetable/exam document or normalized spreadsheet text is sent to Google Gemini, which handles it under its own terms and privacy practices.
             </div>
           </div>
 
@@ -895,7 +895,7 @@
               <div class="playstore-guarantees">
                 <span>⭐ 5.0 Star Rating</span>
                 <span>•</span>
-                <span>🔒 100% Offline SQLite</span>
+                <span>🔒 Local SQLite Storage</span>
                 <span>•</span>
                 <span>🚫 0 Ads &amp; No Login</span>
                 <span>•</span>
@@ -973,7 +973,7 @@
             <span class="brand-name">NextClass</span>
           </div>
           <p class="footer-desc">
-            The intelligent university timetable and class schedule assistant. Photo-to-schedule AI extraction, exact Android alarms, and 100% offline privacy.
+            The intelligent university timetable and class schedule assistant. AI document extraction requires internet; confirmed schedules are stored locally on your device.
           </p>
           <div style="font-family: var(--font-display); font-weight: 800; font-size: 0.85rem; color: #000;">
             Package: <code style="background: var(--yellow); padding: 2px 6px; border: 1px solid #000; border-radius: 3px;">com.nextclass.app</code>

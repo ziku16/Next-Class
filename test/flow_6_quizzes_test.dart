@@ -393,7 +393,7 @@ void main() {
       expect(find.textContaining('Physics'), findsOneWidget);
     });
 
-    testWidgets('Validates required title field and saves quiz with 8:00 PM reminder notice', (tester) async {
+    testWidgets('Saves quiz on the selected recurring class day and inherits the class time', (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(() {
@@ -430,6 +430,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Please enter a quiz topic or title'), findsOneWidget);
+      expect(find.byKey(const Key('quiz_inherited_class_time')), findsOneWidget);
+      expect(find.byKey(const Key('quiz_reminder_type_segmented')), findsNothing);
+      expect(find.byKey(const Key('quiz_reminder_time_picker_button')), findsNothing);
 
       // Enter topic and note
       await tester.enterText(
@@ -442,16 +445,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Verify reminder notice is visible
-      expect(
-        find.text('Night before quiz at 8:00 PM'),
-        findsOneWidget,
-      );
-
       // Save
       await tester.ensureVisible(find.byKey(const Key('save_quiz_button')));
       await tester.tap(find.byKey(const Key('save_quiz_button')));
       await tester.pumpAndSettle();
+
+      expect(savedQuiz, isNotNull);
+      expect(savedQuiz!.dueDate.weekday, DateTime.monday);
+      expect(savedQuiz!.dueDate.hour, 8);
+      expect(savedQuiz!.dueDate.minute, 30);
+      expect(savedQuiz!.reminderTime, isNull);
+      expect(savedQuiz!.reminderType, isNull);
 
       expect(savedQuiz, isNotNull);
       expect(savedQuiz!.title, 'Unit 4 Wave Mechanics');
@@ -501,10 +505,9 @@ void main() {
       // Past quiz filtered out
       expect(find.text('Quiz 1: Functions'), findsNothing);
 
-      // FAB is present with tertiaryContainer styling
-      final fabFinder = find.byKey(const Key('add_quiz_fab'));
-      expect(fabFinder, findsOneWidget);
-      expect(find.text('+ Add quiz'), findsOneWidget);
+      // The plus action is centralized in the navigation bar.
+      expect(find.byKey(const Key('bottom_nav_add_button')), findsOneWidget);
+      expect(find.byKey(const Key('add_quiz_fab')), findsNothing);
     });
 
     testWidgets('Empty state when no upcoming quizzes exist', (tester) async {
