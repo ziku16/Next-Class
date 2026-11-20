@@ -1,38 +1,63 @@
-import { ArrowDown, X, ZoomIn } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { X, ZoomIn } from 'lucide-react';
 import PageIntro from '../components/PageIntro.jsx';
 import usePageMeta from '../components/usePageMeta.js';
 
 const captures = [
-  { title: 'Today Dashboard', file: 'today.png', text: 'Today’s classes, next class time, and quick navigation.', alt: 'NextClass Today Dashboard with Algorithms and Database Systems classes.' },
-  { title: 'Weekly Timetable', file: 'week.png', text: 'Day-by-day classes with rooms and times.', alt: 'NextClass weekly timetable showing university classes across the week.' },
-  { title: 'Quiz Management', file: 'quizzes.png', text: 'Upcoming quizzes grouped by due date.', alt: 'NextClass quiz management screen with upcoming university quizzes.' },
-  { title: 'Add Quiz', file: 'add-quiz.png', text: 'The app’s quiz entry sheet, opened over the quiz list.', alt: 'NextClass Add Quiz form in a Flutter-rendered bottom sheet.' },
-  { title: 'Exam Schedule', file: 'exams.png', text: 'An active exam schedule with the imported student group.', alt: 'NextClass examination schedule with sample university exams.' },
-  { title: 'Automatic Exam Mode', file: 'exam-mode.png', text: 'The Today screen focused on exams during the active exam period.', alt: 'NextClass Today screen in Automatic Exam Mode with an Algorithms final.' },
-  { title: 'Exam Date-Sheet Import', file: 'exam-import.png', text: 'The student-group step shown before reading a date sheet.', alt: 'NextClass exam date-sheet import flow asking for degree program, semester, and section.' },
+  { title: 'Today', file: 'today.png', text: 'Today’s classes and what is next.', alt: 'NextClass Today screen with the current and upcoming classes.' },
+  { title: 'Weekly timetable', file: 'week.png', text: 'Classes laid out across the week.', alt: 'NextClass weekly timetable screen with sample university classes.' },
+  { title: 'Quizzes', file: 'quizzes.png', text: 'Quiz dates, topics, and status.', alt: 'NextClass quiz list with sample quiz details.' },
+  { title: 'Add a quiz', file: 'add-quiz.png', text: 'The form for adding a quiz.', alt: 'NextClass add quiz form.' },
+  { title: 'Exam schedule', file: 'exams.png', text: 'A saved schedule of upcoming exams.', alt: 'NextClass exam schedule with sample university exams.' },
+  { title: 'Automatic Exam Mode', file: 'exam-mode.png', text: 'The Today screen focused on exams during an active exam period.', alt: 'NextClass Today screen in Automatic Exam Mode.' },
+  { title: 'Date-sheet import', file: 'exam-import.png', text: 'Choose the student group for a date sheet.', alt: 'NextClass date-sheet import flow asking for degree program, semester, and section.' },
 ];
 
 export default function ScreenshotsPage() {
   const [selected, setSelected] = useState(null);
-  usePageMeta({ title: 'Screenshots — NextClass', description: 'Flutter-rendered UI previews of the NextClass app, generated from its actual widget source.', path: '/screenshots' });
+  const closeButton = useRef(null);
+  const opener = useRef(null);
+  usePageMeta({ title: 'Screenshots — NextClass', description: 'A look at the NextClass Android app, from the weekly timetable to quizzes and exams.', path: '/screenshots' });
 
   useEffect(() => {
     if (!selected) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeButton.current?.focus();
     const closeOnEscape = (event) => {
       if (event.key === 'Escape') setSelected(null);
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        closeButton.current?.focus();
+      }
     };
     window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+      opener.current?.focus();
+    };
   }, [selected]);
 
+  const close = () => setSelected(null);
+
   return <div className="page-shell shell">
-    <PageIntro kicker="THE APP, RENDERED FROM SOURCE" title={<>Real Flutter UI.<br /><span>Every pixel, honest.</span></>} description="These 360 × 800 previews are rendered from the app’s Flutter widgets with isolated sample data. They are not screenshots captured from an Android device." />
-    <div className="gallery-grid">{captures.map((item) => <article className="capture-card" key={item.file}>
-      <div className="capture-art"><button className="capture-image-button" type="button" onClick={() => setSelected(item)} aria-label={`Open larger Flutter-rendered preview: ${item.title}`}><img src={`/images/screenshots/${item.file}`} width="360" height="800" loading="lazy" alt={`Flutter-rendered UI preview: ${item.alt}`} /><span><ZoomIn size={14} /> Open preview</span></button></div>
-      <div className="capture-caption"><div><span className="eyebrow">FLUTTER-RENDERED UI PREVIEW</span><h2>{item.title}</h2><p>{item.text}</p></div><span className="capture-file">{item.file}</span></div>
-    </article>)}</div>
-    <aside className="asset-request"><div className="request-icon"><ArrowDown size={23} /></div><div><p className="eyebrow">HOW THESE PREVIEWS WERE MADE</p><h2>Actual widgets. Controlled data.</h2><p>The Flutter golden-test harness uses the app’s real theme, Space Grotesk font, Material icons, screen widgets, and sample university information at a fixed 360 × 800 logical viewport with a 3× device-pixel setting. No production database or personal records are used.</p><code>webapp/public/images/screenshots/</code></div></aside>
-    {selected && <div className="screenshot-lightbox" role="dialog" aria-modal="true" aria-labelledby="screenshot-dialog-title" onClick={() => setSelected(null)}><div className="screenshot-lightbox-panel" onClick={(event) => event.stopPropagation()}><div className="screenshot-lightbox-heading"><div><p className="eyebrow">FLUTTER-RENDERED UI PREVIEW</p><h2 id="screenshot-dialog-title">{selected.title}</h2></div><button className="lightbox-close" type="button" onClick={() => setSelected(null)} aria-label="Close screenshot preview"><X size={20} /></button></div><img src={`/images/screenshots/${selected.file}`} width="360" height="800" alt={`Flutter-rendered UI preview: ${selected.alt}`} /><p>{selected.text} Rendered from Flutter widgets, not captured from an Android device.</p></div></div>}
+    <PageIntro kicker="THE APP" title={<>NextClass,<br /><span>screen by screen.</span></>} description="App screens shown with sample university data. These are rendered previews, not photos taken on a device." />
+    <div className="gallery-grid" data-reveal>
+      {captures.map((item, index) => <article className={`capture-card capture-${index + 1}`} key={item.file} data-reveal-item>
+        <button className="capture-image-button" type="button" onClick={(event) => { opener.current = event.currentTarget; setSelected(item); }} aria-label={`Open larger preview: ${item.title}`}>
+          <img src={`/images/screenshots/${item.file}`} width="360" height="800" loading="lazy" alt={item.alt} />
+          <span className="capture-open"><ZoomIn size={15} aria-hidden="true" /> View larger</span>
+        </button>
+        <div className="capture-caption"><div><h2>{item.title}</h2><p>{item.text}</p></div></div>
+      </article>)}
+    </div>
+    {selected && <div className="screenshot-lightbox" role="dialog" aria-modal="true" aria-labelledby="screenshot-dialog-title" onClick={close}>
+      <div className="screenshot-lightbox-panel" onClick={(event) => event.stopPropagation()}>
+        <div className="screenshot-lightbox-heading"><div><p className="eyebrow">NEXTCLASS APP</p><h2 id="screenshot-dialog-title">{selected.title}</h2></div><button ref={closeButton} className="lightbox-close" type="button" onClick={close} aria-label="Close preview"><X size={20} /></button></div>
+        <img src={`/images/screenshots/${selected.file}`} width="360" height="800" alt={selected.alt} />
+        <p>{selected.text}</p>
+      </div>
+    </div>}
   </div>;
 }
