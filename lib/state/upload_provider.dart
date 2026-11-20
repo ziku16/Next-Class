@@ -1,6 +1,8 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../data/models/class_item.dart';
 import '../data/models/scan_quota.dart';
 import '../data/repositories/settings_repository.dart';
@@ -8,15 +10,27 @@ import '../services/timetable_parser_service.dart';
 
 enum TimetableScanErrorCode {
   rateLimitExceeded,
+  configuration,
+  authentication,
+  modelUnavailable,
+  apiQuotaExceeded,
+  invalidRequest,
   parserFormatError,
   networkError,
+  timeout,
+  unreadableImage,
   serverError,
   emptyResult,
 }
 
+typedef TimetableExtractor = Future<Map<String, dynamic>> Function(
+  File imageFile,
+);
+
 /// State management for timetable upload and Gemini Generative AI parsing pipeline.
 class UploadProvider extends ChangeNotifier {
   final SettingsRepository _settingsRepository;
+  final TimetableExtractor _timetableExtractor;
 
   XFile? _selectedImage;
   ScanQuota _quota = ScanQuota.initial();
@@ -27,9 +41,10 @@ class UploadProvider extends ChangeNotifier {
 
   UploadProvider({
     SettingsRepository? settingsRepository,
-  }) : _settingsRepository = settingsRepository ?? SettingsRepository() {
-    refreshQuota();
-  }
+    TimetableExtractor? timetableExtractor,
+  }) : _settingsRepository = settingsRepository ?? SettingsRepository(),
+       _timetableExtractor =
+           timetableExtractor ?? TimetableParserService.parseTimetable;
 
   XFile? get selectedImage => _selectedImage;
   String? get selectedImagePath => _selectedImage?.path;
@@ -65,6 +80,7 @@ class UploadProvider extends ChangeNotifier {
 
   /// Executes client-side Gemini Generative AI timetable parsing.
   Future<List<ClassItem>?> extractClasses() async {
+    if (_isLoading) return null;
     if (_selectedImage == null) {
       _errorMessage = 'Please select a photo first.';
       notifyListeners();
@@ -77,7 +93,16 @@ class UploadProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final rawJson = await TimetableParserService.parseTimetable(File(_selectedImage!.path));
+      _quota = await _settingsRepository.getScanQuota();
+      if (!_quota.canScan()) {
+        _errorCode = TimetableScanErrorCode.rateLimitExceeded;
+        _errorMessage = 'Scan limit reached. Try again after your daily or weekly allowance resets.';
+        _isLoading = false;
+        notifyListeners();
+        return null;
+      }
+
+      final rawJson = await _timetableExtractor(File(_selectedImage!.path));
       final classes = TimetableParserService.jsonToClassItems(rawJson);
 
       if (classes.isEmpty) {
@@ -96,31 +121,65 @@ class UploadProvider extends ChangeNotifier {
       return classes;
     } catch (e) {
       _isLoading = false;
-      final errStr = e.toString();
-      if (e is ScanLimitException) {
-        _errorCode = TimetableScanErrorCode.rateLimitExceeded;
-        _errorMessage = e.message;
-      } else if (errStr.contains('RATE_LIMIT_EXCEEDED')) {
-        _errorCode = TimetableScanErrorCode.rateLimitExceeded;
-        _errorMessage = 'Scan limit reached (Max 2 scans/day, 3 scans/week).';
-      } else if (errStr.contains('PARSER_FORMAT_ERROR')) {
-        _errorCode = TimetableScanErrorCode.parserFormatError;
-        _errorMessage = 'Could not parse timetable format. Please try again.';
-      } else if (errStr.contains('NETWORK_TIMEOUT') || errStr.contains('TimeoutException')) {
-        _errorCode = TimetableScanErrorCode.networkError;
-        _errorMessage = 'Request timed out. Please check your internet connection.';
-      } else if (errStr.contains('NETWORK_ERROR') || errStr.contains('SocketException')) {
-        _errorCode = TimetableScanErrorCode.networkError;
-        _errorMessage = 'Unable to connect to timetable service. Please check your internet connection.';
-      } else if (errStr.contains('PARSER_ERROR') || errStr.contains('SERVER_ERROR')) {
-        _errorCode = TimetableScanErrorCode.serverError;
-        _errorMessage = 'AI extraction failed. Please ensure photo is clear and try again.';
+      if (e is TimetableScanException) {
+        _errorCode = switch (e.failure) {
+          TimetableScanFailure.configuration =>
+            TimetableScanErrorCode.configuration,
+          TimetableScanFailure.authentication =>
+            TimetableScanErrorCode.authentication,
+          TimetableScanFailure.modelUnavailable =>
+            TimetableScanErrorCode.modelUnavailable,
+          TimetableScanFailure.apiQuotaExceeded =>
+            TimetableScanErrorCode.apiQuotaExceeded,
+          TimetableScanFailure.invalidRequest =>
+            TimetableScanErrorCode.invalidRequest,
+          TimetableScanFailure.serviceUnavailable =>
+            TimetableScanErrorCode.serverError,
+          TimetableScanFailure.timeout => TimetableScanErrorCode.timeout,
+          TimetableScanFailure.network => TimetableScanErrorCode.networkError,
+          TimetableScanFailure.unreadableImage =>
+            TimetableScanErrorCode.unreadableImage,
+          TimetableScanFailure.malformedResponse ||
+          TimetableScanFailure.invalidSchema =>
+            TimetableScanErrorCode.parserFormatError,
+          TimetableScanFailure.emptyResult =>
+            TimetableScanErrorCode.emptyResult,
+        };
+        _errorMessage = _messageFor(_errorCode!);
+      } else if (e is FileSystemException) {
+        _errorCode = TimetableScanErrorCode.unreadableImage;
+        _errorMessage = _messageFor(_errorCode!);
       } else {
         _errorCode = TimetableScanErrorCode.networkError;
-        _errorMessage = 'An error occurred while scanning timetable. Please try again.';
+        _errorMessage = _messageFor(_errorCode!);
       }
       notifyListeners();
       return null;
     }
   }
+
+  String _messageFor(TimetableScanErrorCode code) => switch (code) {
+    TimetableScanErrorCode.rateLimitExceeded =>
+      'Scan limit reached. Try again after your allowance resets.',
+    TimetableScanErrorCode.configuration ||
+    TimetableScanErrorCode.authentication => 'AI scanning is not configured correctly. Add a valid Gemini API key in the release configuration.',
+    TimetableScanErrorCode.modelUnavailable =>
+      'AI scanning is temporarily unavailable. Try again later.',
+    TimetableScanErrorCode.apiQuotaExceeded =>
+      'The AI service quota is exhausted. Try again later.',
+    TimetableScanErrorCode.invalidRequest =>
+      'Could not read this timetable. Try a clearer image.',
+    TimetableScanErrorCode.parserFormatError =>
+      'Could not read the timetable. Try a clearer image.',
+    TimetableScanErrorCode.networkError =>
+      'Internet connection unavailable. Check your connection and try again.',
+    TimetableScanErrorCode.timeout =>
+      'The AI service took too long to respond. Try again shortly.',
+    TimetableScanErrorCode.unreadableImage =>
+      'Could not open this image. Choose a clear JPG, PNG or WebP photo.',
+    TimetableScanErrorCode.serverError =>
+      'AI service temporarily unavailable. Try again later.',
+    TimetableScanErrorCode.emptyResult =>
+      'No classes found. Try a clearer photo of the full timetable.',
+  };
 }

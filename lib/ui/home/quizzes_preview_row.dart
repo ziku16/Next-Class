@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../core/theme/next_class_colors.dart';
 import '../../data/models/quiz_item.dart';
 
@@ -22,6 +23,7 @@ class QuizzesPreviewRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (quizzes.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
     final ncColors = context.ncColors;
 
@@ -68,89 +70,20 @@ class QuizzesPreviewRow extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Content: Horizontal List or Empty Card
-        if (quizzes.isEmpty)
-          _buildEmptyState(context, theme)
-        else
-          SizedBox(
-            height: 124,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              clipBehavior: Clip.none,
-              itemCount: quizzes.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 12),
-              itemBuilder: (context, index) {
-                final quiz = quizzes[index];
-                return _buildQuizCard(context, theme, ncColors, quiz);
-              },
-            ),
+        SizedBox(
+          height: 112,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            itemCount: quizzes.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final quiz = quizzes[index];
+              return _buildQuizCard(context, theme, ncColors, quiz);
+            },
           ),
+        ),
       ],
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.black, width: 2.5),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black,
-            offset: Offset(3.0, 3.0),
-            blurRadius: 0,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFE500),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.black, width: 2.0),
-            ),
-            child: const Icon(
-              Icons.task_alt_rounded,
-              size: 22,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'No quizzes coming up.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Add one when your teacher announces it.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (onAddQuiz != null)
-            IconButton(
-              icon: const Icon(Icons.add_circle, color: Colors.black),
-              tooltip: 'Add quiz',
-              onPressed: onAddQuiz,
-            ),
-        ],
-      ),
     );
   }
 
@@ -162,8 +95,9 @@ class QuizzesPreviewRow extends StatelessWidget {
   ) {
     final urgency = quiz.urgencyCategory(referenceDate);
     final badgeText = quiz.urgencyBadgeText(referenceDate);
-    final subjectColor =
-        ncColors.getSubjectColor(quiz.subject.hashCode.abs() % 8);
+    final subjectColor = ncColors.getSubjectColor(
+      quiz.subject.hashCode.abs() % 8,
+    );
 
     final Color badgeBg;
     final Color badgeTextCol;
@@ -190,8 +124,8 @@ class QuizzesPreviewRow extends StatelessWidget {
       onTap: onQuizTap != null ? () => onQuizTap!(quiz) : null,
       borderRadius: BorderRadius.circular(6),
       child: Container(
-        width: 230,
-        padding: const EdgeInsets.all(14),
+        width: 212,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(6),
@@ -236,8 +170,10 @@ class QuizzesPreviewRow extends StatelessWidget {
                 ),
                 // Urgency Pill with brutalist border
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: badgeBg,
                     borderRadius: BorderRadius.circular(4),
@@ -268,11 +204,7 @@ class QuizzesPreviewRow extends StatelessWidget {
             // Bottom line: formatted due date
             Row(
               children: [
-                const Icon(
-                  Icons.event,
-                  size: 14,
-                  color: Colors.black,
-                ),
+                const Icon(Icons.event, size: 14, color: Colors.black),
                 const SizedBox(width: 4),
                 Text(
                   formattedDue,

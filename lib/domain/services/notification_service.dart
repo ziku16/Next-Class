@@ -689,7 +689,7 @@ class NotificationService {
         final examEnd = hasUpcomingExamPeriod ? examPeriod.endDate : null;
 
         bool isInExamPeriod(DateTime date) =>
-            hasUpcomingExamPeriod && examPeriod!.contains(date);
+            hasUpcomingExamPeriod && examPeriod.contains(date);
 
         // Group classes by day to compute "Next class after this"
         final Map<String, List<ClassItem>> dayGroups = {};

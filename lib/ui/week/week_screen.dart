@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 import '../../data/models/exam_item.dart';
@@ -126,8 +127,9 @@ class _WeekScreenState extends State<WeekScreen> {
   }
 
   void _computeWeekDays() {
-    final monday = _referenceDate
-        .subtract(Duration(days: _referenceDate.weekday - 1));
+    final monday = _referenceDate.subtract(
+      Duration(days: _referenceDate.weekday - 1),
+    );
     final mondayStart = DateTime(monday.year, monday.month, monday.day);
     _weekDays = List.generate(7, (i) => mondayStart.add(Duration(days: i)));
   }
@@ -214,10 +216,7 @@ class _WeekScreenState extends State<WeekScreen> {
         }
       },
       onEditClass: () async {
-        final updated = await EditClassSheet.show(
-          context,
-          initialClass: item,
-        );
+        final updated = await EditClassSheet.show(context, initialClass: item);
         if (updated != null) {
           await _timetableRepo.updateClass(updated);
           await NotificationService().rescheduleAll();
@@ -291,11 +290,7 @@ class _WeekScreenState extends State<WeekScreen> {
                     ),
                   ],
                 ),
-                child: Icon(
-                  Icons.settings,
-                  color: nc.icon,
-                  size: 20,
-                ),
+                child: Icon(Icons.settings, color: nc.icon, size: 20),
               ),
             ),
           ),
@@ -323,9 +318,16 @@ class _WeekScreenState extends State<WeekScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Row(
                 children: [
-                  IconButton(tooltip: 'Previous week', onPressed: () => _changeWeek(-1), icon: const Icon(Icons.chevron_left_rounded)),
+                  IconButton(
+                    tooltip: 'Previous week',
+                    onPressed: () => _changeWeek(-1),
+                    icon: const Icon(Icons.chevron_left_rounded),
+                  ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: nc.border,
                       borderRadius: BorderRadius.circular(8),
@@ -366,35 +368,45 @@ class _WeekScreenState extends State<WeekScreen> {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        monthStr,
-                        style: TextStyle(
-                          fontFamily: 'SpaceGrotesk',
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
-                          color: nc.textPrimary,
-                          height: 1.0,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          monthStr,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                            color: nc.textPrimary,
+                            height: 1.0,
+                          ),
                         ),
-                      ),
-                      Text(
-                        yearStr,
-                        style: TextStyle(
-                          fontFamily: 'SpaceGrotesk',
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
-                          color: nc.textPrimary,
-                          height: 1.0,
+                        Text(
+                          yearStr,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'SpaceGrotesk',
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                            color: nc.textPrimary,
+                            height: 1.0,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  IconButton(tooltip: 'Next week', onPressed: () => _changeWeek(1), icon: const Icon(Icons.chevron_right_rounded)),
+                  IconButton(
+                    tooltip: 'Next week',
+                    onPressed: () => _changeWeek(1),
+                    icon: const Icon(Icons.chevron_right_rounded),
+                  ),
                 ],
               ),
             ),
@@ -419,9 +431,14 @@ class _WeekScreenState extends State<WeekScreen> {
                         children: List.generate(7, (index) {
                           final dayName = _dayNames[index];
                           final dayDate = _weekDays[index];
-                          final isExamDayInPeriod = widget.examProvider?.isExamMode(dayDate) ?? false;
-                          final classes = isExamDayInPeriod ? <ClassItem>[] : _classesForDay(dayName);
-                          final exams = widget.examProvider?.examsForDate(dayDate) ?? const <ExamItem>[];
+                          final isExamDayInPeriod =
+                              widget.examProvider?.isExamMode(dayDate) ?? false;
+                          final classes = isExamDayInPeriod
+                              ? <ClassItem>[]
+                              : _classesForDay(dayName);
+                          final exams =
+                              widget.examProvider?.examsForDate(dayDate) ??
+                              const <ExamItem>[];
 
                           return _buildDaySection(
                             context: context,
@@ -454,7 +471,8 @@ class _WeekScreenState extends State<WeekScreen> {
     required bool examMode,
   }) {
     final today = DateTime.now();
-    final isToday = dayDate.year == today.year &&
+    final isToday =
+        dayDate.year == today.year &&
         dayDate.month == today.month &&
         dayDate.day == today.day;
 
@@ -463,7 +481,9 @@ class _WeekScreenState extends State<WeekScreen> {
 
     final String countLabel;
     if (examMode) {
-      countLabel = exams.isEmpty ? 'exam break' : '${exams.length} ${exams.length == 1 ? 'exam' : 'exams'}';
+      countLabel = exams.isEmpty
+          ? 'exam break'
+          : '${exams.length} ${exams.length == 1 ? 'exam' : 'exams'}';
     } else if (classes.isEmpty) {
       countLabel = 'free';
     } else if (classes.length == 1) {
@@ -495,12 +515,17 @@ class _WeekScreenState extends State<WeekScreen> {
               if (isToday) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFE500),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: context.ncColors.border, width: 2.0),
+                    border: Border.all(
+                      color: context.ncColors.border,
+                      width: 2.0,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: context.ncColors.shadow,
@@ -533,7 +558,8 @@ class _WeekScreenState extends State<WeekScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: exams.length,
               separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, examIndex) => _buildExamCard(context, exams[examIndex]),
+              itemBuilder: (context, examIndex) =>
+                  _buildExamCard(context, exams[examIndex]),
             )
           else if (classes.isEmpty)
             _buildEmptyDayState(context, theme, dayName)
@@ -569,24 +595,54 @@ class _WeekScreenState extends State<WeekScreen> {
     return Container(
       key: Key('week_exam_${exam.id}'),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: const Color(0xFFFFE500), border: Border.all(color: nc.border, width: 2.5), boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(3, 3))]),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(exam.subject, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-        const SizedBox(height: 5),
-        Text([
-          if (exam.startTime != null) '${exam.startTime}${exam.endTime == null ? '' : '–${exam.endTime}'}',
-          if (exam.venue != null) exam.venue!,
-          if (exam.examType != null) exam.examType!,
-        ].join(' · ')),
-      ]),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFE500),
+        border: Border.all(color: nc.border, width: 2.5),
+        boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(3, 3))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            exam.subject,
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            [
+              if (exam.startTime != null)
+                '${exam.startTime}${exam.endTime == null ? '' : '–${exam.endTime}'}',
+              if (exam.venue != null) exam.venue!,
+              if (exam.examType != null) exam.examType!,
+            ].join(' · '),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildEmptyExamDayState(BuildContext context) => Container(
     key: const Key('week_exam_free_day_state'),
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    decoration: BoxDecoration(color: context.ncColors.surface, border: Border.all(color: context.ncColors.border, width: 2.5), boxShadow: [BoxShadow(color: context.ncColors.shadow, offset: const Offset(3, 3))]),
-    child: const Row(children: [Icon(Icons.event_available_rounded), SizedBox(width: 12), Expanded(child: Text('No exam scheduled today', style: TextStyle(fontWeight: FontWeight.w800)))]),
+    decoration: BoxDecoration(
+      color: context.ncColors.surface,
+      border: Border.all(color: context.ncColors.border, width: 2.5),
+      boxShadow: [
+        BoxShadow(color: context.ncColors.shadow, offset: const Offset(3, 3)),
+      ],
+    ),
+    child: const Row(
+      children: [
+        Icon(Icons.event_available_rounded),
+        SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            'No exam scheduled today',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
+    ),
   );
 
   Widget _buildEmptyDayState(
@@ -601,10 +657,7 @@ class _WeekScreenState extends State<WeekScreen> {
       decoration: BoxDecoration(
         color: nc.surface,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: nc.border,
-          width: 2.5,
-        ),
+        border: Border.all(color: nc.border, width: 2.5),
         boxShadow: [
           BoxShadow(
             color: nc.shadow,
@@ -615,11 +668,7 @@ class _WeekScreenState extends State<WeekScreen> {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.weekend,
-            size: 20,
-            color: nc.icon,
-          ),
+          Icon(Icons.weekend, size: 20, color: nc.icon),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

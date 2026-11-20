@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#fffdf0"/>
+  <path d="M875 0h325v325z" fill="#ffe500"/>
+  <path d="M0 518h1200v112H0z" fill="#ff5500"/>
+  <rect x="72" y="70" width="82" height="82" rx="12" fill="#ffe500" stroke="#000" stroke-width="8"/>
+  <path d="M96 130V92h10l18 23V92h10v38h-10l-18-23v23z" fill="#ff5500" stroke="#000" stroke-width="1.5"/>
+  <text x="180" y="133" font-family="Arial,sans-serif" font-size="52" font-weight="900" fill="#000">NEXTCLASS</text>
+  <text x="72" y="300" font-family="Arial,sans-serif" font-size="86" font-weight="900" fill="#000">YOUR SEMESTER.</text>
+  <text x="72" y="400" font-family="Arial,sans-serif" font-size="86" font-weight="900" fill="#000">UNDER CONTROL.</text>
+  <text x="76" y="473" font-family="Arial,sans-serif" font-size="30" font-weight="700" fill="#000">Classes · Quizzes · Reminders</text>
+  <text x="76" y="588" font-family="Arial,sans-serif" font-size="25" font-weight="800" fill="#000">ANDROID APP  /  DIRECT DOWNLOAD</text>
+  <circle cx="1055" cy="384" r="90" fill="#fffdf0" stroke="#000" stroke-width="8"/>
+  <path d="m1008 384 34 34 64-72" fill="none" stroke="#ff5500" stroke-linecap="round" stroke-linejoin="round" stroke-width="20"/>
+</svg>

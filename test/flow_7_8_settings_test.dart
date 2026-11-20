@@ -467,6 +467,13 @@ void main() {
       expect(find.text('Quiz reminder'), findsOneWidget);
       expect(find.text('NOTIFICATIONS'), findsOneWidget);
       expect(find.text('TIMETABLE'), findsOneWidget);
+      // ABOUT is below the lazy ListView viewport at 130% text scaling.
+      await tester.scrollUntilVisible(
+        find.text('ABOUT'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('ABOUT'), findsOneWidget);
     });
   });

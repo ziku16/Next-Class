@@ -183,9 +183,8 @@ class QuizProvider extends ChangeNotifier {
 
       await _quizRepo.deleteQuiz(id);
       _allQuizzes.removeWhere((q) => q.id == id);
-      await NotificationService().rescheduleAll();
-
       notifyListeners();
+      await NotificationService().rescheduleAll();
     } catch (e) {
       _errorMessage = e.toString();
       notifyListeners();

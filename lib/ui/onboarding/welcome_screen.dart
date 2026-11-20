@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/next_class_colors.dart';
 import 'notification_explainer_screen.dart';
 
@@ -25,9 +26,7 @@ class WelcomeScreen extends StatelessWidget {
       onSignInSuccess!();
     } else {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const NotificationExplainerScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const NotificationExplainerScreen()),
       );
     }
   }
@@ -42,9 +41,14 @@ class WelcomeScreen extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 20.0,
+              ),
               child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight - 40.0),
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 40.0,
+                ),
                 child: IntrinsicHeight(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,7 +59,10 @@ class WelcomeScreen extends StatelessWidget {
                       Transform.rotate(
                         angle: -0.03,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFE500),
                             borderRadius: BorderRadius.circular(4),
@@ -101,24 +108,16 @@ class WelcomeScreen extends StatelessWidget {
                         context,
                         icon: Icons.photo_camera_outlined,
                         iconColor: const Color(0xFFFFE500),
-                        title: 'Snap a photo of your timetable',
-                        subtitle: "We'll read every day, time, and room for you.",
-                      ),
-                      const SizedBox(height: 14),
-                      _buildValueRow(
-                        context,
-                        icon: Icons.auto_awesome_outlined,
-                        iconColor: const Color(0xFF00E676),
-                        title: 'We find every class for you',
-                        subtitle: 'No manual entry required. Just verify and save.',
+                        title: 'Snap your timetable',
+                        subtitle: 'Review classes before saving.',
                       ),
                       const SizedBox(height: 14),
                       _buildValueRow(
                         context,
                         icon: Icons.notifications_active_outlined,
                         iconColor: const Color(0xFFFF5500),
-                        title: 'Get reminded right on time',
-                        subtitle: '15 min before class and the evening before each quiz.',
+                        title: 'Class and quiz reminders',
+                        subtitle: 'Set reminder timing in Settings.',
                       ),
 
                       const Spacer(),
@@ -175,29 +174,6 @@ class WelcomeScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Friendly Tagline
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: nc.surface,
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: nc.border, width: 1.5),
-                          ),
-                          child: Text(
-                            "Chalo, let's get organised.",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'SpaceGrotesk',
-                              color: nc.textPrimary,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
@@ -243,11 +219,7 @@ class WelcomeScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
               border: Border.all(color: nc.border, width: 2.0),
             ),
-            child: Icon(
-              icon,
-              size: 24,
-              color: Colors.black,
-            ),
+            child: Icon(icon, size: 24, color: Colors.black),
           ),
           const SizedBox(width: 14),
           Expanded(

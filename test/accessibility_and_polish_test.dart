@@ -168,7 +168,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      expect(find.text('Good morning, Ali'), findsOneWidget);
+      expect(find.text('Friday, 2 October'), findsOneWidget);
       expect(find.byType(TodayHeader), findsOneWidget);
     });
 

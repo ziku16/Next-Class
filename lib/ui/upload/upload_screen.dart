@@ -1,9 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
+import '../../data/models/scan_quota.dart';
 import '../../domain/services/connectivity_service.dart';
 import '../../domain/services/notification_service.dart';
 import '../../state/upload_provider.dart';
@@ -12,7 +15,6 @@ import '../review/review_screen.dart';
 import '../shared/offline_banner.dart';
 import '../shared/fluid_page_route.dart';
 import '../shared/bouncy_tap.dart';
-import '../../services/timetable_parser_service.dart';
 import 'parsing_loader_screen.dart';
 import 'source_picker_sheet.dart';
 
@@ -41,17 +43,14 @@ class _UploadScreenState extends State<UploadScreen> {
   bool _isOffline = false;
   StreamSubscription<bool>? _connectivitySubscription;
 
-  int _dailyUsed = 0;
-  int _weeklyUsed = 0;
-
-  bool get _isDailyLimitReached => _dailyUsed >= TimetableParserService.maxScansPerDay;
-  bool get _isWeeklyLimitReached => _weeklyUsed >= TimetableParserService.maxScansPerWeek;
+  bool get _isDailyLimitReached => _provider.quota.isDailyLimitReached;
+  bool get _isWeeklyLimitReached => _provider.quota.isWeeklyLimitReached;
   bool get _isQuotaExhausted => _isDailyLimitReached || _isWeeklyLimitReached;
 
   int get _dailyRemaining =>
-      (TimetableParserService.maxScansPerDay - _dailyUsed).clamp(0, TimetableParserService.maxScansPerDay);
+      _provider.quota.dailyScansLeft.clamp(0, ScanQuota.maxDailyScans);
   int get _weeklyRemaining =>
-      (TimetableParserService.maxScansPerWeek - _weeklyUsed).clamp(0, TimetableParserService.maxScansPerWeek);
+      _provider.quota.weeklyScansLeft.clamp(0, ScanQuota.maxWeeklyScans);
 
   String get _exhaustedButtonText {
     if (_isDailyLimitReached) {
@@ -67,32 +66,22 @@ class _UploadScreenState extends State<UploadScreen> {
     _provider = widget.uploadProvider ?? UploadProvider();
     _provider.addListener(_onProviderUpdate);
 
-    _loadScanQuota();
+    _provider.refreshQuota();
 
     _isOffline = widget.isOffline ?? ConnectivityService().isOffline;
     if (widget.isOffline == null) {
-      _connectivitySubscription =
-          ConnectivityService().onConnectivityChanged.listen((offline) {
-        if (mounted) setState(() => _isOffline = offline);
-      });
+      _connectivitySubscription = ConnectivityService().onConnectivityChanged
+          .listen((offline) {
+            if (mounted) setState(() => _isOffline = offline);
+          });
     }
-  }
-
-  Future<void> _loadScanQuota() async {
-    try {
-      final quota = await TimetableParserService.getRemainingScans();
-      if (mounted) {
-        setState(() {
-          _dailyUsed = quota['dailyUsed'] ?? 0;
-          _weeklyUsed = quota['weeklyUsed'] ?? 0;
-        });
-      }
-    } catch (_) {}
   }
 
   Widget _buildQuotaBadge(BuildContext context) {
     final isExhausted = _isQuotaExhausted;
-    final bgColor = isExhausted ? const Color(0xFFF3F3F3) : const Color(0xFFFFFFFF);
+    final bgColor = isExhausted
+        ? const Color(0xFFF3F3F3)
+        : const Color(0xFFFFFFFF);
 
     return Container(
       width: double.infinity,
@@ -102,11 +91,7 @@ class _UploadScreenState extends State<UploadScreen> {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: Colors.black, width: 2.0),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black,
-            offset: Offset(2, 2),
-            blurRadius: 0,
-          ),
+          BoxShadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0),
         ],
       ),
       child: Row(
@@ -115,12 +100,14 @@ class _UploadScreenState extends State<UploadScreen> {
           Icon(
             isExhausted ? Icons.lock_clock_outlined : Icons.bolt_rounded,
             size: 16,
-            color: isExhausted ? const Color(0xFF757575) : const Color(0xFFFF5500),
+            color: isExhausted
+                ? const Color(0xFF757575)
+                : const Color(0xFFFF5500),
           ),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
-              'DAILY QUOTA: $_dailyRemaining/${TimetableParserService.maxScansPerDay} REMAINING • WEEKLY: $_weeklyRemaining/${TimetableParserService.maxScansPerWeek} REMAINING',
+              'DAILY QUOTA: $_dailyRemaining/${ScanQuota.maxDailyScans} REMAINING • WEEKLY: $_weeklyRemaining/${ScanQuota.maxWeeklyScans} REMAINING',
               style: TextStyle(
                 fontFamily: 'monospace',
                 fontWeight: FontWeight.w900,
@@ -195,9 +182,7 @@ class _UploadScreenState extends State<UploadScreen> {
     // Launch full-screen parsing loader
     final result = await Navigator.of(context).push<List<ClassItem>?>(
       FluidPageRoute(
-        builder: (_) => ParsingLoaderScreen(
-          uploadProvider: _provider,
-        ),
+        builder: (_) => ParsingLoaderScreen(uploadProvider: _provider),
       ),
     );
 
@@ -209,10 +194,8 @@ class _UploadScreenState extends State<UploadScreen> {
       } else {
         final saved = await Navigator.of(context).push<bool>(
           FluidPageRoute(
-            builder: (_) => ReviewScreen(
-              initialClasses: result,
-              onSaved: _navigateToHome,
-            ),
+            builder: (_) =>
+                ReviewScreen(initialClasses: result, onSaved: _navigateToHome),
           ),
         );
         if (saved == true && mounted) {
@@ -222,37 +205,62 @@ class _UploadScreenState extends State<UploadScreen> {
     } else if (_provider.errorMessage != null) {
       _showExtractionErrorDialog(_provider.errorCode, _provider.errorMessage!);
     }
-    await _loadScanQuota();
+    await _provider.refreshQuota();
   }
 
-  void _showExtractionErrorDialog(TimetableScanErrorCode? code, String message) {
+  void _showExtractionErrorDialog(
+    TimetableScanErrorCode? code,
+    String message,
+  ) {
     final title = switch (code) {
-      TimetableScanErrorCode.rateLimitExceeded => "WEEKLY LIMIT REACHED",
+      TimetableScanErrorCode.rateLimitExceeded ||
+      TimetableScanErrorCode.apiQuotaExceeded => "SCAN LIMIT REACHED",
+      TimetableScanErrorCode.configuration ||
+      TimetableScanErrorCode.authentication => "SCANNING NOT CONFIGURED",
+      TimetableScanErrorCode.modelUnavailable ||
+      TimetableScanErrorCode.serverError => "AI SERVICE UNAVAILABLE",
       TimetableScanErrorCode.parserFormatError => "FORMAT ERROR",
       TimetableScanErrorCode.emptyResult => "NO CLASSES FOUND",
-      TimetableScanErrorCode.serverError => "EXTRACTION ERROR",
-      TimetableScanErrorCode.networkError => "CONNECTION ERROR",
+      TimetableScanErrorCode.networkError ||
+      TimetableScanErrorCode.timeout => "CONNECTION PROBLEM",
+      TimetableScanErrorCode.unreadableImage => "IMAGE COULD NOT BE READ",
+      TimetableScanErrorCode.invalidRequest => "COULD NOT READ TIMETABLE",
       _ => "ERROR",
     };
 
     final contentText = message.isNotEmpty
         ? message
         : switch (code) {
-            TimetableScanErrorCode.rateLimitExceeded =>
-              "Weekly limit reached (2 scans max per week).",
-            TimetableScanErrorCode.parserFormatError =>
-              "Could not parse timetable format. Please try again.",
-            TimetableScanErrorCode.emptyResult =>
-              "No classes could be identified from this image. Please ensure your photo is clear and legible.",
+            TimetableScanErrorCode.rateLimitExceeded ||
+            TimetableScanErrorCode.apiQuotaExceeded =>
+              "Scan limit reached. Try again after your allowance resets.",
+            TimetableScanErrorCode.configuration ||
+            TimetableScanErrorCode.authentication => "AI scanning is not configured correctly. Add a valid API key in the release configuration.",
+            TimetableScanErrorCode.modelUnavailable ||
             TimetableScanErrorCode.serverError =>
-              "AI extraction failed. Please ensure photo is clear and try again.",
-            TimetableScanErrorCode.networkError =>
-              "Request timed out or connection lost. Please check your internet.",
+              "AI service temporarily unavailable. Try again later.",
+            TimetableScanErrorCode.parserFormatError =>
+              "Could not read the timetable. Try a clearer image.",
+            TimetableScanErrorCode.emptyResult => "No classes could be identified from this image. Please ensure your photo is clear and legible.",
+            TimetableScanErrorCode.networkError => "Internet connection unavailable. Check your connection and try again.",
+            TimetableScanErrorCode.timeout =>
+              "The AI service took too long to respond. Try again shortly.",
+            TimetableScanErrorCode.unreadableImage => "Could not open this image. Choose a clear JPG, PNG or WebP photo.",
+            TimetableScanErrorCode.invalidRequest =>
+              "Could not read this timetable. Try a clearer image.",
             _ =>
               "An error occurred while scanning timetable. Please try again.",
           };
 
-    final isRateLimit = code == TimetableScanErrorCode.rateLimitExceeded;
+    final canRetry = !{
+      TimetableScanErrorCode.rateLimitExceeded,
+      TimetableScanErrorCode.apiQuotaExceeded,
+      TimetableScanErrorCode.configuration,
+      TimetableScanErrorCode.authentication,
+      TimetableScanErrorCode.modelUnavailable,
+      TimetableScanErrorCode.invalidRequest,
+      TimetableScanErrorCode.unreadableImage,
+    }.contains(code);
     final nc = context.ncColors;
 
     showDialog(
@@ -294,7 +302,7 @@ class _UploadScreenState extends State<UploadScreen> {
               ),
             ),
           ),
-          if (!isRateLimit)
+          if (canRetry)
             FilledButton(
               onPressed: () {
                 Navigator.of(ctx).pop();
@@ -329,10 +337,8 @@ class _UploadScreenState extends State<UploadScreen> {
     }
     final saved = await Navigator.of(context).push<bool>(
       FluidPageRoute(
-        builder: (_) => ReviewScreen(
-          initialClasses: const [],
-          onSaved: _navigateToHome,
-        ),
+        builder: (_) =>
+            ReviewScreen(initialClasses: const [], onSaved: _navigateToHome),
       ),
     );
     if (saved == true && mounted) {
@@ -395,7 +401,10 @@ class _UploadScreenState extends State<UploadScreen> {
             child: GestureDetector(
               onTap: _navigateToHome,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: nc.surface,
                   borderRadius: BorderRadius.circular(6),
@@ -438,14 +447,20 @@ class _UploadScreenState extends State<UploadScreen> {
             // Scrollable Upload Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Quota Banner Badge
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFE500),
                         borderRadius: BorderRadius.circular(8),
@@ -514,17 +529,26 @@ class _UploadScreenState extends State<UploadScreen> {
                         onTap: _isQuotaExhausted ? null : _openSourcePicker,
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 40,
+                            horizontal: 20,
+                          ),
                           decoration: BoxDecoration(
-                            color: _isQuotaExhausted ? const Color(0xFFF7F7F7) : nc.surface,
+                            color: _isQuotaExhausted
+                                ? const Color(0xFFF7F7F7)
+                                : nc.surface,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: _isQuotaExhausted ? nc.border.withValues(alpha: 0.4) : nc.border,
+                              color: _isQuotaExhausted
+                                  ? nc.border.withValues(alpha: 0.4)
+                                  : nc.border,
                               width: 3.0,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: _isQuotaExhausted ? Colors.transparent : nc.shadow,
+                                color: _isQuotaExhausted
+                                    ? Colors.transparent
+                                    : nc.shadow,
                                 offset: const Offset(4, 4),
                                 blurRadius: 0,
                               ),
@@ -537,29 +561,42 @@ class _UploadScreenState extends State<UploadScreen> {
                                 width: 64,
                                 height: 64,
                                 decoration: BoxDecoration(
-                                  color: _isQuotaExhausted ? const Color(0xFFB0BEC5) : const Color(0xFFFF5500),
+                                  color: _isQuotaExhausted
+                                      ? const Color(0xFFB0BEC5)
+                                      : const Color(0xFFFF5500),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: nc.border, width: 2.5),
+                                  border: Border.all(
+                                    color: nc.border,
+                                    width: 2.5,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: _isQuotaExhausted ? Colors.transparent : nc.shadow,
+                                      color: _isQuotaExhausted
+                                          ? Colors.transparent
+                                          : nc.shadow,
                                       offset: const Offset(2.5, 2.5),
                                       blurRadius: 0,
                                     ),
                                   ],
                                 ),
                                 child: Icon(
-                                  _isQuotaExhausted ? Icons.lock_clock_outlined : Icons.add_a_photo_outlined,
+                                  _isQuotaExhausted
+                                      ? Icons.lock_clock_outlined
+                                      : Icons.add_a_photo_outlined,
                                   size: 32,
                                   color: Colors.white,
                                 ),
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                _isQuotaExhausted ? 'Scan limit reached' : 'Take or choose a photo',
+                                _isQuotaExhausted
+                                    ? 'Scan limit reached'
+                                    : 'Take or choose a photo',
                                 style: TextStyle(
                                   fontFamily: 'SpaceGrotesk',
-                                  color: _isQuotaExhausted ? nc.textSecondary : nc.textPrimary,
+                                  color: _isQuotaExhausted
+                                      ? nc.textSecondary
+                                      : nc.textPrimary,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -0.2,
@@ -589,10 +626,7 @@ class _UploadScreenState extends State<UploadScreen> {
                         decoration: BoxDecoration(
                           color: nc.surface,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: nc.border,
-                            width: 3.0,
-                          ),
+                          border: Border.all(color: nc.border, width: 3.0),
                           boxShadow: [
                             BoxShadow(
                               color: nc.shadow,
@@ -611,7 +645,10 @@ class _UploadScreenState extends State<UploadScreen> {
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF00E676),
                                     borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: nc.border, width: 2),
+                                    border: Border.all(
+                                      color: nc.border,
+                                      width: 2,
+                                    ),
                                   ),
                                   child: const Icon(
                                     Icons.image_outlined,
@@ -622,7 +659,8 @@ class _UploadScreenState extends State<UploadScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Photo selected',
@@ -655,9 +693,16 @@ class _UploadScreenState extends State<UploadScreen> {
                                     decoration: BoxDecoration(
                                       color: nc.surface,
                                       borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: nc.border, width: 2),
+                                      border: Border.all(
+                                        color: nc.border,
+                                        width: 2,
+                                      ),
                                     ),
-                                    child: Icon(Icons.close, size: 18, color: nc.icon),
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 18,
+                                      color: nc.icon,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -669,16 +714,28 @@ class _UploadScreenState extends State<UploadScreen> {
                                   child: BouncyTap(
                                     enabled: !_isQuotaExhausted,
                                     child: OutlinedButton.icon(
-                                      onPressed: _isQuotaExhausted ? null : () => _pickImage(ImageSource.camera),
+                                      onPressed: _isQuotaExhausted
+                                          ? null
+                                          : () =>
+                                                _pickImage(ImageSource.camera),
                                       style: OutlinedButton.styleFrom(
                                         backgroundColor: nc.surface,
                                         foregroundColor: nc.textPrimary,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(6),
-                                          side: BorderSide(color: nc.border, width: 2),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                          side: BorderSide(
+                                            color: nc.border,
+                                            width: 2,
+                                          ),
                                         ),
                                       ),
-                                      icon: Icon(Icons.refresh, size: 18, color: nc.icon),
+                                      icon: Icon(
+                                        Icons.refresh,
+                                        size: 18,
+                                        color: nc.icon,
+                                      ),
                                       label: Text(
                                         'Retake',
                                         style: TextStyle(
@@ -695,16 +752,28 @@ class _UploadScreenState extends State<UploadScreen> {
                                   child: BouncyTap(
                                     enabled: !_isQuotaExhausted,
                                     child: OutlinedButton.icon(
-                                      onPressed: _isQuotaExhausted ? null : () => _pickImage(ImageSource.gallery),
+                                      onPressed: _isQuotaExhausted
+                                          ? null
+                                          : () =>
+                                                _pickImage(ImageSource.gallery),
                                       style: OutlinedButton.styleFrom(
                                         backgroundColor: nc.surface,
                                         foregroundColor: nc.textPrimary,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(6),
-                                          side: BorderSide(color: nc.border, width: 2),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                          side: BorderSide(
+                                            color: nc.border,
+                                            width: 2,
+                                          ),
                                         ),
                                       ),
-                                      icon: Icon(Icons.image, size: 18, color: nc.icon),
+                                      icon: Icon(
+                                        Icons.image,
+                                        size: 18,
+                                        color: nc.icon,
+                                      ),
                                       label: Text(
                                         'Choose another',
                                         style: TextStyle(
@@ -747,11 +816,17 @@ class _UploadScreenState extends State<UploadScreen> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF00E676),
                                   borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: nc.border, width: 1.5),
+                                  border: Border.all(
+                                    color: nc.border,
+                                    width: 1.5,
+                                  ),
                                 ),
                                 child: const Text(
                                   'TIPS',
@@ -802,10 +877,16 @@ class _UploadScreenState extends State<UploadScreen> {
 
                     // Primary Action: Extract classes
                     BouncyTap(
-                      enabled: (_provider.selectedImage != null && !_isOffline && !_isQuotaExhausted),
+                      enabled:
+                          (_provider.selectedImage != null &&
+                          !_isOffline &&
+                          !_isQuotaExhausted),
                       child: Container(
                         decoration: BoxDecoration(
-                          boxShadow: (_provider.selectedImage != null && !_isOffline && !_isQuotaExhausted)
+                          boxShadow:
+                              (_provider.selectedImage != null &&
+                                  !_isOffline &&
+                                  !_isQuotaExhausted)
                               ? [
                                   BoxShadow(
                                     color: nc.shadow,
@@ -819,19 +900,24 @@ class _UploadScreenState extends State<UploadScreen> {
                           width: double.infinity,
                           height: 52,
                           child: FilledButton.icon(
-                            onPressed: (_provider.selectedImage != null && !_isOffline && !_isQuotaExhausted)
+                            onPressed:
+                                (_provider.selectedImage != null &&
+                                    !_isOffline &&
+                                    !_isQuotaExhausted)
                                 ? () => _startExtraction()
                                 : null,
                             icon: Icon(
-                              _isQuotaExhausted ? Icons.lock_outline : Icons.auto_awesome,
+                              _isQuotaExhausted
+                                  ? Icons.lock_outline
+                                  : Icons.auto_awesome,
                               size: 20,
                             ),
                             label: Text(
                               _isQuotaExhausted
                                   ? _exhaustedButtonText
                                   : _isOffline
-                                      ? 'Offline — Extraction unavailable'
-                                      : 'Extract classes',
+                                  ? 'Offline — Extraction unavailable'
+                                  : 'Extract classes',
                               style: const TextStyle(
                                 fontFamily: 'SpaceGrotesk',
                                 fontWeight: FontWeight.w900,
@@ -848,7 +934,10 @@ class _UploadScreenState extends State<UploadScreen> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(6),
                                 side: BorderSide(
-                                  color: (_provider.selectedImage != null && !_isOffline && !_isQuotaExhausted)
+                                  color:
+                                      (_provider.selectedImage != null &&
+                                          !_isOffline &&
+                                          !_isQuotaExhausted)
                                       ? nc.border
                                       : nc.border.withValues(alpha: 0.3),
                                   width: 2.5,
@@ -878,7 +967,11 @@ class _UploadScreenState extends State<UploadScreen> {
                         height: 48,
                         child: OutlinedButton.icon(
                           onPressed: _handleManualEdit,
-                          icon: Icon(Icons.edit_outlined, size: 18, color: nc.icon),
+                          icon: Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                            color: nc.icon,
+                          ),
                           label: Text(
                             'Add classes manually',
                             style: TextStyle(
@@ -907,7 +1000,11 @@ class _UploadScreenState extends State<UploadScreen> {
                       width: double.infinity,
                       child: TextButton.icon(
                         onPressed: _navigateToHome,
-                        icon: Icon(Icons.arrow_forward_rounded, size: 18, color: nc.textSecondary),
+                        icon: Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 18,
+                          color: nc.textSecondary,
+                        ),
                         label: Text(
                           'Skip and go to Home',
                           style: TextStyle(

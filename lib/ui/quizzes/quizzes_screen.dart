@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 import '../../data/models/quiz_item.dart';
@@ -232,13 +233,15 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
             // Timetable Guard Warning Banner if no classes exist
             if (!hasTimetable)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: NcBanner(
                   key: const Key('timetable_guard_banner'),
                   kind: NcBannerKind.warning,
                   title: 'Add your timetable first',
-                  message:
-                      "Quizzes belong to a class, and you haven't added any yet.",
+                  message: "Quizzes belong to a class, and you haven't added any yet.",
                   actionLabel: 'Upload timetable',
                   onAction: widget.onUploadTimetable,
                 ),
@@ -249,134 +252,117 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
               child: _provider.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : !hasQuizzes
-                      ? _buildEmptyState(context, theme, hasTimetable)
-                      : RefreshIndicator(
-                          onRefresh: () => _provider.loadData(),
-                          child: ListView(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
-                            children: [
-                              // Top REVO Action: Create a Quiz
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 18),
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
+                  ? _buildEmptyState(context, theme, hasTimetable)
+                  : RefreshIndicator(
+                      onRefresh: () => _provider.loadData(),
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
+                        children: [
+                          // Top REVO Action: Create a Quiz
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 18),
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black,
+                                    offset: Offset(3.5, 3.5),
+                                    blurRadius: 0,
+                                  ),
+                                ],
+                              ),
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: 52,
+                                child: FilledButton.icon(
+                                  onPressed: () => _openAddQuizSheet(),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFF5500),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                      side: const BorderSide(
                                         color: Colors.black,
-                                        offset: Offset(3.5, 3.5),
-                                        blurRadius: 0,
+                                        width: 2.5,
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                  child: SizedBox(
-                                    width: double.infinity,
-                                    height: 52,
-                                    child: FilledButton.icon(
-                                      onPressed: () => _openAddQuizSheet(),
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: const Color(0xFFFF5500),
-                                        foregroundColor: Colors.white,
-                                        elevation: 0,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(6),
-                                          side: const BorderSide(color: Colors.black, width: 2.5),
-                                        ),
-                                      ),
-                                      icon: const Icon(Icons.add_rounded, size: 22, color: Colors.white),
-                                      label: const Text(
-                                        'Create a Quiz',
-                                        style: TextStyle(
-                                          fontFamily: 'SpaceGrotesk',
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 16,
-                                          letterSpacing: 0.5,
-                                          color: Colors.white,
-                                        ),
-                                      ),
+                                  icon: const Icon(
+                                    Icons.add_rounded,
+                                    size: 22,
+                                    color: Colors.white,
+                                  ),
+                                  label: const Text(
+                                    'Create a Quiz',
+                                    style: TextStyle(
+                                      fontFamily: 'SpaceGrotesk',
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                      letterSpacing: 0.5,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ),
                               ),
-
-                              // Section Header: Your quizzes
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 14),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Your quizzes',
-                                      style: TextStyle(
-                                        fontFamily: 'SpaceGrotesk',
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 20,
-                                        color: nc.textPrimary,
-                                        letterSpacing: -0.3,
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFFE500),
-                                        borderRadius: BorderRadius.circular(3),
-                                        border: Border.all(color: nc.border, width: 1.5),
-                                      ),
-                                      child: Text(
-                                        '${_provider.activeQuizzes.length} UPCOMING',
-                                        style: const TextStyle(
-                                          fontFamily: 'SpaceGrotesk',
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 0.8,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Group: TODAY
-                              if (grouped[QuizUrgency.today]!.isNotEmpty)
-                                _buildGroupSection(
-                                  context: context,
-                                  theme: theme,
-                                  title: 'TODAY',
-                                  quizzes: grouped[QuizUrgency.today]!,
-                                  isUrgent: true,
-                                ),
-
-                              // Group: TOMORROW
-                              if (grouped[QuizUrgency.tomorrow]!.isNotEmpty)
-                                _buildGroupSection(
-                                  context: context,
-                                  theme: theme,
-                                  title: 'TOMORROW',
-                                  quizzes: grouped[QuizUrgency.tomorrow]!,
-                                  isUrgent: true,
-                                ),
-
-                              // Group: THIS WEEK
-                              if (grouped[QuizUrgency.thisWeek]!.isNotEmpty)
-                                _buildGroupSection(
-                                  context: context,
-                                  theme: theme,
-                                  title: 'THIS WEEK',
-                                  quizzes: grouped[QuizUrgency.thisWeek]!,
-                                  isUrgent: false,
-                                ),
-
-                              // Group: LATER
-                              if (grouped[QuizUrgency.later]!.isNotEmpty)
-                                _buildGroupSection(
-                                  context: context,
-                                  theme: theme,
-                                  title: 'LATER',
-                                  quizzes: grouped[QuizUrgency.later]!,
-                                  isUrgent: false,
-                                ),
-                            ],
+                            ),
                           ),
-                        ),
+
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Text(
+                              'Your quizzes',
+                              style: TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                fontWeight: FontWeight.w900,
+                                fontSize: 20,
+                                color: nc.textPrimary,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ),
+                          // Group: TODAY
+                          if (grouped[QuizUrgency.today]!.isNotEmpty)
+                            _buildGroupSection(
+                              context: context,
+                              theme: theme,
+                              title: 'TODAY',
+                              quizzes: grouped[QuizUrgency.today]!,
+                              isUrgent: true,
+                            ),
+
+                          // Group: TOMORROW
+                          if (grouped[QuizUrgency.tomorrow]!.isNotEmpty)
+                            _buildGroupSection(
+                              context: context,
+                              theme: theme,
+                              title: 'TOMORROW',
+                              quizzes: grouped[QuizUrgency.tomorrow]!,
+                              isUrgent: true,
+                            ),
+
+                          // Group: THIS WEEK
+                          if (grouped[QuizUrgency.thisWeek]!.isNotEmpty)
+                            _buildGroupSection(
+                              context: context,
+                              theme: theme,
+                              title: 'THIS WEEK',
+                              quizzes: grouped[QuizUrgency.thisWeek]!,
+                              isUrgent: false,
+                            ),
+
+                          // Group: LATER
+                          if (grouped[QuizUrgency.later]!.isNotEmpty)
+                            _buildGroupSection(
+                              context: context,
+                              theme: theme,
+                              title: 'LATER',
+                              quizzes: grouped[QuizUrgency.later]!,
+                              isUrgent: false,
+                            ),
+                        ],
+                      ),
+                    ),
             ),
           ],
         ),
@@ -402,7 +388,9 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: isUrgent ? const Color(0xFFFF5500) : const Color(0xFFDCE2E6),
+                color: isUrgent
+                    ? const Color(0xFFFF5500)
+                    : const Color(0xFFDCE2E6),
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(color: Colors.black, width: 2),
                 boxShadow: const [
@@ -417,7 +405,11 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (isUrgent) ...[
-                    const Icon(Icons.alarm_rounded, size: 14, color: Colors.white),
+                    const Icon(
+                      Icons.alarm_rounded,
+                      size: 14,
+                      color: Colors.white,
+                    ),
                     const SizedBox(width: 4),
                   ],
                   Text(
@@ -432,7 +424,10 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                   ),
                   const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: isUrgent ? Colors.black : Colors.white,
                       borderRadius: BorderRadius.circular(3),
@@ -572,7 +567,10 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFFF5500),
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 12,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
                       side: BorderSide(color: nc.border, width: 2.5),

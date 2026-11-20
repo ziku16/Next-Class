@@ -1,10 +1,10 @@
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:nextclass/data/database/app_database.dart';
 import 'package:nextclass/data/models/class_item.dart';
 import 'package:nextclass/services/timetable_parser_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -21,7 +21,9 @@ void main() {
       final pngBytes = img.encodePng(rawImage);
 
       final tempDir = Directory.systemTemp;
-      final rawFile = File('${tempDir.path}/test_raw_timetable_${DateTime.now().millisecondsSinceEpoch}.png');
+      final rawFile = File(
+        '${tempDir.path}/test_raw_timetable_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
       await rawFile.writeAsBytes(pngBytes, flush: true);
 
       addTearDown(() async {
@@ -31,7 +33,9 @@ void main() {
       });
 
       // 2. Preprocess the image
-      final processedFile = await TimetableParserService.preprocessImage(rawFile);
+      final processedFile = await TimetableParserService.preprocessImage(
+        rawFile,
+      );
 
       addTearDown(() async {
         if (await processedFile.exists()) {
@@ -63,7 +67,9 @@ void main() {
       final pngBytes = img.encodePng(rawImage);
 
       final tempDir = Directory.systemTemp;
-      final rawFile = File('${tempDir.path}/test_small_timetable_${DateTime.now().millisecondsSinceEpoch}.png');
+      final rawFile = File(
+        '${tempDir.path}/test_small_timetable_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
       await rawFile.writeAsBytes(pngBytes, flush: true);
 
       addTearDown(() async {
@@ -72,7 +78,9 @@ void main() {
         }
       });
 
-      final processedFile = await TimetableParserService.preprocessImage(rawFile);
+      final processedFile = await TimetableParserService.preprocessImage(
+        rawFile,
+      );
 
       addTearDown(() async {
         if (await processedFile.exists()) {
@@ -88,11 +96,16 @@ void main() {
       expect(decoded.height, 600);
     });
 
-    test('preprocessImage returns original file gracefully if file does not exist', () async {
-      final nonExistent = File('non_existent_file_path.jpg');
-      final result = await TimetableParserService.preprocessImage(nonExistent);
-      expect(result.path, nonExistent.path);
-    });
+    test(
+      'preprocessImage returns original file gracefully if file does not exist',
+      () async {
+        final nonExistent = File('non_existent_file_path.jpg');
+        final result = await TimetableParserService.preprocessImage(
+          nonExistent,
+        );
+        expect(result.path, nonExistent.path);
+      },
+    );
   });
 
   group('TimetableParserService jsonToClassItems & Teacher Mapping Tests', () {
@@ -162,7 +175,11 @@ void main() {
       await db.insert('classes', item.toMap());
 
       // Query from SQLite
-      final rows = await db.query('classes', where: 'id = ?', whereArgs: [item.id]);
+      final rows = await db.query(
+        'classes',
+        where: 'id = ?',
+        whereArgs: [item.id],
+      );
       expect(rows, isNotEmpty);
 
       final retrieved = ClassItem.fromMap(rows.first);
@@ -213,98 +230,6 @@ void main() {
       expect(items[1].endTime, '10:00');
       expect(items[1].room, isNull);
       expect(items[1].teacher, isNull);
-    });
-  });
-
-  group('On-Device Scan Quota Rate Limiting Tests', () {
-    setUp(() {
-      SharedPreferences.setMockInitialValues({});
-    });
-
-    test('Allows scan when under quota', () async {
-      final prefs = await SharedPreferences.getInstance();
-      await expectLater(
-        TimetableParserService.checkScanQuota(prefs),
-        completes,
-      );
-    });
-
-    test('Throws ScanLimitException when 2 daily scans are exhausted', () async {
-      final prefs = await SharedPreferences.getInstance();
-      final now = DateTime.now();
-
-      // Record 2 scans today
-      await prefs.setStringList('timetable_scan_timestamps', [
-        now.subtract(const Duration(hours: 2)).toIso8601String(),
-        now.subtract(const Duration(hours: 1)).toIso8601String(),
-      ]);
-
-      expect(
-        () => TimetableParserService.checkScanQuota(prefs),
-        throwsA(isA<ScanLimitException>().having(
-          (e) => e.message,
-          'message',
-          contains('Daily scan limit reached (2/2)'),
-        )),
-      );
-    });
-
-    test('Throws ScanLimitException when 3 rolling weekly scans are exhausted', () async {
-      final prefs = await SharedPreferences.getInstance();
-      final now = DateTime.now();
-
-      // Record 3 scans across rolling week (1 today, 2 on previous days)
-      await prefs.setStringList('timetable_scan_timestamps', [
-        now.subtract(const Duration(days: 3)).toIso8601String(),
-        now.subtract(const Duration(days: 2)).toIso8601String(),
-        now.subtract(const Duration(hours: 1)).toIso8601String(),
-      ]);
-
-      expect(
-        () => TimetableParserService.checkScanQuota(prefs),
-        throwsA(isA<ScanLimitException>().having(
-          (e) => e.message,
-          'message',
-          contains('Weekly scan limit reached (3/3)'),
-        )),
-      );
-    });
-
-    test('Prunes timestamps older than 7 rolling days', () async {
-      final prefs = await SharedPreferences.getInstance();
-      final now = DateTime.now();
-
-      await prefs.setStringList('timetable_scan_timestamps', [
-        now.subtract(const Duration(days: 10)).toIso8601String(), // Expired
-        now.subtract(const Duration(days: 8)).toIso8601String(),  // Expired
-        now.subtract(const Duration(days: 2)).toIso8601String(),  // Active
-      ]);
-
-      await TimetableParserService.recordSuccessfulScan(prefs);
-
-      final timestamps = await TimetableParserService.getRecentScanTimestamps(prefs);
-      // Only the 2-day-old scan and the newly recorded scan should be present
-      expect(timestamps.length, 2);
-    });
-
-    test('getRemainingScans returns accurate dailyUsed and weeklyUsed', () async {
-      final prefs = await SharedPreferences.getInstance();
-      final now = DateTime.now();
-
-      // Initial empty state
-      final initial = await TimetableParserService.getRemainingScans(prefs);
-      expect(initial['dailyUsed'], 0);
-      expect(initial['weeklyUsed'], 0);
-
-      // Record 1 scan today and 1 scan 2 days ago
-      await prefs.setStringList('timetable_scan_timestamps', [
-        now.subtract(const Duration(hours: 1)).toIso8601String(),
-        now.subtract(const Duration(days: 2)).toIso8601String(),
-      ]);
-
-      final updated = await TimetableParserService.getRemainingScans(prefs);
-      expect(updated['dailyUsed'], 1);
-      expect(updated['weeklyUsed'], 2);
     });
   });
 

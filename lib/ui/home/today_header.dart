@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../core/theme/next_class_colors.dart';
 import '../../data/models/class_item.dart';
 
@@ -15,7 +16,7 @@ class ScheduleSummaryInfo {
     this.isCelebratory = false,
   });
 
-  /// Computes schedule pill badge icon and label according to current time and classes.
+  /// Computes the compact schedule summary for the current day.
   factory ScheduleSummaryInfo.compute({
     required DateTime now,
     required List<ClassItem> classesToday,
@@ -51,7 +52,8 @@ class ScheduleSummaryInfo {
     if (activeClass != null) {
       return ScheduleSummaryInfo(
         icon: Icons.schedule_rounded,
-        text: '$totalLabel today · ${activeClass.subject} ends at ${activeClass.endTime}',
+        text:
+            '$totalLabel today · ${activeClass.subject} ends at ${activeClass.endTime}',
       );
     }
 
@@ -60,8 +62,7 @@ class ScheduleSummaryInfo {
     if (allDone) {
       return const ScheduleSummaryInfo(
         icon: Icons.celebration_rounded,
-        text: "That's a wrap for today. Shabash!",
-        isCelebratory: true,
+        text: 'Classes finished for today',
       );
     }
 
@@ -75,12 +76,15 @@ class ScheduleSummaryInfo {
     }
 
     // 4. Between classes
-    final upcoming = sorted.where((c) => c.startMinutes > currentMinutes).toList();
+    final upcoming = sorted
+        .where((c) => c.startMinutes > currentMinutes)
+        .toList();
     if (upcoming.isNotEmpty) {
       final nextClass = upcoming.first;
       final remainingCount = upcoming.length;
-      final remainingLabel =
-          remainingCount == 1 ? '1 class left' : '$remainingCount classes left';
+      final remainingLabel = remainingCount == 1
+          ? '1 class left'
+          : '$remainingCount classes left';
       return ScheduleSummaryInfo(
         icon: Icons.schedule_rounded,
         text: '$remainingLabel · next at ${nextClass.startTime}',
@@ -89,16 +93,12 @@ class ScheduleSummaryInfo {
 
     return const ScheduleSummaryInfo(
       icon: Icons.celebration_rounded,
-      text: "That's a wrap for today. Shabash!",
-      isCelebratory: true,
+      text: 'Classes finished for today',
     );
   }
 }
 
-/// Header component of the Today screen displaying:
-/// - Time-sensitive greeting ("Good morning/afternoon/evening, [User Name]")
-/// - Formatted date ("Thursday, 2 October")
-/// - Dynamic schedule summary pill with status icon
+/// Compact date and schedule summary for the Today screen.
 class TodayHeader extends StatelessWidget {
   final String userName;
   final DateTime currentTime;
@@ -112,22 +112,6 @@ class TodayHeader extends StatelessWidget {
     required this.classesToday,
     this.hasTimetable = true,
   });
-
-  String _getGreeting() {
-    if (!hasTimetable) {
-      return userName.trim().isEmpty ? 'Welcome' : 'Welcome, $userName';
-    }
-    final hour = currentTime.hour;
-    final prefix = hour < 12
-        ? 'Good morning'
-        : hour < 17
-            ? 'Good afternoon'
-            : 'Good evening';
-    if (userName.trim().isEmpty) {
-      return prefix;
-    }
-    return '$prefix, $userName';
-  }
 
   String _formatDate() {
     return DateFormat('EEEE, d MMMM').format(currentTime);
@@ -147,73 +131,15 @@ class TodayHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Ultra-bold greeting
         Text(
-          _getGreeting(),
-          style: theme.textTheme.headlineMedium?.copyWith(
+          _formatDate(),
+          style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w900,
             color: ncColors.textPrimary,
-            letterSpacing: -0.5,
+            letterSpacing: -0.2,
           ),
         ),
         const SizedBox(height: 8),
-
-        // 3. Date & Daily metadata badge row
-        Wrap(
-          spacing: 8,
-          runSpacing: 6,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            // Date pill
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: ncColors.border,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: ncColors.border, width: 2.0),
-              ),
-              child: Text(
-                _formatDate(),
-                style: TextStyle(
-                  fontFamily: 'SpaceGrotesk',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: ncColors.background,
-                  letterSpacing: 0.2,
-                ),
-              ),
-            ),
-
-            // Daily metadata count stamp
-            if (hasTimetable && classesToday.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: ncColors.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: ncColors.border, width: 2.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: ncColors.shadow,
-                      offset: const Offset(2, 2),
-                      blurRadius: 0,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  '${classesToday.length} ${classesToday.length == 1 ? "CLASS" : "CLASSES"} TODAY',
-                  style: TextStyle(
-                    fontFamily: 'SpaceGrotesk',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
-                    color: ncColors.textPrimary,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
 
         // 4. Dynamic Schedule Summary Pill (ticket style)
         _buildSummaryPill(context, theme, ncColors, summary),
@@ -250,10 +176,7 @@ class TodayHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: ncColors.border,
-          width: 2.5,
-        ),
+        border: Border.all(color: ncColors.border, width: 2.5),
         boxShadow: [
           BoxShadow(
             color: ncColors.shadow,
@@ -265,11 +188,7 @@ class TodayHeader extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            summary.icon,
-            size: 18,
-            color: iconColor,
-          ),
+          Icon(summary.icon, size: 18, color: iconColor),
           const SizedBox(width: 8),
           Flexible(
             child: Text(

@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:archive/archive.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
 import 'package:xml/xml.dart';
+
 import '../data/models/exam_item.dart';
 
 class ExamSheetFormatException implements Exception {
@@ -12,14 +17,11 @@ class ExamSheetFormatException implements Exception {
   String toString() => message;
 }
 
-/// Reads XLSX workbook cells locally and uses Gemini for PDF/image extraction.
+/// Reads XLSX workbook cells locally and sends supported content to the Worker.
 class ExamSheetParserService {
-  static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY');
-  static const List<String> _candidateModels = [
-    'gemini-3.5-flash-lite',
-    'gemini-3.1-flash-lite',
-    'gemini-3.5-flash',
-  ];
+  static const String _workerBaseUrl = String.fromEnvironment(
+    'NEXTCLASS_WORKER_URL',
+  );
 
   static bool isSupportedFile(String fileName) {
     final extension = fileName.toLowerCase().split('.').last;
@@ -33,7 +35,9 @@ class ExamSheetParserService {
     required String semester,
     required String section,
     String? scheduleId,
-    GenerativeModel? model,
+    http.Client? httpClient,
+    String? workerBaseUrlOverride,
+    Duration requestTimeout = const Duration(seconds: 40),
   }) async {
     final extension = fileName.toLowerCase().split('.').last;
     if (extension == 'xls') {
@@ -47,67 +51,101 @@ class ExamSheetParserService {
       );
     }
     if (bytes.isEmpty) {
-      throw const ExamSheetFormatException('The selected file is empty or unreadable.');
+      throw const ExamSheetFormatException(
+        'The selected file is empty or unreadable.',
+      );
     }
-
-    final content = <Part>[];
+    final baseUrl = (workerBaseUrlOverride ?? _workerBaseUrl).trim();
+    if (baseUrl.isEmpty) {
+      throw const ExamSheetFormatException(
+        'Exam scanning is not configured yet. Please try again later.',
+      );
+    }
+    final Map<String, dynamic> document;
     if (extension == 'xlsx') {
       final workbookText = xlsxToText(bytes);
       if (workbookText.trim().isEmpty) {
-        throw const ExamSheetFormatException('No readable rows were found in this Excel file.');
+        throw const ExamSheetFormatException(
+          'No readable rows were found in this Excel file.',
+        );
       }
-      content.add(TextPart('Workbook cells (read locally):\n$workbookText'));
+      if (workbookText.length > 300000) {
+        throw const ExamSheetFormatException(
+          'This spreadsheet is too large to scan. Please save a smaller sheet as PDF.',
+        );
+      }
+      document = {'mimeType': 'text/plain', 'text': workbookText};
     } else {
       final mimeType = switch (extension) {
         'pdf' => 'application/pdf',
         'png' => 'image/png',
         _ => 'image/jpeg',
       };
-      content.add(DataPart(mimeType, bytes));
+      document = {'mimeType': mimeType, 'data': base64Encode(bytes)};
     }
 
-    if (model == null && _apiKey.isEmpty) {
-      throw const ExamSheetFormatException(
-        'AI extraction is not configured. Set GEMINI_API_KEY and try again.',
-      );
-    }
-
-    final prompt = '''
-Extract examination entries from this date sheet and return only JSON:
-{"exams":[{"subject":"Course","date":"YYYY-MM-DD","startTime":"HH:MM or null","endTime":"HH:MM or null","program":"or null","semester":"or null","section":"or null","venue":"or null","examType":"or null"}]}
-Student selection: program="$program", semester="$semester", section="$section".
-Include only exams explicitly associated with this selection. Exclude entries with a different explicit program, semester, or section. A shared course may be included only if its row/heading supports this section. Do not infer missing values; return null. Normalize dates and times only when supported by the source. Preserve headings that apply to following rows.
-''';
-    final requestParts = <Part>[TextPart(prompt), ...content];
-    String? responseText;
-    Object? lastError;
-    if (model != null) {
-      responseText = (await model.generateContent([Content.multi(requestParts)])).text;
-    } else {
-      for (final modelName in _candidateModels) {
-        try {
-          final candidate = GenerativeModel(
-            model: modelName,
-            apiKey: _apiKey,
-            generationConfig: GenerationConfig(
-              responseMimeType: 'application/json',
-              temperature: 0,
+    final client = httpClient ?? http.Client();
+    final ownsClient = httpClient == null;
+    String responseText;
+    try {
+      final response = await client
+          .post(
+            Uri.parse(
+              '${baseUrl.replaceFirst(RegExp(r'/+$'), '')}/v1/extract/exam',
             ),
-          );
-          responseText = (await candidate
-                  .generateContent([Content.multi(requestParts)])
-                  .timeout(const Duration(seconds: 40)))
-              .text;
-          if (responseText != null && responseText.trim().isNotEmpty) break;
-        } catch (error) {
-          lastError = error;
-        }
+            headers: {
+              'Content-Type': 'application/json',
+              'Idempotency-Key': const Uuid().v4(),
+            },
+            body: jsonEncode({
+              'document': document,
+              'program': program,
+              'semester': semester,
+              'section': section,
+            }),
+          )
+          .timeout(requestTimeout);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        final message = switch (response.statusCode) {
+          413 => 'This file is too large. Choose a smaller document.',
+          422 => 'This date sheet could not be read. Try a clearer image or document.',
+          429 =>
+            'Too many scans right now. Please wait a minute and try again.',
+          504 => 'The AI service took too long to respond. Please try again.',
+          >= 500 =>
+            'Exam scanning is temporarily unavailable. Please try again later.',
+          _ =>
+            'Could not scan this date sheet. Check the details and try again.',
+        };
+        throw ExamSheetFormatException(message);
       }
-    }
-    if (responseText == null || responseText.trim().isEmpty) {
-      throw ExamSheetFormatException(lastError == null
-          ? 'The AI service returned no examination entries.'
-          : 'Could not read this date sheet. Check your connection and try again.');
+      final envelope = jsonDecode(response.body);
+      if (envelope is! Map<String, dynamic> ||
+          envelope['ok'] != true ||
+          envelope['data'] is! Map) {
+        throw const ExamSheetFormatException(
+          'The AI service returned an unreadable response. Please try again.',
+        );
+      }
+      responseText = jsonEncode(envelope['data']);
+    } on TimeoutException {
+      throw const ExamSheetFormatException(
+        'Exam scanning took too long. Check your connection and try again.',
+      );
+    } on SocketException {
+      throw const ExamSheetFormatException(
+        'Could not connect to exam scanning. Check your internet connection and try again.',
+      );
+    } on http.ClientException {
+      throw const ExamSheetFormatException(
+        'Could not connect to exam scanning. Check your internet connection and try again.',
+      );
+    } on FormatException {
+      throw const ExamSheetFormatException(
+        'The AI service returned an unreadable response. Please try again.',
+      );
+    } finally {
+      if (ownsClient) client.close();
     }
 
     try {
@@ -120,21 +158,31 @@ Include only exams explicitly associated with this selection. Exclude entries wi
         if (row is! Map<String, dynamic>) continue;
         final subject = row['subject']?.toString().trim() ?? '';
         final date = _parseDate(row['date']?.toString() ?? '');
-        if (subject.isEmpty || date == null || !_matchesIdentity(row, program, semester, section)) {
+        if (subject.isEmpty ||
+            date == null ||
+            !_matchesIdentity(row, program, semester, section)) {
           continue;
         }
-        final explicitFields = [row['program'], row['semester'], row['section']];
-        parsed.add(ExamItem(
-          id: 'exam_${DateTime.now().microsecondsSinceEpoch}_${parsed.length}',
-          scheduleId: scheduleId ?? 'pending',
-          subject: subject,
-          examDate: date,
-          startTime: _normalizeTime(row['startTime']?.toString()),
-          endTime: _normalizeTime(row['endTime']?.toString()),
-          venue: _optionalText(row['venue']),
-          examType: _optionalText(row['examType']),
-          isAiUnsure: explicitFields.any((value) => _optionalText(value) == null),
-        ));
+        final explicitFields = [
+          row['program'],
+          row['semester'],
+          row['section'],
+        ];
+        parsed.add(
+          ExamItem(
+            id: 'exam_${DateTime.now().microsecondsSinceEpoch}_${parsed.length}',
+            scheduleId: scheduleId ?? 'pending',
+            subject: subject,
+            examDate: date,
+            startTime: _normalizeTime(row['startTime']?.toString()),
+            endTime: _normalizeTime(row['endTime']?.toString()),
+            venue: _optionalText(row['venue']),
+            examType: _optionalText(row['examType']),
+            isAiUnsure: explicitFields.any(
+              (value) => _optionalText(value) == null,
+            ),
+          ),
+        );
       }
       if (parsed.isEmpty) {
         throw const ExamSheetFormatException(
@@ -151,7 +199,9 @@ Include only exams explicitly associated with this selection. Exclude entries wi
     } on ExamSheetFormatException {
       rethrow;
     } catch (error) {
-      throw ExamSheetFormatException('Could not parse the extracted exam data: $error');
+      throw ExamSheetFormatException(
+        'Could not parse the extracted exam data: $error',
+      );
     }
   }
 
@@ -163,8 +213,10 @@ Include only exams explicitly associated with this selection. Exclude entries wi
   ) {
     bool matches(String key, String selected) {
       final value = _optionalText(row[key]);
-      return value == null || _normalizeIdentity(value) == _normalizeIdentity(selected);
+      return value == null ||
+          _normalizeIdentity(value) == _normalizeIdentity(selected);
     }
+
     return matches('program', program) &&
         matches('semester', semester) &&
         matches('section', section);
@@ -176,7 +228,11 @@ Include only exams explicitly associated with this selection. Exclude entries wi
   static String? _optionalText(Object? value) {
     if (value == null) return null;
     final text = value.toString().trim();
-    if (text.isEmpty || text.toLowerCase() == 'null' || text.toLowerCase() == 'n/a') return null;
+    if (text.isEmpty ||
+        text.toLowerCase() == 'null' ||
+        text.toLowerCase() == 'n/a') {
+      return null;
+    }
     return text;
   }
 
@@ -184,7 +240,8 @@ Include only exams explicitly associated with this selection. Exclude entries wi
     final value = raw.trim();
     final iso = DateTime.tryParse(value);
     if (iso != null) return DateTime(iso.year, iso.month, iso.day);
-    final match = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$').firstMatch(value);
+    final match = RegExp(r'^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$')
+        .firstMatch(value);
     if (match == null) return null;
     final first = int.parse(match.group(1)!);
     final second = int.parse(match.group(2)!);
@@ -194,7 +251,9 @@ Include only exams explicitly associated with this selection. Exclude entries wi
     final day = first;
     final month = second;
     final parsed = DateTime(year, month, day);
-    if (parsed.year != year || parsed.month != month || parsed.day != day) return null;
+    if (parsed.year != year || parsed.month != month || parsed.day != day) {
+      return null;
+    }
     return parsed;
   }
 
@@ -202,7 +261,8 @@ Include only exams explicitly associated with this selection. Exclude entries wi
     if (raw == null) return null;
     final value = raw.trim().toUpperCase();
     if (value.isEmpty || value == 'NULL') return null;
-    final match = RegExp(r'^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$').firstMatch(value);
+    final match = RegExp(r'^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$')
+        .firstMatch(value);
     if (match == null) return null;
     var hour = int.parse(match.group(1)!);
     final minute = int.tryParse(match.group(2) ?? '0') ?? 0;
@@ -229,14 +289,22 @@ Include only exams explicitly associated with this selection. Exclude entries wi
       final sharedStrings = sharedXml == null
           ? <String>[]
           : XmlDocument.parse(sharedXml)
-              .findAllElements('si')
-              .map((si) => si.findAllElements('t').map((t) => t.innerText).join())
-              .toList();
-      final sheets = archive.files
-          .where((file) => file.isFile &&
-              RegExp(r'^xl/worksheets/sheet\d+\.xml$').hasMatch(file.name))
-          .toList()
-        ..sort((a, b) => a.name.compareTo(b.name));
+                .findAllElements('si')
+                .map(
+                  (si) =>
+                      si.findAllElements('t').map((t) => t.innerText).join(),
+                )
+                .toList();
+      final sheets =
+          archive.files
+              .where(
+                (file) =>
+                    file.isFile &&
+                    RegExp(r'^xl/worksheets/sheet\d+\.xml$')
+                        .hasMatch(file.name),
+              )
+              .toList()
+            ..sort((a, b) => a.name.compareTo(b.name));
       if (sheets.isEmpty) throw const FormatException('No worksheets found');
 
       final output = <String>[];
@@ -258,12 +326,17 @@ Include only exams explicitly associated with this selection. Exclude entries wi
             columnNumbers.add(colIndex);
             final type = cell.getAttribute('t');
             final valueElements = cell.findElements('v');
-            final raw = valueElements.isEmpty ? '' : valueElements.first.innerText;
+            final raw = valueElements.isEmpty
+                ? ''
+                : valueElements.first.innerText;
             final value = switch (type) {
-              's' => int.tryParse(raw) != null && int.parse(raw) < sharedStrings.length
-                  ? sharedStrings[int.parse(raw)]
-                  : '',
-              'inlineStr' => cell.findAllElements('t').map((t) => t.innerText).join(),
+              's' =>
+                int.tryParse(raw) != null &&
+                        int.parse(raw) < sharedStrings.length
+                    ? sharedStrings[int.parse(raw)]
+                    : '',
+              'inlineStr' =>
+                cell.findAllElements('t').map((t) => t.innerText).join(),
               _ => raw,
             };
             cells['$rowIndex:$colIndex'] = value;
@@ -291,20 +364,33 @@ Include only exams explicitly associated with this selection. Exclude entries wi
 
         if (rowNumbers.isEmpty || columnNumbers.isEmpty) continue;
         final minRow = rowNumbers.reduce((a, b) => a < b ? a : b);
-        final maxRow = rowNumbers.reduce((a, b) => a > b ? a : b).clamp(minRow, minRow + 300);
+        final maxRow = rowNumbers
+            .reduce((a, b) => a > b ? a : b)
+            .clamp(minRow, minRow + 300);
         final minCol = columnNumbers.reduce((a, b) => a < b ? a : b);
-        final maxCol = columnNumbers.reduce((a, b) => a > b ? a : b).clamp(minCol, minCol + 40);
+        final maxCol = columnNumbers
+            .reduce((a, b) => a > b ? a : b)
+            .clamp(minCol, minCol + 40);
         final rows = <List<String>>[];
         for (var row = minRow; row <= maxRow; row++) {
           final values = <String>[];
           for (var col = minCol; col <= maxCol; col++) {
             var value = cells['$row:$col'] ?? '';
             // Normalize Excel date serials when the column header signals a date.
-            if (row > minRow && RegExp(r'date|day', caseSensitive: false).hasMatch(cells['$minRow:$col'] ?? '')) {
+            if (row > minRow &&
+                RegExp(
+                  r'date|day',
+                  caseSensitive: false,
+                ).hasMatch(cells['$minRow:$col'] ?? '')) {
               final serial = double.tryParse(value);
               if (serial != null && serial > 0 && serial < 100000) {
-                final date = DateTime(1899, 12, 30).add(Duration(days: serial.floor()));
-                value = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                final date = DateTime(
+                  1899,
+                  12,
+                  30,
+                ).add(Duration(days: serial.floor()));
+                value =
+                    '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
               }
             }
             values.add(value);
@@ -312,12 +398,16 @@ Include only exams explicitly associated with this selection. Exclude entries wi
           if (values.any((value) => value.trim().isNotEmpty)) rows.add(values);
         }
         if (rows.isNotEmpty) {
-          output.add('Sheet ${sheet.name}:\n${rows.map((row) => row.join(' | ')).join('\n')}');
+          output.add(
+            'Sheet ${sheet.name}:\n${rows.map((row) => row.join(' | ')).join('\n')}',
+          );
         }
       }
       return output.join('\n\n');
     } catch (error) {
-      throw ExamSheetFormatException('This XLSX file is malformed or encrypted: $error');
+      throw ExamSheetFormatException(
+        'This XLSX file is malformed or encrypted: $error',
+      );
     }
   }
 

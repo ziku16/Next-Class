@@ -1,114 +1,46 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+
 import '../data/models/class_item.dart';
 
-/// Exception thrown when on-device scan rate limit is exceeded.
-class ScanLimitException implements Exception {
-  final String message;
-  const ScanLimitException(this.message);
+enum TimetableScanFailure {
+  configuration,
+  authentication,
+  modelUnavailable,
+  apiQuotaExceeded,
+  invalidRequest,
+  serviceUnavailable,
+  timeout,
+  network,
+  unreadableImage,
+  malformedResponse,
+  invalidSchema,
+  emptyResult,
+}
+
+class TimetableScanException implements Exception {
+  final TimetableScanFailure failure;
+  final int? statusCode;
+
+  const TimetableScanException(this.failure, {this.statusCode});
 
   @override
-  String toString() => 'RATE_LIMIT_EXCEEDED: $message';
+  String toString() =>
+      'TimetableScanException: ${failure.name}${statusCode == null ? '' : ' (HTTP $statusCode)'}';
 }
 
 class TimetableParserService {
-  static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY');
-  static const List<String> _candidateModels = [
-    'gemini-3.5-flash-lite',
-    'gemini-3.1-flash-lite',
-    'gemini-3.5-flash',
-  ];
-
-  static const String _scanHistoryKey = 'timetable_scan_timestamps';
-  static const int maxScansPerDay = 2;
-  static const int maxScansPerWeek = 3;
-
-  /// Returns recent scan timestamps within the 7-day rolling window.
-  static Future<List<DateTime>> getRecentScanTimestamps([SharedPreferences? testPrefs]) async {
-    final prefs = testPrefs ?? await SharedPreferences.getInstance();
-    final raw = prefs.getStringList(_scanHistoryKey) ?? [];
-    final now = DateTime.now();
-    final cutoff = now.subtract(const Duration(days: 7));
-
-    final List<DateTime> valid = [];
-    for (final s in raw) {
-      final dt = DateTime.tryParse(s);
-      if (dt != null && dt.isAfter(cutoff)) {
-        valid.add(dt);
-      }
-    }
-    return valid;
-  }
-
-  /// Returns the current quota usage:
-  /// - `dailyUsed`: count of successful scans today (out of [maxScansPerDay]).
-  /// - `weeklyUsed`: count of successful scans in the rolling 7-day window (out of [maxScansPerWeek]).
-  static Future<Map<String, int>> getRemainingScans([SharedPreferences? testPrefs]) async {
-    final prefs = testPrefs ?? await SharedPreferences.getInstance();
-    final history = await getRecentScanTimestamps(prefs);
-    final now = DateTime.now();
-
-    final dailyUsed = history.where((dt) =>
-        dt.year == now.year && dt.month == now.month && dt.day == now.day).length;
-    final weeklyUsed = history.length;
-
-    return {
-      'dailyUsed': dailyUsed,
-      'weeklyUsed': weeklyUsed,
-    };
-  }
-
-  /// Checks on-device scan quota before initiating a scan.
-  /// Throws [ScanLimitException] if daily or weekly limits are exceeded.
-  static Future<void> checkScanQuota([SharedPreferences? testPrefs]) async {
-    final prefs = testPrefs ?? await SharedPreferences.getInstance();
-    final history = await getRecentScanTimestamps(prefs);
-    final now = DateTime.now();
-
-    final dailyScans = history.where((dt) =>
-        dt.year == now.year && dt.month == now.month && dt.day == now.day).length;
-    final weeklyScans = history.length;
-
-    if (dailyScans >= maxScansPerDay) {
-      throw ScanLimitException(
-        'Daily scan limit reached ($maxScansPerDay/$maxScansPerDay). You can scan again tomorrow.',
-      );
-    }
-    if (weeklyScans >= maxScansPerWeek) {
-      throw ScanLimitException(
-        'Weekly scan limit reached ($maxScansPerWeek/$maxScansPerWeek). Please wait for rolling scans to reset.',
-      );
-    }
-  }
-
-  /// Records successful scan timestamp and prunes records older than 7 days.
-  static Future<void> recordSuccessfulScan([SharedPreferences? testPrefs]) async {
-    final prefs = testPrefs ?? await SharedPreferences.getInstance();
-    final history = await getRecentScanTimestamps(prefs);
-    history.add(DateTime.now());
-
-    final now = DateTime.now();
-    final cutoff = now.subtract(const Duration(days: 7));
-    final pruned = history.where((dt) => dt.isAfter(cutoff)).toList();
-
-    await prefs.setStringList(
-      _scanHistoryKey,
-      pruned.map((dt) => dt.toIso8601String()).toList(),
-    );
-  }
-
-  /// Clears scan history (useful for tests and clean install reset).
-  static Future<void> clearScanHistory([SharedPreferences? testPrefs]) async {
-    final prefs = testPrefs ?? await SharedPreferences.getInstance();
-    await prefs.remove(_scanHistoryKey);
-  }
+  static const String _workerBaseUrl = String.fromEnvironment(
+    'NEXTCLASS_WORKER_URL',
+  );
 
   /// Downscales and compresses the timetable image before sending over the network.
   /// - Format: JPEG
@@ -117,30 +49,21 @@ class TimetableParserService {
   /// - Writes output to application's temporary cache directory.
   static Future<File> preprocessImage(File originalFile) async {
     try {
-      if (!await originalFile.exists()) {
-        return originalFile;
-      }
-
+      if (!await originalFile.exists()) return originalFile;
       final bytes = await originalFile.readAsBytes();
       final decoded = img.decodeImage(bytes);
-      if (decoded == null) {
-        return originalFile;
-      }
-
+      if (decoded == null) return originalFile;
       int targetWidth = decoded.width;
       int targetHeight = decoded.height;
-      const int maxW = 1600;
-      const int maxH = 1200;
-
+      const maxW = 1600;
+      const maxH = 1200;
       if (targetWidth > maxW || targetHeight > maxH) {
-        final double widthRatio = maxW / targetWidth;
-        final double heightRatio = maxH / targetHeight;
-        final double scale = widthRatio < heightRatio ? widthRatio : heightRatio;
+        final scale = min(maxW / targetWidth, maxH / targetHeight);
         targetWidth = (targetWidth * scale).round();
         targetHeight = (targetHeight * scale).round();
       }
-
-      final resized = (targetWidth != decoded.width || targetHeight != decoded.height)
+      final resized =
+          targetWidth != decoded.width || targetHeight != decoded.height
           ? img.copyResize(
               decoded,
               width: targetWidth,
@@ -148,171 +71,248 @@ class TimetableParserService {
               interpolation: img.Interpolation.linear,
             )
           : decoded;
-
       final compressedBytes = img.encodeJpg(resized, quality: 80);
-
       Directory tempDir;
       try {
         tempDir = await getTemporaryDirectory();
       } catch (_) {
         tempDir = Directory.systemTemp;
       }
-
-      final tempPath =
-          '${tempDir.path}/timetable_compressed_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final compressedFile = File(tempPath);
+      final compressedFile = File(
+        '${tempDir.path}/timetable_compressed_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
       await compressedFile.writeAsBytes(compressedBytes, flush: true);
-
       return compressedFile;
-    } catch (e) {
-      debugPrint("IMAGE PREPROCESSING ERROR: $e");
+    } catch (_) {
+      debugPrint('[TimetableAI] category=image_preprocess_failed');
       return originalFile;
     }
   }
 
-  /// Parses timetable directly via Gemini Generative AI SDK.
+  /// Sends a timetable image through the configured NextClass Worker.
   static Future<Map<String, dynamic>> parseTimetable(
     File imageFile, {
-    GenerativeModel? customModel,
-    SharedPreferences? customPrefs,
+    http.Client? httpClient,
+    String? workerBaseUrlOverride,
+    Duration requestTimeout = const Duration(seconds: 40),
   }) async {
-    // 1. Enforce on-device rate limiting
-    await checkScanQuota(customPrefs);
-
-    if (customModel == null) {
-      assert(
-        _apiKey.isNotEmpty,
-        'GEMINI_API_KEY is not defined. Please run with --dart-define=GEMINI_API_KEY=<your_key>',
-      );
-      if (_apiKey.isEmpty) {
-        throw StateError(
-          'Missing GEMINI_API_KEY environment configuration. Pass via --dart-define=GEMINI_API_KEY=<key>.',
-        );
-      }
+    final baseUrl = (workerBaseUrlOverride ?? _workerBaseUrl).trim();
+    if (baseUrl.isEmpty) {
+      throw const TimetableScanException(TimetableScanFailure.configuration);
     }
-
+    final client = httpClient ?? http.Client();
+    final ownsClient = httpClient == null;
     File? preprocessedFile;
-
     try {
       preprocessedFile = await preprocessImage(imageFile);
       final imageBytes = await preprocessedFile.readAsBytes();
-
-      const prompt = '''
-You are an expert university timetable extractor.
-Analyze the timetable image and extract all lecture / class sessions into a valid JSON object.
-Return JSON with this exact schema:
-{
-  "entries": [
-    {
-      "day": "Monday",
-      "subject": "Course Name",
-      "group": "Section / Group if specified",
-      "start": "HH:MM",
-      "end": "HH:MM",
-      "room": "Room / Hall / Lab number",
-      "teacher": "Instructor or Professor Name"
-    }
-  ]
-}
-Rules:
-- Strictly output ONLY valid JSON matching the schema above.
-- Ensure 24-hour time formats (HH:MM).
-- Day must be Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, or Sunday.
-- If teacher, room, or group is absent or unreadable, set to null.
-''';
-
-      final content = [
-        Content.multi([
-          TextPart(prompt),
-          DataPart('image/jpeg', imageBytes),
-        ]),
-      ];
-
-      GenerateContentResponse? response;
-      Object? lastError;
-
-      if (customModel != null) {
-        response = await customModel
-            .generateContent(content)
-            .timeout(const Duration(seconds: 40));
-      } else {
-        for (final modelName in _candidateModels) {
-          try {
-            final model = GenerativeModel(
-              model: modelName,
-              apiKey: _apiKey,
-              generationConfig: GenerationConfig(
-                responseMimeType: 'application/json',
-                temperature: 0.0,
-              ),
-            );
-            final candidateRes = await model
-                .generateContent(content)
-                .timeout(const Duration(seconds: 35));
-            if (candidateRes.text != null && candidateRes.text!.trim().isNotEmpty) {
-              response = candidateRes;
-              break;
-            }
-          } catch (e) {
-            lastError = e;
-            debugPrint("Model $modelName attempt failed: $e. Trying next candidate...");
-          }
-        }
+      if (imageBytes.isEmpty) {
+        throw const TimetableScanException(
+          TimetableScanFailure.unreadableImage,
+        );
       }
-
-      if (response == null || response.text == null || response.text!.trim().isEmpty) {
-        if (lastError != null) {
-          throw lastError;
-        }
-        throw const FormatException("Empty response received from AI scanner.");
+      final response = await client
+          .post(
+            Uri.parse(
+              '${baseUrl.replaceFirst(RegExp(r'/+$'), '')}/v1/extract/timetable',
+            ),
+            headers: {
+              'Content-Type': 'application/json',
+              'Idempotency-Key': const Uuid().v4(),
+            },
+            body: jsonEncode({
+              'image': {
+                'mimeType': _mimeTypeForImage(preprocessedFile),
+                'data': base64Encode(imageBytes),
+              },
+            }),
+          )
+          .timeout(requestTimeout);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw TimetableScanException(
+          _failureForHttpStatus(response.statusCode),
+          statusCode: response.statusCode,
+        );
       }
-
-      final text = response.text!;
-
-      // Isolate outermost JSON object
-      final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(text);
-      if (jsonMatch == null) {
-        throw const FormatException("No JSON object detected in response body.");
+      final envelope = jsonDecode(response.body);
+      if (envelope is! Map<String, dynamic> ||
+          envelope['ok'] != true ||
+          envelope['data'] is! Map) {
+        throw const TimetableScanException(
+          TimetableScanFailure.malformedResponse,
+        );
       }
-
-      final jsonString = jsonMatch.group(0)!;
-      final Map<String, dynamic> decoded = jsonDecode(jsonString);
-
-      if (!decoded.containsKey("entries") && !decoded.containsKey("schedule")) {
-        throw const FormatException("Missing both 'entries' and 'schedule' keys in response.");
-      }
-
-      // Record successful scan upon successful receipt and decoding
-      await recordSuccessfulScan(customPrefs);
-
-      return decoded;
-    } on ScanLimitException {
+      return decodeTimetableResponse(jsonEncode(envelope['data']));
+    } on TimetableScanException catch (error) {
+      _logFailure(error.failure, statusCode: error.statusCode);
       rethrow;
-    } on TimeoutException catch (e) {
-      debugPrint("REQUEST TIMEOUT: $e");
-      throw Exception("NETWORK_TIMEOUT: Request timed out. The server took too long to respond.");
-    } on SocketException catch (e) {
-      debugPrint("SOCKET ERROR: $e");
-      throw Exception("NETWORK_ERROR: Unable to connect to timetable server. Please check your internet.");
-    } on FormatException catch (e) {
-      debugPrint("JSON PARSE ERROR: $e");
-      throw Exception("PARSER_FORMAT_ERROR: Failed to parse schedule from AI response: $e");
-    } catch (e) {
-      debugPrint("GEMINI INFERENCE ERROR: $e");
-      final errStr = e.toString();
-      if (errStr.contains('429') || errStr.contains('quota') || errStr.contains('QUOTA')) {
-        throw const ScanLimitException("Daily or weekly scan limit reached.");
-      }
-      throw Exception("PARSER_ERROR: AI parsing failed: $e");
+    } on TimeoutException {
+      const error = TimetableScanException(TimetableScanFailure.timeout);
+      _logFailure(error.failure);
+      throw error;
+    } on FormatException {
+      const error = TimetableScanException(
+        TimetableScanFailure.malformedResponse,
+      );
+      _logFailure(error.failure);
+      throw error;
+    } on SocketException {
+      const error = TimetableScanException(TimetableScanFailure.network);
+      _logFailure(error.failure);
+      throw error;
+    } on http.ClientException {
+      const error = TimetableScanException(TimetableScanFailure.network);
+      _logFailure(error.failure);
+      throw error;
     } finally {
+      if (ownsClient) client.close();
       if (preprocessedFile != null && preprocessedFile.path != imageFile.path) {
         try {
-          if (await preprocessedFile.exists()) {
-            await preprocessedFile.delete();
-          }
+          if (await preprocessedFile.exists()) await preprocessedFile.delete();
         } catch (_) {}
       }
     }
+  }
+
+  static TimetableScanFailure _failureForHttpStatus(int statusCode) =>
+      switch (statusCode) {
+        400 || 422 => TimetableScanFailure.invalidRequest,
+        408 || 504 => TimetableScanFailure.timeout,
+        401 || 403 => TimetableScanFailure.authentication,
+        404 => TimetableScanFailure.modelUnavailable,
+        429 => TimetableScanFailure.apiQuotaExceeded,
+        >= 500 => TimetableScanFailure.serviceUnavailable,
+        _ => TimetableScanFailure.serviceUnavailable,
+      };
+  static Map<String, dynamic> decodeTimetableResponse(String responseText) {
+    final jsonText = _extractJsonObject(responseText);
+    if (jsonText == null) {
+      throw const TimetableScanException(
+        TimetableScanFailure.malformedResponse,
+      );
+    }
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(jsonText);
+    } on FormatException {
+      throw const TimetableScanException(
+        TimetableScanFailure.malformedResponse,
+      );
+    }
+    if (decoded is! Map<String, dynamic> || decoded['entries'] is! List) {
+      throw const TimetableScanException(TimetableScanFailure.invalidSchema);
+    }
+    final entries = decoded['entries'] as List;
+    if (entries.isEmpty) {
+      throw const TimetableScanException(TimetableScanFailure.emptyResult);
+    }
+    for (final entry in entries) {
+      if (entry is! Map<String, dynamic> || !_isValidEntry(entry)) {
+        throw const TimetableScanException(TimetableScanFailure.invalidSchema);
+      }
+    }
+    return decoded;
+  }
+
+  static String? _extractJsonObject(String response) {
+    var source = response.trim();
+    if (source.startsWith('```')) {
+      final firstNewline = source.indexOf('\n');
+      if (firstNewline < 0) return null;
+      source = source.substring(firstNewline + 1).trim();
+      if (source.endsWith('```')) {
+        source = source.substring(0, source.length - 3).trim();
+      }
+    }
+    final start = source.indexOf('{');
+    if (start < 0) return null;
+    var depth = 0;
+    var inString = false;
+    var escaped = false;
+    for (var index = start; index < source.length; index++) {
+      final code = source.codeUnitAt(index);
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (code == 0x5c) {
+          escaped = true;
+        } else if (code == 0x22) {
+          inString = false;
+        }
+        continue;
+      }
+      if (code == 0x22) {
+        inString = true;
+      } else if (code == 0x7b) {
+        depth++;
+      } else if (code == 0x7d && --depth == 0) {
+        return source.substring(start, index + 1);
+      }
+    }
+    return null;
+  }
+
+  static bool _isValidEntry(Map<String, dynamic> entry) {
+    const requiredFields = [
+      'day',
+      'subject',
+      'group',
+      'start',
+      'end',
+      'room',
+      'teacher',
+    ];
+    if (requiredFields.any((field) => !entry.containsKey(field))) return false;
+    final day = entry['day'];
+    final subject = entry['subject'];
+    final start = entry['start'];
+    final end = entry['end'];
+    if (day is! String || !ClassItem.daysOfWeek.contains(day)) return false;
+    if (subject is! String || subject.trim().isEmpty) return false;
+    if (start is! String ||
+        end is! String ||
+        !_isValid24HourTime(start) ||
+        !_isValid24HourTime(end)) {
+      return false;
+    }
+    if (_minutesFromTime(end) <= _minutesFromTime(start)) return false;
+    for (final field in ['group', 'room', 'teacher']) {
+      if (entry[field] != null && entry[field] is! String) return false;
+    }
+    return true;
+  }
+
+  static bool _isValid24HourTime(String value) =>
+      RegExp(r'^(?:[01]\d|2[0-3]):[0-5]\d$').hasMatch(value);
+
+  static int _minutesFromTime(String value) {
+    final parts = value.split(':').map(int.parse).toList();
+    return parts[0] * 60 + parts[1];
+  }
+
+  static String _mimeTypeForImage(File file) {
+    final extension = file.path.split('.').last.toLowerCase();
+    return switch (extension) {
+      'jpg' || 'jpeg' => 'image/jpeg',
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'heic' || 'heif' => 'image/heic',
+      _ => throw const TimetableScanException(
+        TimetableScanFailure.unreadableImage,
+      ),
+    };
+  }
+
+  static void _logFailure(
+    TimetableScanFailure failure, {
+    int? statusCode,
+    int? attempt,
+    bool retrying = false,
+  }) {
+    debugPrint(
+      '[TimetableAI] category=${statusCode == null ? failure.name : 'http_$statusCode'} '
+      'failure=${failure.name} attempt=${attempt ?? 1} retrying=$retrying',
+    );
   }
 
   /// Converts either flat `entries` or legacy nested `schedule` into [ClassItem] models.
@@ -329,7 +329,9 @@ Rules:
 
         String subject = raw['subject']?.toString().trim() ?? 'Untitled Class';
         final group = raw['group']?.toString().trim();
-        if (group != null && group.isNotEmpty && !subject.toLowerCase().contains(group.toLowerCase())) {
+        if (group != null &&
+            group.isNotEmpty &&
+            !subject.toLowerCase().contains(group.toLowerCase())) {
           subject = "$subject ($group)";
         }
 
@@ -374,7 +376,8 @@ Rules:
 
       for (final lecture in rawClasses) {
         if (lecture is! Map<String, dynamic>) continue;
-        final subject = lecture['subject']?.toString().trim() ?? 'Untitled Class';
+        final subject =
+            lecture['subject']?.toString().trim() ?? 'Untitled Class';
         final timeStr = lecture['time']?.toString().trim() ?? '';
         final room = lecture['room']?.toString().trim();
         final teacher = lecture['teacher'] as String?;

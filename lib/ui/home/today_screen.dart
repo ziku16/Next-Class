@@ -1,7 +1,9 @@
 import 'dart:async';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../data/models/class_item.dart';
 import '../../data/models/quiz_item.dart';
 import '../../data/models/user_settings.dart';
@@ -13,6 +15,7 @@ import '../../state/quiz_provider.dart';
 import '../../state/exam_provider.dart';
 import '../../data/models/exam_item.dart';
 import '../shared/class_card.dart';
+import 'quizzes_preview_row.dart';
 import '../shared/nc_banner.dart';
 import '../shared/offline_banner.dart';
 import '../shared/undo_snackbar.dart';
@@ -77,7 +80,6 @@ class TodayScreen extends StatefulWidget {
 
 class _TodayScreenState extends State<TodayScreen> {
   late final TimetableRepository _timetableRepo;
-  late final QuizRepository _quizRepo;
   late final SettingsRepository _settingsRepo;
 
   late DateTime _now;
@@ -90,13 +92,11 @@ class _TodayScreenState extends State<TodayScreen> {
 
   List<ClassItem> _allClasses = [];
   List<ClassItem> _todayClasses = [];
-  List<QuizItem> _upcomingQuizzes = [];
 
   @override
   void initState() {
     super.initState();
     _timetableRepo = widget.timetableRepository ?? TimetableRepository();
-    _quizRepo = widget.quizRepository ?? QuizRepository();
     _settingsRepo = widget.settingsRepository ?? SettingsRepository();
 
     _now = widget.currentTime ?? DateTime.now();
@@ -108,14 +108,9 @@ class _TodayScreenState extends State<TodayScreen> {
       _filterTodayClasses();
       _isLoading = false;
     }
-
-    if (widget.quizProvider != null) {
-      _upcomingQuizzes = widget.quizProvider!.quizzes;
-      widget.quizProvider!.addListener(_onQuizProviderUpdated);
-    } else if (widget.initialQuizzes != null) {
-      _upcomingQuizzes = widget.initialQuizzes!;
-    }
     widget.examProvider?.addListener(_onExamProviderUpdated);
+    widget.quizProvider?.addListener(_onQuizProviderUpdated);
+    if (widget.currentTime != null) widget.quizProvider?.setReferenceDate(_now);
 
     if (widget.currentTime == null) {
       // Re-evaluate every minute for live progress and active class status
@@ -133,15 +128,11 @@ class _TodayScreenState extends State<TodayScreen> {
     _initConnectivity();
   }
 
-  void _onQuizProviderUpdated() {
-    if (mounted && widget.quizProvider != null) {
-      setState(() {
-        _upcomingQuizzes = widget.quizProvider!.quizzes;
-      });
-    }
+  void _onExamProviderUpdated() {
+    if (mounted) setState(() {});
   }
 
-  void _onExamProviderUpdated() {
+  void _onQuizProviderUpdated() {
     if (mounted) setState(() {});
   }
 
@@ -165,26 +156,20 @@ class _TodayScreenState extends State<TodayScreen> {
       _allClasses = widget.initialClasses!;
       _filterTodayClasses();
     }
-    if (widget.quizProvider != oldWidget.quizProvider) {
-      oldWidget.quizProvider?.removeListener(_onQuizProviderUpdated);
-      widget.quizProvider?.addListener(_onQuizProviderUpdated);
-      if (widget.quizProvider != null) {
-        _upcomingQuizzes = widget.quizProvider!.quizzes;
-      }
-    } else if (widget.initialQuizzes != oldWidget.initialQuizzes &&
-        widget.initialQuizzes != null) {
-      _upcomingQuizzes = widget.initialQuizzes!;
-    }
     if (widget.examProvider != oldWidget.examProvider) {
       oldWidget.examProvider?.removeListener(_onExamProviderUpdated);
       widget.examProvider?.addListener(_onExamProviderUpdated);
+    }
+    if (widget.quizProvider != oldWidget.quizProvider) {
+      oldWidget.quizProvider?.removeListener(_onQuizProviderUpdated);
+      widget.quizProvider?.addListener(_onQuizProviderUpdated);
     }
   }
 
   @override
   void dispose() {
-    widget.quizProvider?.removeListener(_onQuizProviderUpdated);
     widget.examProvider?.removeListener(_onExamProviderUpdated);
+    widget.quizProvider?.removeListener(_onQuizProviderUpdated);
     _minuteTicker?.cancel();
     _connectivitySubscription?.cancel();
     super.dispose();
@@ -199,8 +184,9 @@ class _TodayScreenState extends State<TodayScreen> {
           _isOffline = connectivityResult.contains(ConnectivityResult.none);
         });
       }
-      _connectivitySubscription =
-          Connectivity().onConnectivityChanged.listen((results) {
+      _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+        results,
+      ) {
         if (mounted) {
           setState(() {
             _isOffline = results.contains(ConnectivityResult.none);
@@ -221,14 +207,6 @@ class _TodayScreenState extends State<TodayScreen> {
         _filterTodayClasses();
       }
 
-      if (widget.quizProvider != null) {
-        _upcomingQuizzes = widget.quizProvider!.quizzes;
-      } else if (widget.initialQuizzes == null) {
-        final quizzes =
-            await _quizRepo.getUpcomingQuizzes(referenceDate: _now);
-        _upcomingQuizzes = quizzes;
-      }
-
       if (widget.remindersEnabled == null) {
         final settings = await _settingsRepo.getUserSettings();
         _remindersEnabled = settings.classReminderMinutes != null;
@@ -246,8 +224,9 @@ class _TodayScreenState extends State<TodayScreen> {
 
   void _filterTodayClasses() {
     final currentDay = DateFormat('EEEE').format(_now);
-    final todayList =
-        _allClasses.where((c) => c.dayOfWeek == currentDay).toList();
+    final todayList = _allClasses
+        .where((c) => c.dayOfWeek == currentDay)
+        .toList();
     todayList.sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
     _todayClasses = todayList;
   }
@@ -276,7 +255,8 @@ class _TodayScreenState extends State<TodayScreen> {
     final nc = context.ncColors;
     final hasTimetable = _allClasses.isNotEmpty;
     final examMode = widget.examProvider?.isExamMode(_now) ?? false;
-    final examsToday = widget.examProvider?.examsForDate(_now) ?? const <ExamItem>[];
+    final examsToday =
+        widget.examProvider?.examsForDate(_now) ?? const <ExamItem>[];
 
     return Scaffold(
       backgroundColor: nc.background,
@@ -316,11 +296,7 @@ class _TodayScreenState extends State<TodayScreen> {
                 ),
               ),
               SizedBox(width: 4),
-              Icon(
-                Icons.north_east_rounded,
-                size: 16,
-                color: Colors.black,
-              ),
+              Icon(Icons.north_east_rounded, size: 16, color: Colors.black),
             ],
           ),
         ),
@@ -344,11 +320,7 @@ class _TodayScreenState extends State<TodayScreen> {
                     ),
                   ],
                 ),
-                child: Icon(
-                  Icons.settings,
-                  color: nc.icon,
-                  size: 20,
-                ),
+                child: Icon(Icons.settings, color: nc.icon, size: 20),
               ),
             ),
           ),
@@ -377,10 +349,11 @@ class _TodayScreenState extends State<TodayScreen> {
             // Reminders disabled banner
             if (!_remindersEnabled)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: NcBanner.permission(
-                  onTurnOn: _turnOnReminders,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
+                child: NcBanner.permission(onTurnOn: _turnOnReminders),
               ),
 
             // Main Scrollable Feed
@@ -420,6 +393,16 @@ class _TodayScreenState extends State<TodayScreen> {
                             const SizedBox(height: 20),
                             _buildNextExamPreview(context),
                           ],
+                          if (!examMode) ...[
+                            const SizedBox(height: 20),
+                            QuizzesPreviewRow(
+                              quizzes: _upcomingQuizzes.take(2).toList(),
+                              referenceDate: _now,
+                              onSeeAll: widget.onNavigateToTab == null
+                                  ? null
+                                  : () => widget.onNavigateToTab!(2),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -428,6 +411,22 @@ class _TodayScreenState extends State<TodayScreen> {
         ),
       ),
     );
+  }
+
+  List<QuizItem> get _upcomingQuizzes {
+    final quizzes =
+        widget.initialQuizzes ??
+        widget.quizProvider?.quizzes ??
+        const <QuizItem>[];
+    final today = DateTime(_now.year, _now.month, _now.day);
+    return quizzes.where((quiz) {
+      final dueDate = DateTime(
+        quiz.dueDate.year,
+        quiz.dueDate.month,
+        quiz.dueDate.day,
+      );
+      return !quiz.isCompleted && !dueDate.isBefore(today);
+    }).toList()..sort((a, b) => a.dueDate.compareTo(b.dueDate));
   }
 
   Widget _examModeBanner(BuildContext context) {
@@ -441,57 +440,114 @@ class _TodayScreenState extends State<TodayScreen> {
         border: Border.all(color: nc.border, width: 2.5),
         boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(3, 3))],
       ),
-      child: const Row(children: [
-        Icon(Icons.edit_calendar_rounded),
-        SizedBox(width: 10),
-        Expanded(child: Text('EXAM MODE', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2))),
-      ]),
+      child: const Row(
+        children: [
+          Icon(Icons.edit_calendar_rounded),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'EXAM MODE',
+              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildExamsToday(BuildContext context, ThemeData theme, List<ExamItem> exams) {
+  Widget _buildExamsToday(
+    BuildContext context,
+    ThemeData theme,
+    List<ExamItem> exams,
+  ) {
     final nc = context.ncColors;
     if (exams.isEmpty) {
       return Container(
         key: const Key('exam_free_day_state'),
         padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(color: nc.surface, border: Border.all(color: nc.border, width: 2.5), boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(3, 3))]),
-        child: const Column(children: [
-          Icon(Icons.event_available_rounded, size: 36),
-          SizedBox(height: 10),
-          Text('No exam scheduled today', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
-          SizedBox(height: 4),
-          Text('Your regular classes are paused during Exam Mode.', textAlign: TextAlign.center),
-        ]),
+        decoration: BoxDecoration(
+          color: nc.surface,
+          border: Border.all(color: nc.border, width: 2.5),
+          boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(3, 3))],
+        ),
+        child: const Column(
+          children: [
+            Icon(Icons.event_available_rounded, size: 36),
+            SizedBox(height: 10),
+            Text(
+              'No exam scheduled today',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Your regular classes are paused during Exam Mode.',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       );
     }
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('TODAY’S EXAMS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1, color: nc.textPrimary)),
-      const SizedBox(height: 10),
-      ...exams.map((exam) => Container(
-        key: Key('today_exam_${exam.id}'),
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: nc.surface, border: Border.all(color: nc.border, width: 2.5), boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(3, 3))]),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(exam.subject, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
-          const SizedBox(height: 6),
-          Text([
-            if (exam.startTime != null) '${exam.startTime}${exam.endTime == null ? '' : '–${exam.endTime}'}',
-            if (exam.venue != null) exam.venue!,
-            if (exam.examType != null) exam.examType!,
-          ].join(' · ')),
-        ]),
-      )),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'TODAY’S EXAMS',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+            color: nc.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        ...exams.map(
+          (exam) => Container(
+            key: Key('today_exam_${exam.id}'),
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: nc.surface,
+              border: Border.all(color: nc.border, width: 2.5),
+              boxShadow: [
+                BoxShadow(color: nc.shadow, offset: const Offset(3, 3)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  exam.subject,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  [
+                    if (exam.startTime != null)
+                      '${exam.startTime}${exam.endTime == null ? '' : '–${exam.endTime}'}',
+                    if (exam.venue != null) exam.venue!,
+                    if (exam.examType != null) exam.examType!,
+                  ].join(' · '),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildNextExamPreview(BuildContext context) {
     final nc = context.ncColors;
-    final futureExams = widget.examProvider!.activeExams
-        .where((exam) => !AcademicScheduleService.calendarDate(exam.examDate).isBefore(AcademicScheduleService.calendarDate(_now)))
-        .toList()
-      ..sort((a, b) => a.localDate.compareTo(b.localDate));
+    final futureExams =
+        widget.examProvider!.activeExams
+            .where(
+              (exam) =>
+                  !AcademicScheduleService.calendarDate(exam.examDate)
+                      .isBefore(AcademicScheduleService.calendarDate(_now)),
+            )
+            .toList()
+          ..sort((a, b) => a.localDate.compareTo(b.localDate));
     if (futureExams.isEmpty) return const SizedBox.shrink();
     final exam = futureExams.first;
     return Semantics(
@@ -501,13 +557,26 @@ class _TodayScreenState extends State<TodayScreen> {
         onTap: widget.onAddExam,
         child: Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: nc.surface, border: Border.all(color: nc.border, width: 2), boxShadow: [BoxShadow(color: nc.shadow, offset: const Offset(2, 2))]),
-          child: Row(children: [
-            const Icon(Icons.event_note_rounded),
-            const SizedBox(width: 10),
-            Expanded(child: Text('Next exam · ${exam.subject} · ${DateFormat('d MMM').format(exam.examDate)}', style: const TextStyle(fontWeight: FontWeight.w800))),
-            const Icon(Icons.chevron_right_rounded),
-          ]),
+          decoration: BoxDecoration(
+            color: nc.surface,
+            border: Border.all(color: nc.border, width: 2),
+            boxShadow: [
+              BoxShadow(color: nc.shadow, offset: const Offset(2, 2)),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.event_note_rounded),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Next exam · ${exam.subject} · ${DateFormat('d MMM').format(exam.examDate)}',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded),
+            ],
+          ),
         ),
       ),
     );
@@ -524,13 +593,15 @@ class _TodayScreenState extends State<TodayScreen> {
     );
 
     // Find upcoming classes
-    final upcomingClasses =
-        _todayClasses.where((c) => c.startMinutes > currentMinutes).toList();
+    final upcomingClasses = _todayClasses
+        .where((c) => c.startMinutes > currentMinutes)
+        .toList();
     final nextClass = upcomingClasses.isNotEmpty ? upcomingClasses.first : null;
 
     // Find completed classes
-    final completedClasses =
-        _todayClasses.where((c) => c.endMinutes <= currentMinutes).toList();
+    final completedClasses = _todayClasses
+        .where((c) => c.endMinutes <= currentMinutes)
+        .toList();
 
     // Order: Active class at top, followed by upcoming, followed by completed
     final orderedFeed = <ClassItem>[];
@@ -549,38 +620,14 @@ class _TodayScreenState extends State<TodayScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'Today',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: context.ncColors.textPrimary,
-                fontSize: 20,
-                letterSpacing: 0.5,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: context.ncColors.surface,
-                borderRadius: BorderRadius.circular(3),
-                border: Border.all(color: context.ncColors.border, width: 1.5),
-              ),
-              child: Text(
-                'OCT0221 / CLASSIFY',
-                style: TextStyle(
-                  fontFamily: 'SpaceGrotesk',
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
-                  color: context.ncColors.textPrimary,
-                ),
-              ),
-            ),
-          ],
+        Text(
+          'Classes',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: context.ncColors.textPrimary,
+            fontSize: 20,
+            letterSpacing: 0.2,
+          ),
         ),
         const SizedBox(height: 12),
         ListView.separated(
@@ -628,10 +675,7 @@ class _TodayScreenState extends State<TodayScreen> {
       decoration: BoxDecoration(
         color: nc.surface,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: nc.border,
-          width: 3.0,
-        ),
+        border: Border.all(color: nc.border, width: 3.0),
         boxShadow: [
           BoxShadow(
             color: nc.shadow,
@@ -702,10 +746,7 @@ class _TodayScreenState extends State<TodayScreen> {
       decoration: BoxDecoration(
         color: nc.surface,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: nc.border,
-          width: 3.0,
-        ),
+        border: Border.all(color: nc.border, width: 3.0),
         boxShadow: [
           BoxShadow(
             color: nc.shadow,

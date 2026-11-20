@@ -1,0 +1,24 @@
+name = "nextclass-gemini-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-11-20"
+workers_dev = true
+
+[[ratelimits]]
+name = "IP_RATE_LIMITER"
+# Must be a positive integer unique within the Cloudflare account.
+namespace_id = "739104"
+
+[ratelimits.simple]
+limit = 5
+period = 60
+
+[[durable_objects.bindings]]
+name = "IDEMPOTENCY"
+class_name = "IdempotencyObject"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["IdempotencyObject"]
+
+[observability]
+enabled = true

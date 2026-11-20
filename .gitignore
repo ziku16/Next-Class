@@ -63,3 +63,5 @@ android/app/*.keystore
 # Obfuscation symbol mappings
 build/app/outputs/symbols/
 
+
+/secrets/
