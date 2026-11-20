@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { X, ZoomIn } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react';
 import PageIntro from '../components/PageIntro.jsx';
 import usePageMeta from '../components/usePageMeta.js';
 
@@ -14,50 +15,96 @@ const captures = [
 ];
 
 export default function ScreenshotsPage() {
-  const [selected, setSelected] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(null);
   const closeButton = useRef(null);
+  const modalPanel = useRef(null);
   const opener = useRef(null);
+  const touchStartX = useRef(null);
+  const isOpen = selectedIndex !== null;
+  const selected = isOpen ? captures[selectedIndex] : null;
   usePageMeta({ title: 'Screenshots — NextClass', description: 'A look at the NextClass Android app, from the weekly timetable to quizzes and exams.', path: '/screenshots' });
 
   useEffect(() => {
-    if (!selected) return undefined;
-    const previousOverflow = document.body.style.overflow;
+    if (!isOpen) return undefined;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousRootOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     closeButton.current?.focus();
-    const closeOnEscape = (event) => {
-      if (event.key === 'Escape') setSelected(null);
-      if (event.key === 'Tab') {
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setSelectedIndex(null);
+        return;
+      }
+      if (event.key === 'ArrowRight') {
         event.preventDefault();
-        closeButton.current?.focus();
+        setSelectedIndex((index) => index === null ? null : (index + 1) % captures.length);
+        return;
+      }
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        setSelectedIndex((index) => index === null ? null : (index - 1 + captures.length) % captures.length);
+        return;
+      }
+      if (event.key === 'Tab') {
+        const focusable = [...(modalPanel.current?.querySelectorAll('button:not([disabled])') ?? [])];
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
-    window.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('keydown', onKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', closeOnEscape);
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousRootOverflow;
+      window.removeEventListener('keydown', onKeyDown);
       opener.current?.focus();
     };
-  }, [selected]);
+  }, [isOpen]);
 
-  const close = () => setSelected(null);
+  const close = () => setSelectedIndex(null);
+  const changeCapture = (direction) => setSelectedIndex((index) => index === null ? null : (index + direction + captures.length) % captures.length);
+  const handleTouchStart = (event) => { touchStartX.current = event.changedTouches[0]?.clientX ?? null; };
+  const handleTouchEnd = (event) => {
+    if (touchStartX.current === null) return;
+    const endX = event.changedTouches[0]?.clientX;
+    const distance = typeof endX === 'number' ? endX - touchStartX.current : 0;
+    touchStartX.current = null;
+    if (Math.abs(distance) > 48) changeCapture(distance < 0 ? 1 : -1);
+  };
 
-  return <div className="page-shell shell">
-    <PageIntro kicker="THE APP" title={<>NextClass,<br /><span>screen by screen.</span></>} description="App screens shown with sample university data. These are rendered previews, not photos taken on a device." />
-    <div className="gallery-grid" data-reveal>
-      {captures.map((item, index) => <article className={`capture-card capture-${index + 1}`} key={item.file} data-reveal-item>
-        <button className="capture-image-button" type="button" onClick={(event) => { opener.current = event.currentTarget; setSelected(item); }} aria-label={`Open larger preview: ${item.title}`}>
-          <img src={`/images/screenshots/${item.file}`} width="360" height="800" loading="lazy" alt={item.alt} />
-          <span className="capture-open"><ZoomIn size={15} aria-hidden="true" /> View larger</span>
-        </button>
-        <div className="capture-caption"><div><h2>{item.title}</h2><p>{item.text}</p></div></div>
-      </article>)}
-    </div>
-    {selected && <div className="screenshot-lightbox" role="dialog" aria-modal="true" aria-labelledby="screenshot-dialog-title" onClick={close}>
-      <div className="screenshot-lightbox-panel" onClick={(event) => event.stopPropagation()}>
-        <div className="screenshot-lightbox-heading"><div><p className="eyebrow">NEXTCLASS APP</p><h2 id="screenshot-dialog-title">{selected.title}</h2></div><button ref={closeButton} className="lightbox-close" type="button" onClick={close} aria-label="Close preview"><X size={20} /></button></div>
-        <img src={`/images/screenshots/${selected.file}`} width="360" height="800" alt={selected.alt} />
-        <p>{selected.text}</p>
+  const previewModal = selected && createPortal(
+    <div className="screenshot-lightbox" role="dialog" aria-modal="true" aria-labelledby="screenshot-dialog-title" onClick={close}>
+      <div ref={modalPanel} className="screenshot-lightbox-panel" onClick={(event) => event.stopPropagation()}>
+        <div className="screenshot-lightbox-heading"><div><p className="eyebrow">NEXTCLASS APP · {selectedIndex + 1} OF {captures.length}</p><h2 id="screenshot-dialog-title">{selected.title}</h2></div><button ref={closeButton} className="lightbox-close" type="button" onClick={close} aria-label="Close preview"><X size={20} /></button></div>
+        <div className="lightbox-image-wrap" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}><img src={`/images/screenshots/${selected.file}`} width="360" height="800" alt={selected.alt} /></div>
+        <div className="lightbox-controls"><button type="button" onClick={() => changeCapture(-1)} aria-label="Previous screenshot"><ChevronLeft size={19} /> Previous</button><span>{String(selectedIndex + 1).padStart(2, '0')} / {String(captures.length).padStart(2, '0')}</span><button type="button" onClick={() => changeCapture(1)} aria-label="Next screenshot">Next <ChevronRight size={19} /></button></div>
       </div>
-    </div>}
-  </div>;
+    </div>,
+    document.body,
+  );
+
+  return <>
+    <div className="page-shell shell">
+      <PageIntro kicker="THE APP" title={<>NextClass,<br /><span>screen by<br className="mobile-title-break" /> screen.</span></>} description="Actual Flutter-rendered app previews with sample university data. Open any screen to see it at full size." />
+      <div className="gallery-grid" data-reveal aria-label="NextClass app screenshots">
+        {captures.map((item, index) => <article className={`capture-card capture-${index + 1}`} key={item.file} data-reveal-item>
+          <button className="capture-image-button" type="button" onClick={(event) => { opener.current = event.currentTarget; setSelectedIndex(index); }} aria-label={`Open larger preview: ${item.title}`}>
+            <img src={`/images/screenshots/${item.file}`} width="360" height="800" loading="lazy" alt={item.alt} />
+            <span className="capture-open"><ZoomIn size={15} aria-hidden="true" /> View screen</span>
+          </button>
+          <div className="capture-caption"><h2>{item.title}</h2><p>{item.text}</p></div>
+        </article>)}
+      </div>
+      <p className="gallery-source-note">Previews are rendered from the app’s Flutter widgets using sample data.</p>
+    </div>
+    {previewModal}
+  </>;
 }

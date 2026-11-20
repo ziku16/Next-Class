@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatFileSize, getLocalRelease, isOfficialApkAsset, parseReleaseField, parseSha256Digest } from '../src/data/releaseConfig.js';
+import { readFileSync, statSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+import { formatFileSize, getLocalRelease, getStudentReleaseNotes, isOfficialApkAsset, isPublicReleaseData, bundledReleaseMetadata, parseReleaseField, parseSha256Digest } from '../src/data/releaseConfig.js';
 
 const localReleaseEnv = {
   DEV: true,
@@ -62,4 +65,36 @@ test('creates local APK metadata only in development with a complete valid confi
   assert.equal(release.isLocal, true);
   assert.equal(getLocalRelease({ ...localReleaseEnv, DEV: false }), null);
   assert.equal(getLocalRelease({ ...localReleaseEnv, VITE_LOCAL_APK_SHA256: '' }), null);
+});
+
+test('keeps student-facing release notes and removes engineering metadata', () => {
+  const notes = getStudentReleaseNotes(`## What's New
+- Exam date-sheet scanning is easier to review.
+- Quiz reminders are more reliable.
+Architecture: Universal (armeabi-v7a, arm64-v8a, x86_64)
+Minimum Android: Android 7.0 (API 24)
+SHA-256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Signing certificate fingerprint: internal-only`);
+  assert.deepEqual(notes, [
+    'Exam date-sheet scanning is easier to review.',
+    'Quiz reminders are more reliable.',
+  ]);
+});
+test('requires a hosted official APK before enabling a public release', () => {
+  const hostedUrl = 'https://github.com/ziku16/Next-Class/releases/download/v1.0.1/NextClass.apk';
+  assert.equal(isPublicReleaseData({ url: hostedUrl, isLocal: false }), true);
+  assert.equal(isPublicReleaseData({ url: hostedUrl, isLocal: true }), false);
+  assert.equal(isPublicReleaseData({ url: '/downloads/NextClass.apk' }), false);
+  assert.equal(isPublicReleaseData({ url: 'https://example.com/NextClass.apk' }), false);
+  assert.equal(isPublicReleaseData(null), false);
+});
+test('shows the existing APK metadata without marking it as a public release', () => {
+  const webappRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const apkPath = resolve(webappRoot, 'public/downloads/NextClass-v1.0.1-universal.apk');
+  const pubspec = readFileSync(resolve(webappRoot, '../pubspec.yaml'), 'utf8');
+  assert.match(pubspec, /^version:\s*1\.0\.1\+2\s*$/m);
+  assert.equal(bundledReleaseMetadata.version, '1.0.1');
+  assert.equal(bundledReleaseMetadata.sizeBytes, statSync(apkPath).size);
+  assert.equal(bundledReleaseMetadata.size, '24.6 MB');
+  assert.equal(isPublicReleaseData({ ...bundledReleaseMetadata, url: '/downloads/NextClass-v1.0.1-universal.apk', isLocal: true }), false);
 });

@@ -25,6 +25,9 @@ export const formatFileSize = (bytes) => {
   return `${value.toFixed(unit >= 2 ? 1 : 0)} ${units[unit]}`;
 };
 
+// Metadata for the APK already bundled in public/downloads; it is not a hosted release.
+export const bundledReleaseMetadata = { version: '1.0.1', sizeBytes: 25824416, size: formatFileSize(25824416) };
+
 export function parseReleaseField(body, label) {
   if (typeof body !== 'string' || typeof label !== 'string' || !label.trim()) return null;
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -38,6 +41,34 @@ export function parseSha256Digest({ digest, body } = {}) {
   return (apiDigest ?? noteDigest)?.toLowerCase() ?? null;
 }
 
+const hiddenReleaseDetail = /^(?:architecture|abis?|sha\s*-?\s*256|checksum|signing(?:\s+(?:certificate(?:\s+fingerprint)?|identity|fingerprint))?|minimum\s+android|android\s+(?:version|sdk|api(?:\s+level)?)|minimum\s+(?:sdk|api)|sdk(?:\s+(?:version|level))?|api(?:\s+(?:version|level))?|build\s+(?:configuration|config|type)|version\s+code|application\s+id)\s*:/i;
+const hiddenPlatformDetail = /\b(?:armeabi-v7a|arm64-v8a|x86_64|API\s*level\s*\d+|SDK\s*\d+)\b/i;
+
+export function getStudentReleaseNotes(body) {
+  if (typeof body !== 'string') return [];
+  return body.split(/\r?\n/)
+    .map((line) => line
+      .replace(/^\s*#{1,6}\s*/, '')
+      .replace(/^\s*(?:[-*+]\s+|\d+[.)]\s+)/, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[*_`~]/g, '')
+      .trim())
+    .filter((line) => line && !/^(?:what['’]?s new|release notes?)$/i.test(line))
+    .filter((line) => !hiddenReleaseDetail.test(line) && !hiddenPlatformDetail.test(line))
+    .slice(0, 6);
+}
+export function isPublicReleaseData(data) {
+  if (!data || data.isLocal === true || typeof data.url !== 'string') return false;
+  try {
+    const url = new URL(data.url);
+    return url.protocol === 'https:'
+      && url.hostname === 'github.com'
+      && url.pathname.startsWith(releaseConfig.assetPathPrefix)
+      && url.pathname.toLowerCase().endsWith('.apk');
+  } catch {
+    return false;
+  }
+}
 export function isOfficialApkAsset(asset) {
   if (!asset || asset.state !== 'uploaded' || !asset.name?.toLowerCase().endsWith('.apk') || asset.size <= 0) return false;
   try {
