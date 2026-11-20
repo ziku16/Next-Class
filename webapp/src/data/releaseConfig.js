@@ -26,7 +26,14 @@ export const formatFileSize = (bytes) => {
 };
 
 // Metadata for the APK already bundled in public/downloads; it is not a hosted release.
-export const bundledReleaseMetadata = { version: '1.0.1', sizeBytes: 25824416, size: formatFileSize(25824416) };
+export const bundledReleaseMetadata = {
+  version: '1.0.1',
+  sizeBytes: 25824416,
+  size: formatFileSize(25824416),
+  fileName: 'NextClass-v1.0.1-universal.apk',
+  url: '/downloads/NextClass-v1.0.1-universal.apk',
+  isLocal: true,
+};
 
 export function parseReleaseField(body, label) {
   if (typeof body !== 'string' || typeof label !== 'string' || !label.trim()) return null;
@@ -104,4 +111,9 @@ export function getLocalRelease(env = buildEnv) {
     notes: 'Local development APK. This artifact is not a published GitHub release.',
     isLocal: true,
   };
+}
+
+export function getDownloadArtifact(release, isDevelopment = false) {
+  if (release?.status === 'available' && isPublicReleaseData(release.data)) return release.data;
+  return isDevelopment ? bundledReleaseMetadata : null;
 }

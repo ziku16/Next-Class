@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { formatFileSize, getLocalRelease, getStudentReleaseNotes, isOfficialApkAsset, isPublicReleaseData, bundledReleaseMetadata, parseReleaseField, parseSha256Digest } from '../src/data/releaseConfig.js';
+import { formatFileSize, getLocalRelease, getStudentReleaseNotes, isOfficialApkAsset, isPublicReleaseData, bundledReleaseMetadata, getDownloadArtifact, parseReleaseField, parseSha256Digest } from '../src/data/releaseConfig.js';
 
 const localReleaseEnv = {
   DEV: true,
@@ -97,4 +97,15 @@ test('shows the existing APK metadata without marking it as a public release', (
   assert.equal(bundledReleaseMetadata.sizeBytes, statSync(apkPath).size);
   assert.equal(bundledReleaseMetadata.size, '24.6 MB');
   assert.equal(isPublicReleaseData({ ...bundledReleaseMetadata, url: '/downloads/NextClass-v1.0.1-universal.apk', isLocal: true }), false);
+});
+
+test('uses the bundled APK only for development when no public release exists', () => {
+  const local = getDownloadArtifact({ status: 'unavailable', data: null }, true);
+  assert.equal(local.url, '/downloads/NextClass-v1.0.1-universal.apk');
+  assert.equal(local.fileName, 'NextClass-v1.0.1-universal.apk');
+  assert.equal(local.isLocal, true);
+  assert.equal(getDownloadArtifact({ status: 'unavailable', data: null }, false), null);
+
+  const publicRelease = { version: '1.0.2', url: 'https://github.com/ziku16/Next-Class/releases/download/v1.0.2/NextClass.apk' };
+  assert.equal(getDownloadArtifact({ status: 'available', data: publicRelease }, false), publicRelease);
 });
