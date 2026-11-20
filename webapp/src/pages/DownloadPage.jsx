@@ -9,7 +9,6 @@ import { bundledReleaseMetadata, getStudentReleaseNotes, isPublicReleaseData } f
 function ReleaseStatus({ status, releasesUrl }) {
   if (status === 'loading') return <p className="release-status" aria-live="polite"><span className="mini-loader" />Checking the current release…</p>;
   if (status === 'error') return <p className="release-status"><CircleAlert size={18} /> Release information could not be loaded. Try again shortly, or visit the <a href={releasesUrl} target="_blank" rel="noreferrer">official releases</a>.</p>;
-  if (status === 'unavailable') return <p className="release-status"><CircleAlert size={18} /> No public APK is available at this time.</p>;
   return null;
 }
 
