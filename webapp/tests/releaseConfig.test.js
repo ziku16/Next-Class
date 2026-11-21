@@ -100,6 +100,33 @@ test('shows student-friendly v1.0.2 highlights', () => {
     'See your classes laid out across the week.',
   ]);
 });
+test('prepares the published v1.0.3 APK and student-friendly release notes', () => {
+  const apkUrl = 'https://github.com/ziku16/Next-Class/releases/download/v1.0.3/NextClass-v1.0.3.apk';
+  const metadata = {
+    version: 'v1.0.3',
+    fileName: 'NextClass-v1.0.3.apk',
+    url: apkUrl,
+    isLocal: false,
+  };
+  const asset = {
+    name: metadata.fileName,
+    state: 'uploaded',
+    size: 27979632,
+    browser_download_url: apkUrl,
+  };
+
+  assert.equal(isPublicReleaseData(metadata), true);
+  assert.equal(isOfficialApkAsset(asset, 'v1.0.3'), true);
+  assert.equal(formatFileSize(asset.size), '26.7 MiB');
+  assert.deepEqual(getStudentReleaseNotes('', metadata.version), [
+    'Scan your class timetable with AI and review it before saving.',
+    'Get class reminders so you are ready for what is next.',
+    'Track quizzes and use Exam Mode to focus on upcoming exams.',
+    'Import exam date sheets from Excel and choose your batch.',
+    'Review exam dates, courses, times, and rooms before saving.',
+    'See your weekly schedule in a cleaner, steadier view.',
+  ]);
+});
 test('requires a hosted official APK before enabling a public release', () => {
   const hostedUrl = 'https://github.com/ziku16/Next-Class/releases/download/v1.0.2/NextClass-v1.0.2.apk';
   const metadata = { version: 'v1.0.2', fileName: 'NextClass-v1.0.2.apk', url: hostedUrl, isLocal: false };

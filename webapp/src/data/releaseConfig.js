@@ -41,6 +41,14 @@ export function parseSha256Digest({ digest, body } = {}) {
 const hiddenReleaseDetail = /^(?:architecture|abis?|sha\s*-?\s*256|checksum|signing(?:\s+(?:certificate(?:\s+fingerprint)?|identity|fingerprint))?|minimum\s+android|android\s+(?:version|sdk|api(?:\s+level)?)|minimum\s+(?:sdk|api)|sdk(?:\s+(?:version|level))?|api(?:\s+(?:version|level))?|build\s+(?:configuration|config|type)|version\s+code|application\s+id)\s*:/i;
 const hiddenPlatformDetail = /\b(?:armeabi-v7a|arm64-v8a|x86_64|API\s*level\s*\d+|SDK\s*\d+)\b/i;
 const studentReleaseNotesByVersion = {
+  'v1.0.3': [
+    'Scan your class timetable with AI and review it before saving.',
+    'Get class reminders so you are ready for what is next.',
+    'Track quizzes and use Exam Mode to focus on upcoming exams.',
+    'Import exam date sheets from Excel and choose your batch.',
+    'Review exam dates, courses, times, and rooms before saving.',
+    'See your weekly schedule in a cleaner, steadier view.',
+  ],
   'v1.0.2': [
     'Scan your class timetable with AI and review it before saving.',
     'Get class reminders so you are ready for what is next.',
