@@ -169,14 +169,6 @@ class _WeekScreenState extends State<WeekScreen> {
     }
   }
 
-  void _changeWeek(int offset) {
-    setState(() {
-      _referenceDate = _referenceDate.add(Duration(days: offset * 7));
-      _computeWeekDays();
-      _selectedDayIndex = _selectedDayIndex.clamp(0, 6);
-    });
-  }
-
   List<ClassItem> _classesForDay(String dayName) {
     final list = _allClasses.where((c) => c.dayOfWeek == dayName).toList();
     list.sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
@@ -318,11 +310,7 @@ class _WeekScreenState extends State<WeekScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Row(
                 children: [
-                  IconButton(
-                    tooltip: 'Previous week',
-                    onPressed: () => _changeWeek(-1),
-                    icon: const Icon(Icons.chevron_left_rounded),
-                  ),
+                  const SizedBox(width: 48),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -402,11 +390,7 @@ class _WeekScreenState extends State<WeekScreen> {
                       ],
                     ),
                   ),
-                  IconButton(
-                    tooltip: 'Next week',
-                    onPressed: () => _changeWeek(1),
-                    icon: const Icon(Icons.chevron_right_rounded),
-                  ),
+                  const SizedBox(width: 48),
                 ],
               ),
             ),

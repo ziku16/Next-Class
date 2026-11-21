@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
@@ -7,6 +8,16 @@ import '../../data/models/exam_item.dart';
 import '../../data/models/exam_schedule.dart';
 import '../../state/exam_provider.dart';
 import '../../services/exam_sheet_parser_service.dart';
+
+List<String> _discoverExamBatches(Uint8List bytes) =>
+    ExamSheetParserService.discoverXlsxBatches(bytes);
+
+List<ExamItem> _parseXlsxExamBatch(Map<String, Object?> args) =>
+    ExamSheetParserService.parseXlsxBatch(
+      args['bytes']! as Uint8List,
+      selectedBatch: args['batch']! as String,
+      scheduleId: args['scheduleId']! as String,
+    );
 
 class ExamManagementScreen extends StatefulWidget {
   final ExamProvider provider;
@@ -51,8 +62,12 @@ class _ExamManagementScreenState extends State<ExamManagementScreen> {
       );
       if (selected == null) return;
       final fileName = selected['name']?.toString() ?? '';
+      final mimeType = selected['mimeType']?.toString();
       final raw = selected['bytes'];
-      if (!ExamSheetParserService.isSupportedFile(fileName)) {
+      if (!ExamSheetParserService.isSupportedFile(
+        fileName,
+        mimeType: mimeType,
+      )) {
         throw const ExamSheetFormatException(
           'Choose a PDF, XLSX, JPG, JPEG, or PNG date sheet. Legacy .xls files are not supported.',
         );
@@ -61,6 +76,10 @@ class _ExamManagementScreenState extends State<ExamManagementScreen> {
         throw const ExamSheetFormatException(
           'Could not read the selected file.',
         );
+      }
+      if (ExamSheetParserService.isXlsx(fileName, mimeType: mimeType)) {
+        await _importXlsx(raw);
+        return;
       }
       final identity = await _showIdentityDialog();
       if (identity == null || !mounted) return;
@@ -75,6 +94,7 @@ class _ExamManagementScreenState extends State<ExamManagementScreen> {
       final exams = await ExamSheetParserService.parse(
         bytes: raw,
         fileName: fileName,
+        mimeType: mimeType,
         program: schedule.program,
         semester: schedule.semester,
         section: schedule.section,
@@ -103,6 +123,108 @@ class _ExamManagementScreenState extends State<ExamManagementScreen> {
       if (mounted) setState(() => _isImporting = false);
     }
   }
+
+  Future<void> _importXlsx(Uint8List bytes) async {
+    final progress = ValueNotifier<int>(0);
+    var progressDialogOpen = true;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => _XlsxImportProgress(progress: progress),
+    );
+    try {
+      await Future<void>.delayed(Duration.zero);
+      progress.value = 1;
+      final batches = await compute(_discoverExamBatches, bytes);
+      if (!mounted) return;
+      progressDialogOpen = false;
+      Navigator.of(context).pop();
+      final selectedBatch = await _showBatchPicker(batches);
+      if (selectedBatch == null || !mounted) return;
+
+      progressDialogOpen = true;
+      progress.value = 2;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => _XlsxImportProgress(progress: progress),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      progress.value = 3;
+      final scheduleId = 'schedule_${DateTime.now().microsecondsSinceEpoch}';
+      final exams = await compute(_parseXlsxExamBatch, {
+        'bytes': bytes,
+        'batch': selectedBatch,
+        'scheduleId': scheduleId,
+      });
+      if (!mounted) return;
+      progress.value = 4;
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      if (!mounted) return;
+      final normalizedBatch = ExamSheetParserService.normalizeBatch(
+        selectedBatch,
+      );
+      final separator = normalizedBatch.indexOf('-');
+      final schedule = ExamSchedule(
+        id: scheduleId,
+        program: normalizedBatch.substring(0, separator),
+        semester: 'Semester ${normalizedBatch.substring(separator + 1)}',
+        section: normalizedBatch,
+        isActive: true,
+        createdAt: DateTime.now(),
+      );
+      progressDialogOpen = false;
+      Navigator.of(context).pop();
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ExamReviewScreen(
+            schedule: schedule,
+            initialExams: exams,
+            onConfirm: (reviewed) async {
+              await widget.provider.saveConfirmedSchedule(schedule, reviewed);
+              await widget.onScheduleChanged?.call();
+            },
+          ),
+        ),
+      );
+    } finally {
+      if (progressDialogOpen && mounted) Navigator.of(context).pop();
+      progress.dispose();
+    }
+  }
+
+  Future<String?> _showBatchPicker(List<String> batches) => showDialog<String>(
+    context: context,
+    builder: (dialogContext) {
+      var selected = batches.first;
+      return StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Select your batch'),
+          content: DropdownButtonFormField<String>(
+            initialValue: selected,
+            items: batches
+                .map(
+                  (batch) => DropdownMenuItem(value: batch, child: Text(batch)),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value != null) setDialogState(() => selected = value);
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, selected),
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 
   Future<(String, String, String)?> _showIdentityDialog({
     ExamSchedule? initial,
@@ -428,6 +550,57 @@ class _ExamManagementScreenState extends State<ExamManagementScreen> {
             ),
     );
   }
+}
+
+class _XlsxImportProgress extends StatelessWidget {
+  final ValueNotifier<int> progress;
+
+  const _XlsxImportProgress({required this.progress});
+
+  static const _steps = [
+    'Reading Excel workbook',
+    'Finding available programs',
+    'Locating selected batch',
+    'Extracting exam records',
+    'Preparing exam schedule',
+  ];
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Importing exam schedule'),
+    content: ValueListenableBuilder<int>(
+      valueListenable: progress,
+      builder: (context, current, _) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Center(child: CircularProgressIndicator()),
+          const SizedBox(height: 16),
+          for (var index = 0; index < _steps.length; index++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 24,
+                    child: index < current
+                        ? const Icon(Icons.check_circle, size: 18)
+                        : index == current
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.circle_outlined, size: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(_steps[index])),
+                ],
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
 }
 
 class ExamReviewScreen extends StatefulWidget {

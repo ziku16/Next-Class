@@ -159,6 +159,26 @@ void main() {
   });
 
   group('Flow 5: WeekScreen Grouped Day Stream & Empty State Tests', () {
+    testWidgets('keeps the week date and classes visible without broken week arrows', (tester) async {
+      await tester.pumpWidget(_wrap(
+        WeekScreen(
+          referenceDate: refDate,
+          initialClasses: sampleClasses,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Previous week'), findsNothing);
+      expect(find.byTooltip('Next week'), findsNothing);
+      expect(find.byIcon(Icons.chevron_left_rounded), findsNothing);
+      expect(find.byIcon(Icons.chevron_right_rounded), findsNothing);
+      expect(find.text('01'), findsOneWidget);
+      expect(find.text('OCTOBER'), findsOneWidget);
+      expect(find.text('2026'), findsWidgets);
+      expect(find.text('Computer Science'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('Renders all 7 days with section headers, compact cards, and empty day states', (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.0;

@@ -17,20 +17,210 @@ class ExamSheetFormatException implements Exception {
   String toString() => message;
 }
 
-/// Reads XLSX workbook cells locally and sends supported content to the Worker.
+class _XlsxSheet {
+  final String name;
+  final Map<int, Map<int, String>> rows;
+  const _XlsxSheet(this.name, this.rows);
+}
+
+class _XlsxWorkbook {
+  final List<_XlsxSheet> sheets;
+  const _XlsxWorkbook(this.sheets);
+}
+
+class _ExamHeaders {
+  final int row;
+  final int dateColumn;
+  final int timeColumn;
+  final int courseCodeColumn;
+  final int courseTitleColumn;
+  final int classColumn;
+  final int roomColumn;
+  const _ExamHeaders({
+    required this.row,
+    required this.dateColumn,
+    required this.timeColumn,
+    required this.courseCodeColumn,
+    required this.courseTitleColumn,
+    required this.classColumn,
+    required this.roomColumn,
+  });
+}
+
+/// Reads XLSX date sheets locally and sends only PDFs/images to the Worker.
 class ExamSheetParserService {
   static const String _workerBaseUrl = String.fromEnvironment(
     'NEXTCLASS_WORKER_URL',
   );
 
-  static bool isSupportedFile(String fileName) {
+  static bool isSupportedFile(String fileName, {String? mimeType}) {
     final extension = fileName.toLowerCase().split('.').last;
-    return const {'pdf', 'xlsx', 'jpg', 'jpeg', 'png'}.contains(extension);
+    return isXlsx(fileName, mimeType: mimeType) ||
+        const {'pdf', 'jpg', 'jpeg', 'png'}.contains(extension);
+  }
+
+  static bool isXlsx(String fileName, {String? mimeType}) =>
+      fileName.toLowerCase().trim().endsWith('.xlsx') ||
+      mimeType?.toLowerCase().split(';').first.trim() ==
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+  static const Map<int, String> _semesterRomans = {
+    1: 'I',
+    2: 'II',
+    3: 'III',
+    4: 'IV',
+    5: 'V',
+    6: 'VI',
+    7: 'VII',
+    8: 'VIII',
+    9: 'IX',
+    10: 'X',
+    11: 'XI',
+  };
+
+  static String normalizeBatch(String value) {
+    final normalized = value.trim().toUpperCase().replaceAll(
+      RegExp(r'[\s\-‐‑‒–—]+'),
+      '-',
+    );
+    final match = RegExp(r'^([A-Z]+)-([A-Z]+|\d{1,2})$').firstMatch(normalized);
+    if (match == null) return normalized;
+    final program = match.group(1)!;
+    final semester = match.group(2)!;
+    final number = int.tryParse(semester);
+    if (number != null) {
+      final roman = _semesterRomans[number];
+      return roman == null ? normalized : '$program-$roman';
+    }
+    final knownRoman = _semesterRomans.values.contains(semester);
+    return knownRoman ? '$program-$semester' : normalized;
+  }
+
+  /// Returns the distinct class values found in every worksheet.
+  static List<String> discoverXlsxBatches(Uint8List bytes) {
+    final workbook = _readXlsxWorkbook(bytes);
+    final batches = <String, String>{};
+    var inspectedHeaders = 0;
+    for (final sheet in workbook.sheets) {
+      final header = _findExamHeaders(sheet.rows);
+      if (header == null) continue;
+      inspectedHeaders++;
+      for (final row in sheet.rows.entries.where(
+        (entry) => entry.key > header.row,
+      )) {
+        final batch = _cellText(row.value[header.classColumn]).trim();
+        if (batch.isNotEmpty) {
+          batches.putIfAbsent(normalizeBatch(batch), () => batch);
+        }
+      }
+    }
+    if (inspectedHeaders == 0) {
+      throw const ExamSheetFormatException(
+        'Required exam columns were not found. Check that the worksheet has Date, Time, Course Code, Course Title, Class, and Hall/Room headers.',
+      );
+    }
+    if (batches.isEmpty) {
+      throw const ExamSheetFormatException(
+        'No class batches were found in this workbook.',
+      );
+    }
+    return batches.values.toList()
+      ..sort((a, b) => normalizeBatch(a).compareTo(normalizeBatch(b)));
+  }
+
+  /// Parses a selected class from the worksheet whose name matches its program prefix.
+  static List<ExamItem> parseXlsxBatch(
+    Uint8List bytes, {
+    required String selectedBatch,
+    String? scheduleId,
+  }) {
+    final normalizedBatch = normalizeBatch(selectedBatch);
+    final match = RegExp(r'^([A-Z]+)-([IVX]+)$').firstMatch(normalizedBatch);
+    if (match == null || !_semesterRomans.values.contains(match.group(2))) {
+      throw const ExamSheetFormatException(
+        'Selected batch was not found in this workbook.',
+      );
+    }
+    final program = match.group(1)!;
+    final workbook = _readXlsxWorkbook(bytes);
+    final matchingSheets = workbook.sheets.where(
+      (candidate) => candidate.name.toUpperCase() == program,
+    );
+    final sheet = matchingSheets.isEmpty ? null : matchingSheets.first;
+    if (sheet == null) {
+      throw ExamSheetFormatException(
+        'No matching program worksheet was found for $program.',
+      );
+    }
+    final headers = _findExamHeaders(sheet.rows);
+    if (headers == null) {
+      throw ExamSheetFormatException(
+        'Required columns are missing from the $program worksheet. Expected Date, Time, Course Code, Course Title, Class, and Hall/Room.',
+      );
+    }
+    final exams = <ExamItem>[];
+    final seenRecords = <String>{};
+    for (final rowEntry in sheet.rows.entries.where(
+      (entry) => entry.key > headers.row,
+    )) {
+      final row = rowEntry.value;
+      final rowBatch = _cellText(row[headers.classColumn]).trim();
+      if (rowBatch.isEmpty || normalizeBatch(rowBatch) != normalizedBatch) {
+        continue;
+      }
+      final dateValue = _cellText(row[headers.dateColumn]).trim();
+      final timeValue = _cellText(row[headers.timeColumn]).trim();
+      final courseCode = _cellText(row[headers.courseCodeColumn]).trim();
+      final courseTitle = _cellText(row[headers.courseTitleColumn]).trim();
+      final venue = _cellText(row[headers.roomColumn]).trim();
+      final date = _parseXlsxDate(dateValue);
+      final times = _parseTimeRange(timeValue);
+      if (date == null || times == null) {
+        throw ExamSheetFormatException(
+          'Invalid date or time in row ${rowEntry.key} for $rowBatch. Check the date and 24-hour time range.',
+        );
+      }
+      if (courseCode.isEmpty || courseTitle.isEmpty || venue.isEmpty) {
+        throw ExamSheetFormatException(
+          'Required course code, course title, or Hall/Room is missing in row ${rowEntry.key}. No incomplete exam was added.',
+        );
+      }
+      final recordKey = [
+        date.toIso8601String(),
+        times.$1,
+        times.$2,
+        courseCode.toUpperCase(),
+        venue.toUpperCase(),
+      ].join('|');
+      if (!seenRecords.add(recordKey)) continue;
+      exams.add(
+        ExamItem(
+          id: 'exam_${DateTime.now().microsecondsSinceEpoch}_${exams.length}',
+          scheduleId: scheduleId ?? 'pending',
+          subject: '$courseCode — $courseTitle',
+          examDate: date,
+          startTime: times.$1,
+          endTime: times.$2,
+          venue: venue,
+        ),
+      );
+    }
+    if (exams.isEmpty) {
+      throw ExamSheetFormatException(
+        'No exams were found for the selected batch $selectedBatch.',
+      );
+    }
+    exams.sort((a, b) {
+      final dateOrder = a.localDate.compareTo(b.localDate);
+      return dateOrder != 0 ? dateOrder : a.startTime!.compareTo(b.startTime!);
+    });
+    return exams;
   }
 
   static Future<List<ExamItem>> parse({
     required Uint8List bytes,
     required String fileName,
+    String? mimeType,
     required String program,
     required String semester,
     required String section,
@@ -40,12 +230,13 @@ class ExamSheetParserService {
     Duration requestTimeout = const Duration(seconds: 40),
   }) async {
     final extension = fileName.toLowerCase().split('.').last;
-    if (extension == 'xls') {
+    final xlsxFile = isXlsx(fileName, mimeType: mimeType);
+    if (extension == 'xls' && !xlsxFile) {
       throw const ExamSheetFormatException(
         'Legacy .xls files are not supported. Please save this sheet as .xlsx or PDF.',
       );
     }
-    if (!isSupportedFile(fileName)) {
+    if (!isSupportedFile(fileName, mimeType: mimeType)) {
       throw const ExamSheetFormatException(
         'Unsupported file. Choose a PDF, XLSX, JPG, JPEG, or PNG date sheet.',
       );
@@ -55,34 +246,28 @@ class ExamSheetParserService {
         'The selected file is empty or unreadable.',
       );
     }
+    if (xlsxFile) {
+      return parseXlsxBatch(
+        bytes,
+        selectedBatch: section,
+        scheduleId: scheduleId,
+      );
+    }
     final baseUrl = (workerBaseUrlOverride ?? _workerBaseUrl).trim();
     if (baseUrl.isEmpty) {
       throw const ExamSheetFormatException(
         'Exam scanning is not configured yet. Please try again later.',
       );
     }
-    final Map<String, dynamic> document;
-    if (extension == 'xlsx') {
-      final workbookText = xlsxToText(bytes);
-      if (workbookText.trim().isEmpty) {
-        throw const ExamSheetFormatException(
-          'No readable rows were found in this Excel file.',
-        );
-      }
-      if (workbookText.length > 300000) {
-        throw const ExamSheetFormatException(
-          'This spreadsheet is too large to scan. Please save a smaller sheet as PDF.',
-        );
-      }
-      document = {'mimeType': 'text/plain', 'text': workbookText};
-    } else {
-      final mimeType = switch (extension) {
-        'pdf' => 'application/pdf',
-        'png' => 'image/png',
-        _ => 'image/jpeg',
-      };
-      document = {'mimeType': mimeType, 'data': base64Encode(bytes)};
-    }
+    final documentMimeType = switch (extension) {
+      'pdf' => 'application/pdf',
+      'png' => 'image/png',
+      _ => 'image/jpeg',
+    };
+    final document = {
+      'mimeType': documentMimeType,
+      'data': base64Encode(bytes),
+    };
 
     final client = httpClient ?? http.Client();
     final ownsClient = httpClient == null;
@@ -255,6 +440,234 @@ class ExamSheetParserService {
       return null;
     }
     return parsed;
+  }
+
+  static String _cellText(String? value) => value ?? '';
+
+  static _ExamHeaders? _findExamHeaders(Map<int, Map<int, String>> rows) {
+    for (final entry in rows.entries) {
+      final columns = <String, int>{};
+      for (final cell in entry.value.entries) {
+        columns[_normalizeHeader(cell.value)] = cell.key;
+      }
+      int? find(Iterable<String> aliases) {
+        for (final alias in aliases) {
+          final column = columns[alias];
+          if (column != null) return column;
+        }
+        return null;
+      }
+
+      final date = find(const ['date', 'examdate', 'examday']);
+      final time = find(const ['time', 'examtime', 'timerange']);
+      final courseCode = find(const ['coursecode', 'subjectcode', 'courseno']);
+      final courseTitle = find(const [
+        'coursetitle',
+        'coursename',
+        'subject',
+        'course',
+      ]);
+      final classColumn = find(const ['class', 'batch']);
+      final room = find(const [
+        'hallroom',
+        'hall',
+        'room',
+        'venue',
+        'location',
+      ]);
+      if (date != null &&
+          time != null &&
+          courseCode != null &&
+          courseTitle != null &&
+          classColumn != null &&
+          room != null) {
+        return _ExamHeaders(
+          row: entry.key,
+          dateColumn: date,
+          timeColumn: time,
+          courseCodeColumn: courseCode,
+          courseTitleColumn: courseTitle,
+          classColumn: classColumn,
+          roomColumn: room,
+        );
+      }
+    }
+    return null;
+  }
+
+  static String _normalizeHeader(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+  static DateTime? _parseXlsxDate(String value) {
+    final numeric = double.tryParse(value.trim());
+    if (numeric != null && numeric >= 1 && numeric < 100000) {
+      final date = DateTime(1899, 12, 30).add(Duration(days: numeric.floor()));
+      return DateTime(date.year, date.month, date.day);
+    }
+    final isoDate = RegExp(r'^(\d{4})-(\d{2})-(\d{2})')
+        .firstMatch(value.trim());
+    if (isoDate != null) {
+      final year = int.parse(isoDate.group(1)!);
+      final month = int.parse(isoDate.group(2)!);
+      final day = int.parse(isoDate.group(3)!);
+      final date = DateTime(year, month, day);
+      if (date.year != year || date.month != month || date.day != day) {
+        return null;
+      }
+      return date;
+    }
+    final parsed = _parseDate(value);
+    if (parsed != null) return parsed;
+    final namedMonth = RegExp(r'^(\d{1,2})[-\s]([A-Za-z]{3,9})[-\s](\d{4})$')
+        .firstMatch(value.trim());
+    if (namedMonth == null) return null;
+    const months = {
+      'JAN': 1,
+      'FEB': 2,
+      'MAR': 3,
+      'APR': 4,
+      'MAY': 5,
+      'JUN': 6,
+      'JUL': 7,
+      'AUG': 8,
+      'SEP': 9,
+      'OCT': 10,
+      'NOV': 11,
+      'DEC': 12,
+    };
+    final day = int.parse(namedMonth.group(1)!);
+    final month = months[namedMonth.group(2)!.substring(0, 3).toUpperCase()];
+    final year = int.parse(namedMonth.group(3)!);
+    if (month == null) return null;
+    final date = DateTime(year, month, day);
+    return date.year == year && date.month == month && date.day == day
+        ? date
+        : null;
+  }
+
+  static (String, String)? _parseTimeRange(String raw) {
+    final match = RegExp(
+      r'^\s*(\d{3,4}|\d{1,2}:\d{2})\s*[-–—]\s*(\d{3,4}|\d{1,2}:\d{2})\s*$',
+    ).firstMatch(raw);
+    if (match == null) return null;
+    String? time(String value) {
+      int hour;
+      int minute;
+      if (value.contains(':')) {
+        final parts = value.split(':');
+        hour = int.parse(parts[0]);
+        minute = int.parse(parts[1]);
+      } else {
+        final digits = value.padLeft(4, '0');
+        hour = int.parse(digits.substring(0, 2));
+        minute = int.parse(digits.substring(2));
+      }
+      if (hour > 23 || minute > 59) return null;
+      return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    }
+
+    final start = time(match.group(1)!);
+    final end = time(match.group(2)!);
+    if (start == null || end == null || start.compareTo(end) >= 0) return null;
+    return (start, end);
+  }
+
+  static _XlsxWorkbook _readXlsxWorkbook(Uint8List bytes) {
+    try {
+      if (bytes.isEmpty) throw const FormatException('Empty workbook');
+      final archive = ZipDecoder().decodeBytes(bytes);
+      String? fileText(String path) {
+        final entry = archive.findFile(path);
+        final content = entry?.getContent()?.toUint8List();
+        return content == null
+            ? null
+            : utf8.decode(content, allowMalformed: true);
+      }
+
+      final workbookXml = fileText('xl/workbook.xml');
+      final relsXml = fileText('xl/_rels/workbook.xml.rels');
+      if (workbookXml == null || relsXml == null) {
+        throw const FormatException('Workbook sheet metadata is missing');
+      }
+      final sharedXml = fileText('xl/sharedStrings.xml');
+      final sharedStrings = sharedXml == null
+          ? <String>[]
+          : XmlDocument.parse(sharedXml)
+                .findAllElements('si')
+                .map(
+                  (item) => item
+                      .findAllElements('t')
+                      .map((node) => node.innerText)
+                      .join(),
+                )
+                .toList();
+      final relationships = <String, String>{};
+      for (final relationship in XmlDocument.parse(
+        relsXml,
+      ).findAllElements('Relationship')) {
+        final id = relationship.getAttribute('Id');
+        final target = relationship.getAttribute('Target');
+        if (id == null || target == null) continue;
+        relationships[id] = _normalizeWorksheetPath(target);
+      }
+      final sheets = <_XlsxSheet>[];
+      for (final sheetNode in XmlDocument.parse(
+        workbookXml,
+      ).findAllElements('sheet')) {
+        final name = sheetNode.getAttribute('name');
+        final relationId = sheetNode.getAttribute('r:id');
+        final path = relationId == null ? null : relationships[relationId];
+        if (name == null || path == null) continue;
+        final xml = fileText(path);
+        if (xml == null) continue;
+        final rows = <int, Map<int, String>>{};
+        final document = XmlDocument.parse(xml);
+        for (final cell in document.findAllElements('c')) {
+          final coordinate = _cellCoordinate(cell.getAttribute('r') ?? '');
+          if (coordinate == null) continue;
+          final (rowIndex, columnIndex) = coordinate;
+          final type = cell.getAttribute('t');
+          final values = cell.findElements('v');
+          final raw = values.isEmpty ? '' : values.first.innerText;
+          final value = switch (type) {
+            's' =>
+              int.tryParse(raw) != null && int.parse(raw) < sharedStrings.length
+                  ? sharedStrings[int.parse(raw)]
+                  : '',
+            'inlineStr' =>
+              cell.findAllElements('t').map((node) => node.innerText).join(),
+            'str' => raw,
+            _ => raw,
+          };
+          rows.putIfAbsent(rowIndex, () => <int, String>{})[columnIndex] =
+              value;
+        }
+        if (rows.isNotEmpty) sheets.add(_XlsxSheet(name, rows));
+      }
+      if (sheets.isEmpty) {
+        throw const FormatException('No readable worksheets found');
+      }
+      return _XlsxWorkbook(sheets);
+    } on ExamSheetFormatException {
+      rethrow;
+    } catch (error) {
+      throw ExamSheetFormatException(
+        'This XLSX workbook is invalid or corrupted: $error',
+      );
+    }
+  }
+
+  static String _normalizeWorksheetPath(String target) {
+    final segments = <String>[];
+    for (final segment in target.replaceFirst(RegExp(r'^/+'), '').split('/')) {
+      if (segment == '..') {
+        if (segments.isNotEmpty) segments.removeLast();
+      } else if (segment.isNotEmpty && segment != '.') {
+        segments.add(segment);
+      }
+    }
+    final path = segments.join('/');
+    return path.startsWith('xl/') ? path : 'xl/$path';
   }
 
   static String? _normalizeTime(String? raw) {
