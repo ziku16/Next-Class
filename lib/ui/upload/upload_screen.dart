@@ -215,8 +215,8 @@ class _UploadScreenState extends State<UploadScreen> {
     final title = switch (code) {
       TimetableScanErrorCode.rateLimitExceeded ||
       TimetableScanErrorCode.apiQuotaExceeded => "SCAN LIMIT REACHED",
-      TimetableScanErrorCode.configuration ||
-      TimetableScanErrorCode.authentication => "SCANNING NOT CONFIGURED",
+      TimetableScanErrorCode.configuration => "SCANNING NOT CONFIGURED",
+      TimetableScanErrorCode.authentication => "AI SERVICE UNAVAILABLE",
       TimetableScanErrorCode.modelUnavailable ||
       TimetableScanErrorCode.serverError => "AI SERVICE UNAVAILABLE",
       TimetableScanErrorCode.parserFormatError => "FORMAT ERROR",
@@ -235,7 +235,7 @@ class _UploadScreenState extends State<UploadScreen> {
             TimetableScanErrorCode.apiQuotaExceeded =>
               "Scan limit reached. Try again after your allowance resets.",
             TimetableScanErrorCode.configuration ||
-            TimetableScanErrorCode.authentication => "AI scanning is not configured correctly. Add a valid API key in the release configuration.",
+            TimetableScanErrorCode.authentication => "AI scanning is unavailable right now. Please try again later.",
             TimetableScanErrorCode.modelUnavailable ||
             TimetableScanErrorCode.serverError =>
               "AI service temporarily unavailable. Try again later.",

@@ -343,7 +343,10 @@ void main() {
       await provider.extractClasses();
 
       expect(provider.errorCode, TimetableScanErrorCode.authentication);
-      expect(provider.errorMessage, contains('configured correctly'));
+      expect(
+        provider.errorMessage,
+        'AI scanning is unavailable right now. Please try again later.',
+      );
     });
   });
 }

@@ -162,7 +162,8 @@ class UploadProvider extends ChangeNotifier {
     TimetableScanErrorCode.rateLimitExceeded =>
       'Scan limit reached. Try again after your allowance resets.',
     TimetableScanErrorCode.configuration ||
-    TimetableScanErrorCode.authentication => 'AI scanning is not configured correctly. Add a valid Gemini API key in the release configuration.',
+    TimetableScanErrorCode.authentication =>
+      'AI scanning is unavailable right now. Please try again later.',
     TimetableScanErrorCode.modelUnavailable =>
       'AI scanning is temporarily unavailable. Try again later.',
     TimetableScanErrorCode.apiQuotaExceeded =>
