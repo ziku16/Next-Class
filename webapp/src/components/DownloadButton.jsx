@@ -4,7 +4,7 @@ import { getDownloadArtifact } from '../data/releaseConfig.js';
 
 export default function DownloadButton({ className = '', availableLabel = 'Download APK', unavailableLabel = 'Download NextClass' }) {
   const release = useRelease();
-  const artifact = getDownloadArtifact(release, import.meta.env.DEV);
+  const artifact = getDownloadArtifact(release);
   if (!artifact) {
     if (release.status === 'loading') return <button className={`button button-disabled ${className}`} type="button" disabled aria-live="polite"><span className="mini-loader" />Checking for release…</button>;
     return <button className={`button button-disabled ${className}`} type="button" disabled title="No public download is available."><ArrowDownToLine size={19} />{unavailableLabel}</button>;

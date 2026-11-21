@@ -1,9 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, statSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
-import { formatFileSize, getLocalRelease, getStudentReleaseNotes, isOfficialApkAsset, isPublicReleaseData, bundledReleaseMetadata, getDownloadArtifact, parseReleaseField, parseSha256Digest } from '../src/data/releaseConfig.js';
+import { formatFileSize, getLocalRelease, getStudentReleaseNotes, isOfficialApkAsset, isPublicReleaseData, getDownloadArtifact, parseReleaseField, parseSha256Digest } from '../src/data/releaseConfig.js';
 
 const localReleaseEnv = {
   DEV: true,
@@ -35,8 +32,9 @@ test('rejects missing, empty, non-APK, or unofficial release assets', () => {
 
 test('formats APK size without inventing values', () => {
   assert.equal(formatFileSize(0), null);
-  assert.equal(formatFileSize(1024), '1 KB');
-  assert.equal(formatFileSize(2 * 1024 * 1024), '2.0 MB');
+  assert.equal(formatFileSize(1024), '1 KiB');
+  assert.equal(formatFileSize(25809884), '24.6 MiB');
+  assert.equal(formatFileSize(2 * 1024 * 1024), '2.0 MiB');
 });
 
 test('extracts only explicit release metadata fields', () => {
@@ -71,6 +69,7 @@ test('keeps student-facing release notes and removes engineering metadata', () =
   const notes = getStudentReleaseNotes(`## What's New
 - Exam date-sheet scanning is easier to review.
 - Quiz reminders are more reliable.
+Download and install the APK to get NextClass v1.0.1.
 Architecture: Universal (armeabi-v7a, arm64-v8a, x86_64)
 Minimum Android: Android 7.0 (API 24)
 SHA-256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -78,6 +77,15 @@ Signing certificate fingerprint: internal-only`);
   assert.deepEqual(notes, [
     'Exam date-sheet scanning is easier to review.',
     'Quiz reminders are more reliable.',
+  ]);
+});
+test('shows the requested student-friendly v1.0.1 feature highlights', () => {
+  assert.deepEqual(getStudentReleaseNotes('AI scanning update', 'v1.0.1'), [
+    'Scan your class timetable with AI, then review it before saving.',
+    'Set class reminders so you are ready for what is next.',
+    'Track quizzes, topics, and completion in one place.',
+    'Use Exam Mode to focus on exams during active exam schedules.',
+    'See your weekly class schedule at a glance.',
   ]);
 });
 test('requires a hosted official APK before enabling a public release', () => {
@@ -88,23 +96,11 @@ test('requires a hosted official APK before enabling a public release', () => {
   assert.equal(isPublicReleaseData({ url: 'https://example.com/NextClass.apk' }), false);
   assert.equal(isPublicReleaseData(null), false);
 });
-test('shows the existing APK metadata without marking it as a public release', () => {
-  const webappRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  const apkPath = resolve(webappRoot, 'public/downloads/NextClass-v1.0.1-universal.apk');
-  const pubspec = readFileSync(resolve(webappRoot, '../pubspec.yaml'), 'utf8');
-  assert.match(pubspec, /^version:\s*1\.0\.1\+2\s*$/m);
-  assert.equal(bundledReleaseMetadata.version, '1.0.1');
-  assert.equal(bundledReleaseMetadata.sizeBytes, statSync(apkPath).size);
-  assert.equal(bundledReleaseMetadata.size, '24.6 MB');
-  assert.equal(isPublicReleaseData({ ...bundledReleaseMetadata, url: '/downloads/NextClass-v1.0.1-universal.apk', isLocal: true }), false);
-});
-
-test('uses the bundled APK only for development when no public release exists', () => {
-  const local = getDownloadArtifact({ status: 'unavailable', data: null }, true);
-  assert.equal(local.url, '/downloads/NextClass-v1.0.1-universal.apk');
-  assert.equal(local.fileName, 'NextClass-v1.0.1-universal.apk');
-  assert.equal(local.isLocal, true);
-  assert.equal(getDownloadArtifact({ status: 'unavailable', data: null }, false), null);
+test('does not advertise a missing local APK when there is no public release', () => {
+  for (const status of ['loading', 'unavailable', 'error']) {
+    assert.equal(getDownloadArtifact({ status, data: null }, true), null);
+    assert.equal(getDownloadArtifact({ status, data: null }, false), null);
+  }
 
   const publicRelease = { version: '1.0.2', url: 'https://github.com/ziku16/Next-Class/releases/download/v1.0.2/NextClass.apk' };
   assert.equal(getDownloadArtifact({ status: 'available', data: publicRelease }, false), publicRelease);

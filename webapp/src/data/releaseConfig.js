@@ -15,7 +15,7 @@ export const releaseConfig = {
 
 export const formatFileSize = (bytes) => {
   if (!Number.isFinite(bytes) || bytes <= 0) return null;
-  const units = ['B', 'KB', 'MB', 'GB'];
+  const units = ['B', 'KiB', 'MiB', 'GiB'];
   let value = bytes;
   let unit = 0;
   while (value >= 1024 && unit < units.length - 1) {
@@ -23,16 +23,6 @@ export const formatFileSize = (bytes) => {
     unit += 1;
   }
   return `${value.toFixed(unit >= 2 ? 1 : 0)} ${units[unit]}`;
-};
-
-// Metadata for the APK already bundled in public/downloads; it is not a hosted release.
-export const bundledReleaseMetadata = {
-  version: '1.0.1',
-  sizeBytes: 25824416,
-  size: formatFileSize(25824416),
-  fileName: 'NextClass-v1.0.1-universal.apk',
-  url: '/downloads/NextClass-v1.0.1-universal.apk',
-  isLocal: true,
 };
 
 export function parseReleaseField(body, label) {
@@ -50,8 +40,18 @@ export function parseSha256Digest({ digest, body } = {}) {
 
 const hiddenReleaseDetail = /^(?:architecture|abis?|sha\s*-?\s*256|checksum|signing(?:\s+(?:certificate(?:\s+fingerprint)?|identity|fingerprint))?|minimum\s+android|android\s+(?:version|sdk|api(?:\s+level)?)|minimum\s+(?:sdk|api)|sdk(?:\s+(?:version|level))?|api(?:\s+(?:version|level))?|build\s+(?:configuration|config|type)|version\s+code|application\s+id)\s*:/i;
 const hiddenPlatformDetail = /\b(?:armeabi-v7a|arm64-v8a|x86_64|API\s*level\s*\d+|SDK\s*\d+)\b/i;
+const studentReleaseNotesByVersion = {
+  'v1.0.1': [
+    'Scan your class timetable with AI, then review it before saving.',
+    'Set class reminders so you are ready for what is next.',
+    'Track quizzes, topics, and completion in one place.',
+    'Use Exam Mode to focus on exams during active exam schedules.',
+    'See your weekly class schedule at a glance.',
+  ],
+};
 
-export function getStudentReleaseNotes(body) {
+export function getStudentReleaseNotes(body, version) {
+  if (studentReleaseNotesByVersion[version]) return studentReleaseNotesByVersion[version];
   if (typeof body !== 'string') return [];
   return body.split(/\r?\n/)
     .map((line) => line
@@ -61,6 +61,7 @@ export function getStudentReleaseNotes(body) {
       .replace(/[*_`~]/g, '')
       .trim())
     .filter((line) => line && !/^(?:what['’]?s new|release notes?)$/i.test(line))
+    .filter((line) => !/^download and install the apk to get nextclass\b/i.test(line))
     .filter((line) => !hiddenReleaseDetail.test(line) && !hiddenPlatformDetail.test(line))
     .slice(0, 6);
 }
@@ -113,7 +114,7 @@ export function getLocalRelease(env = buildEnv) {
   };
 }
 
-export function getDownloadArtifact(release, isDevelopment = false) {
+export function getDownloadArtifact(release) {
   if (release?.status === 'available' && isPublicReleaseData(release.data)) return release.data;
-  return isDevelopment ? bundledReleaseMetadata : null;
+  return null;
 }

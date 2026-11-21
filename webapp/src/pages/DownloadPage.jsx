@@ -4,7 +4,7 @@ import DownloadButton from '../components/DownloadButton.jsx';
 import PageIntro from '../components/PageIntro.jsx';
 import usePageMeta from '../components/usePageMeta.js';
 import { useRelease } from '../hooks/useRelease.jsx';
-import { bundledReleaseMetadata, getStudentReleaseNotes, isPublicReleaseData } from '../data/releaseConfig.js';
+import { getStudentReleaseNotes, isPublicReleaseData } from '../data/releaseConfig.js';
 
 function ReleaseStatus({ status, releasesUrl }) {
   if (status === 'loading') return <p className="release-status" aria-live="polite"><span className="mini-loader" />Checking the current release…</p>;
@@ -15,9 +15,9 @@ function ReleaseStatus({ status, releasesUrl }) {
 export default function DownloadPage() {
   const release = useRelease();
   const available = release.status === 'available' && isPublicReleaseData(release.data);
-  const details = available ? release.data : bundledReleaseMetadata;
+  const details = available ? release.data : null;
   const status = release.status === 'available' && !available ? 'unavailable' : release.status;
-  const notes = details ? getStudentReleaseNotes(details.notes) : [];
+  const notes = details ? getStudentReleaseNotes(details.notes, details.version) : [];
   usePageMeta({ title: 'Download NextClass for Android', description: 'Get the current NextClass Android release, see what is new, and follow the simple installation steps.', path: '/download' });
 
   return <div className="page-shell shell download-page">
