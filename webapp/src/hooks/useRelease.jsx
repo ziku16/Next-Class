@@ -25,7 +25,7 @@ export function ReleaseProvider({ children }) {
       })
       .then((releaseInfo) => {
         if (controller.signal.aborted) return;
-        const asset = releaseInfo?.assets?.find(isOfficialApkAsset);
+        const asset = releaseInfo?.assets?.find((candidate) => isOfficialApkAsset(candidate, releaseInfo?.tag_name));
         const releaseBody = releaseInfo?.body ?? '';
         if (!releaseInfo || releaseInfo.draft || releaseInfo.prerelease || !asset) {
           setRelease({ status: 'unavailable', data: null });

@@ -4,6 +4,9 @@ import '../../data/models/scan_quota.dart';
 import '../../data/models/user_settings.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../domain/services/notification_service.dart';
+import '../../domain/services/app_update_service.dart';
+import '../../platform/app_update_platform.dart';
+import '../../state/app_update_controller.dart';
 import '../../state/settings_provider.dart';
 import '../shared/confirmation_dialogs.dart';
 import '../shared/undo_snackbar.dart';
@@ -22,6 +25,7 @@ class SettingsScreen extends StatefulWidget {
   final SettingsRepository? settingsRepository;
   final UserSettings? initialSettings;
   final ScanQuota? initialQuota;
+  final AppUpdateController? appUpdateController;
 
   final VoidCallback? onEditTimetable;
   final VoidCallback? onUploadTimetable;
@@ -35,6 +39,7 @@ class SettingsScreen extends StatefulWidget {
     this.settingsRepository,
     this.initialSettings,
     this.initialQuota,
+    this.appUpdateController,
     this.onEditTimetable,
     this.onUploadTimetable,
     this.onContactSupport,
@@ -46,13 +51,26 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
   late final SettingsProvider _provider;
+  late final AppUpdateController _updateController;
   bool _ownsProvider = false;
+  bool _ownsUpdateController = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    if (widget.appUpdateController != null) {
+      _updateController = widget.appUpdateController!;
+    } else {
+      _ownsUpdateController = true;
+      _updateController = AppUpdateController(
+        updateService: AppUpdateService(),
+        platform: AndroidAppUpdatePlatform(),
+      )..initialize();
+    }
+    _updateController.addListener(_onProviderUpdate);
     if (widget.settingsProvider != null) {
       _provider = widget.settingsProvider!;
     } else {
@@ -70,11 +88,83 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _updateController.removeListener(_onProviderUpdate);
+    if (_ownsUpdateController) _updateController.dispose();
     _provider.removeListener(_onProviderUpdate);
     if (_ownsProvider) {
       _provider.dispose();
     }
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _updateController.onAppResumed();
+  }
+
+  Future<void> _handleUpdateNow() async {
+    final hasUpdate = await _updateController.checkForUpdates();
+    if (!hasUpdate || !mounted) return;
+    final release = _updateController.availableRelease;
+    if (release == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('NextClass ${release.version} is ready'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('What’s New'),
+              const SizedBox(height: 8),
+              ..._studentReleaseNotes(release).map((note) => Padding(
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: Text('• $note'),
+                  )),
+              const SizedBox(height: 12),
+              const Text('Download and install this update? Android will ask you to confirm installation.'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Later')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Download update')),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) await _updateController.downloadAndInstall();
+  }
+
+  List<String> _studentReleaseNotes(AppUpdateRelease release) {
+    if (release.version == '1.0.2') {
+      return const [
+        'Scan your class timetable with AI and review it before saving.',
+        'Get class reminders so you are ready for what is next.',
+        'Track quizzes and topics in one place.',
+        'Use Exam Mode to focus on upcoming exams.',
+        'See your classes laid out across the week.',
+      ];
+    }
+    final notes = release.notes
+        .split(RegExp(r'\r?\n'))
+        .map((line) => line.replaceFirst(RegExp(r'^\s*(?:#{1,6}\s*|[-*+]\s*)'), '').trim())
+        .where((line) => line.isNotEmpty && !RegExp(r'^(?:architecture|sha-?256|minimum android|version code|application id)\s*:', caseSensitive: false).hasMatch(line))
+        .take(6)
+        .toList();
+    return notes.isEmpty ? const ['Bug fixes and improvements.'] : notes;
+  }
+
+  Future<void> _contactSupport() async {
+    if (widget.onContactSupport != null) {
+      widget.onContactSupport!();
+      return;
+    }
+    final launched = await _updateController.launchSupportEmail('muhammadzakriaawan237@gmail.com');
+    if (!launched && mounted) {
+      UndoSnackBar.showMessage(context, message: 'Email muhammadzakriaawan237@gmail.com for support.');
+    }
   }
 
   void _onProviderUpdate() {
@@ -180,7 +270,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           children: [
             // ================= REMINDERS =================
-            _buildSectionHeader(theme, 'REMINDERS', stamp: 'P307 / 00 07'),
+            _buildSectionHeader(theme, 'REMINDERS'),
             _buildCardGroup(
               theme,
               children: [
@@ -499,7 +589,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
 
             // ================= NOTIFICATIONS =================
-            _buildSectionHeader(theme, 'NOTIFICATIONS', stamp: 'NC03024 / CONST 00'),
+            _buildSectionHeader(theme, 'NOTIFICATIONS'),
             _buildCardGroup(
               theme,
               children: [
@@ -562,7 +652,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
 
             // ================= TIMETABLE =================
-            _buildSectionHeader(theme, 'TIMETABLE', stamp: 'TT2026 / SYNC 01'),
+            _buildSectionHeader(theme, 'TIMETABLE'),
             _buildCardGroup(
               theme,
               children: [
@@ -630,7 +720,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
 
             // ================= ABOUT =================
-            _buildSectionHeader(theme, 'ABOUT', stamp: 'NC100 / REL 01'),
+            _buildSectionHeader(theme, 'ABOUT'),
             _buildCardGroup(
               theme,
               children: [
@@ -649,7 +739,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   subtitle: Text(
-                    'support@nextclass.app',
+                    'muhammadzakriaawan237@gmail.com',
                     style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       color: nc.textSecondary,
@@ -658,13 +748,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   trailing: Icon(Icons.open_in_new_rounded, size: 20, color: nc.icon),
-                  onTap: widget.onContactSupport ??
-                      () {
-                        UndoSnackBar.showMessage(
-                          context,
-                          message: 'Support contact: support@nextclass.app',
-                        );
-                      },
+                  onTap: _contactSupport,
                 ),
                 Divider(height: 1, thickness: 1.5, color: nc.border.withValues(alpha: 0.2)),
                 ListTile(
@@ -713,8 +797,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(color: nc.border, width: 1.5),
                     ),
-                    child: const Text(
-                      '1.0.0',
+                    child: Text(
+                      _updateController.installedVersion,
                       style: TextStyle(
                         fontFamily: 'SpaceGrotesk',
                         fontWeight: FontWeight.w900,
@@ -722,6 +806,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         color: Colors.black,
                       ),
                     ),
+                  ),
+                ),
+                Divider(height: 1, thickness: 1.5, color: nc.border.withValues(alpha: 0.2)),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('App updates', style: TextStyle(fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.w900, fontSize: 15, color: nc.textPrimary)),
+                      const SizedBox(height: 4),
+                      Text(_updateController.message ?? 'Check GitHub for the latest stable release.', style: TextStyle(fontFamily: 'SpaceGrotesk', color: nc.textSecondary, fontWeight: FontWeight.w700, fontSize: 13)),
+                      if (_updateController.state == AppUpdateState.downloading) ...[
+                        const SizedBox(height: 12),
+                        LinearProgressIndicator(value: _updateController.downloadProgress),
+                        const SizedBox(height: 4),
+                        Text(_updateController.totalBytes > 0 ? '${(_updateController.downloadedBytes / (1024 * 1024)).toStringAsFixed(1)} / ${(_updateController.totalBytes / (1024 * 1024)).toStringAsFixed(1)} MiB' : 'Preparing download…', style: TextStyle(color: nc.textSecondary, fontSize: 12)),
+                      ],
+                      if (_updateController.state == AppUpdateState.permissionRequired) ...[
+                        const SizedBox(height: 8),
+                        OutlinedButton(onPressed: _updateController.openInstallPermissionSettings, child: const Text('Open install permission settings')),
+                      ],
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          key: const Key('update_now_button'),
+                          onPressed: _updateController.isBusy ? null : _handleUpdateNow,
+                          icon: _updateController.isBusy ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.system_update_alt),
+                          label: Text(_updateController.isBusy ? 'Please wait…' : 'Update Now'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 if (widget.onSignOut != null) ...[
@@ -771,7 +887,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionHeader(ThemeData theme, String title, {String? stamp}) {
+  Widget _buildSectionHeader(ThemeData theme, String title) {
     final nc = context.ncColors;
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8, right: 4),
@@ -790,27 +906,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-          if (stamp != null) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFE500),
-                borderRadius: BorderRadius.circular(3),
-                border: Border.all(color: Colors.black, width: 1.5),
-              ),
-              child: Text(
-                stamp,
-                style: const TextStyle(
-                  fontFamily: 'SpaceGrotesk',
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );

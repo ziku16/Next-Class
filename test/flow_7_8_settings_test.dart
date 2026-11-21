@@ -313,6 +313,13 @@ void main() {
       expect(find.text('NOTIFICATIONS'), findsOneWidget);
       expect(find.text('TIMETABLE'), findsOneWidget);
       expect(find.text('ABOUT'), findsOneWidget);
+      expect(find.text('P307 / 00 07'), findsNothing);
+      expect(find.text('NC03024 / CONST 00'), findsNothing);
+      expect(find.text('TT2026 / SYNC 01'), findsNothing);
+      expect(find.text('NC100 / REL 01'), findsNothing);
+      expect(find.text('Contact support'), findsOneWidget);
+      expect(find.text('muhammadzakriaawan237@gmail.com'), findsOneWidget);
+      expect(find.byKey(const Key('update_now_button')), findsOneWidget);
 
       // Class reminder segmented button
       expect(find.byKey(const Key('class_reminder_segmented')), findsOneWidget);
@@ -430,6 +437,7 @@ void main() {
 
       // Scroll and tap sign out
       await tester.ensureVisible(find.byKey(const Key('sign_out_tile')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('sign_out_tile')));
       await tester.pumpAndSettle();
 

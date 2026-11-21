@@ -11,6 +11,7 @@ execFileSync(process.execPath, [viteCli, 'build'], { cwd: project, stdio: 'inher
 
 // The local development APK is never part of the production website bundle.
 await rm(path.join(output, 'downloads', 'NextClass-v1.0.1-universal.apk'), { force: true });
+await rm(path.join(output, 'downloads', 'NextClass-v1.0.1.apk'), { force: true });
 
 const configuredUrl = process.env.VITE_SITE_URL?.trim().replace(/\/+$/, '') ?? '';
 let siteUrl = '';

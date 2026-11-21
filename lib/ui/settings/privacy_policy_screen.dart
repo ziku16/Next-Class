@@ -150,7 +150,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             content:
                 'If you have questions, feedback, or concerns regarding this Privacy Policy or your data, please contact:\n\n'
                 'NextClass Support\n'
-                'Email: support@nextclass.app\n'
+                'Email: muhammadzakriaawan237@gmail.com\n'
                 'Website: https://nextclass.app',
           ),
           const SizedBox(height: 24),

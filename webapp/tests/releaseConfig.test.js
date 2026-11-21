@@ -4,9 +4,9 @@ import { formatFileSize, getLocalRelease, getStudentReleaseNotes, isOfficialApkA
 
 const localReleaseEnv = {
   DEV: true,
-  VITE_LOCAL_APK_URL: '/downloads/NextClass-v1.0.1-universal.apk',
+  VITE_LOCAL_APK_URL: '/downloads/NextClass-v1.0.1.apk',
   VITE_LOCAL_APK_VERSION: '1.0.1',
-  VITE_LOCAL_APK_FILENAME: 'NextClass-v1.0.1-universal.apk',
+  VITE_LOCAL_APK_FILENAME: 'NextClass-v1.0.1.apk',
   VITE_LOCAL_APK_SIZE_BYTES: '25824416',
   VITE_LOCAL_APK_ARCHITECTURE: 'Universal (armeabi-v7a, arm64-v8a, x86_64)',
   VITE_LOCAL_APK_MIN_ANDROID: 'Android 7.0 (API 24)',
@@ -14,20 +14,23 @@ const localReleaseEnv = {
 };
 
 test('accepts a non-empty uploaded APK from the configured official repository', () => {
-  assert.equal(isOfficialApkAsset({
-    name: 'nextclass.apk',
+  const asset = {
+    name: 'NextClass-v1.0.1.apk',
     state: 'uploaded',
     size: 1024,
-    browser_download_url: 'https://github.com/ziku16/Next-Class/releases/download/v1.0.1/nextclass.apk',
-  }), true);
+    browser_download_url: 'https://github.com/ziku16/Next-Class/releases/download/v1.0.1/NextClass-v1.0.1.apk',
+  };
+  assert.equal(isOfficialApkAsset(asset), true);
+  assert.equal(isOfficialApkAsset(asset, 'v1.0.1'), true);
+  assert.equal(isOfficialApkAsset(asset, 'v1.0.2'), false);
 });
 
 test('rejects missing, empty, non-APK, or unofficial release assets', () => {
   assert.equal(isOfficialApkAsset(null), false);
-  assert.equal(isOfficialApkAsset({ name: 'nextclass.apk', state: 'uploaded', size: 0, browser_download_url: 'https://github.com/ziku16/Next-Class/releases/download/v1/a.apk' }), false);
-  assert.equal(isOfficialApkAsset({ name: 'notes.txt', state: 'uploaded', size: 12, browser_download_url: 'https://github.com/ziku16/Next-Class/releases/download/v1/a.txt' }), false);
-  assert.equal(isOfficialApkAsset({ name: 'nextclass.apk', state: 'uploaded', size: 12, browser_download_url: 'https://example.com/ziku16/Next-Class/releases/download/v1/a.apk' }), false);
-  assert.equal(isOfficialApkAsset({ name: 'nextclass.apk', state: 'uploaded', size: 12, browser_download_url: 'https://github.com/other/repo/releases/download/v1/a.apk' }), false);
+  assert.equal(isOfficialApkAsset({ name: 'NextClass-v1.0.1.apk', state: 'uploaded', size: 0, browser_download_url: 'https://github.com/ziku16/Next-Class/releases/download/v1.0.1/NextClass-v1.0.1.apk' }), false);
+  assert.equal(isOfficialApkAsset({ name: 'notes.txt', state: 'uploaded', size: 12, browser_download_url: 'https://github.com/ziku16/Next-Class/releases/download/v1.0.1/notes.txt' }), false);
+  assert.equal(isOfficialApkAsset({ name: 'NextClass-v1.0.1.apk', state: 'uploaded', size: 12, browser_download_url: 'https://example.com/ziku16/Next-Class/releases/download/v1.0.1/NextClass-v1.0.1.apk' }), false);
+  assert.equal(isOfficialApkAsset({ name: 'NextClass-v1.0.1.apk', state: 'uploaded', size: 12, browser_download_url: 'https://github.com/other/repo/releases/download/v1.0.1/NextClass-v1.0.1.apk' }), false);
 });
 
 test('formats APK size without inventing values', () => {
@@ -88,12 +91,24 @@ test('shows the requested student-friendly v1.0.1 feature highlights', () => {
     'See your weekly class schedule at a glance.',
   ]);
 });
+test('shows student-friendly v1.0.2 highlights', () => {
+  assert.deepEqual(getStudentReleaseNotes('', 'v1.0.2'), [
+    'Scan your class timetable with AI and review it before saving.',
+    'Get class reminders so you are ready for what is next.',
+    'Track quizzes and topics in one place.',
+    'Use Exam Mode to focus on upcoming exams.',
+    'See your classes laid out across the week.',
+  ]);
+});
 test('requires a hosted official APK before enabling a public release', () => {
-  const hostedUrl = 'https://github.com/ziku16/Next-Class/releases/download/v1.0.1/NextClass.apk';
-  assert.equal(isPublicReleaseData({ url: hostedUrl, isLocal: false }), true);
-  assert.equal(isPublicReleaseData({ url: hostedUrl, isLocal: true }), false);
-  assert.equal(isPublicReleaseData({ url: '/downloads/NextClass.apk' }), false);
-  assert.equal(isPublicReleaseData({ url: 'https://example.com/NextClass.apk' }), false);
+  const hostedUrl = 'https://github.com/ziku16/Next-Class/releases/download/v1.0.2/NextClass-v1.0.2.apk';
+  const metadata = { version: 'v1.0.2', fileName: 'NextClass-v1.0.2.apk', url: hostedUrl, isLocal: false };
+  assert.equal(isPublicReleaseData(metadata), true);
+  assert.equal(isPublicReleaseData({ ...metadata, isLocal: true }), false);
+  assert.equal(isPublicReleaseData({ ...metadata, fileName: 'NextClass-v1.0.2-universal.apk' }), false);
+  assert.equal(isPublicReleaseData({ ...metadata, url: 'https://github.com/ziku16/Next-Class/releases/download/v1.0.1/NextClass-v1.0.2.apk' }), false);
+  assert.equal(isPublicReleaseData({ ...metadata, url: '/downloads/NextClass-v1.0.2.apk' }), false);
+  assert.equal(isPublicReleaseData({ ...metadata, url: 'https://example.com/NextClass-v1.0.2.apk' }), false);
   assert.equal(isPublicReleaseData(null), false);
 });
 test('does not advertise a missing local APK when there is no public release', () => {
@@ -102,6 +117,6 @@ test('does not advertise a missing local APK when there is no public release', (
     assert.equal(getDownloadArtifact({ status, data: null }, false), null);
   }
 
-  const publicRelease = { version: '1.0.2', url: 'https://github.com/ziku16/Next-Class/releases/download/v1.0.2/NextClass.apk' };
+  const publicRelease = { version: 'v1.0.2', fileName: 'NextClass-v1.0.2.apk', url: 'https://github.com/ziku16/Next-Class/releases/download/v1.0.2/NextClass-v1.0.2.apk' };
   assert.equal(getDownloadArtifact({ status: 'available', data: publicRelease }, false), publicRelease);
 });

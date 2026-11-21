@@ -6,7 +6,7 @@ export const releaseConfig = {
   owner: 'ziku16',
   repository: 'Next-Class',
   repositoryUrl: 'https://github.com/ziku16/Next-Class',
-  issuesUrl: 'https://github.com/ziku16/Next-Class/issues',
+  supportEmail: 'muhammadzakriaawan237@gmail.com',
   releasesUrl: 'https://github.com/ziku16/Next-Class/releases',
   latestReleaseApi: 'https://api.github.com/repos/ziku16/Next-Class/releases/latest',
   assetPathPrefix: '/ziku16/Next-Class/releases/download/',
@@ -41,6 +41,13 @@ export function parseSha256Digest({ digest, body } = {}) {
 const hiddenReleaseDetail = /^(?:architecture|abis?|sha\s*-?\s*256|checksum|signing(?:\s+(?:certificate(?:\s+fingerprint)?|identity|fingerprint))?|minimum\s+android|android\s+(?:version|sdk|api(?:\s+level)?)|minimum\s+(?:sdk|api)|sdk(?:\s+(?:version|level))?|api(?:\s+(?:version|level))?|build\s+(?:configuration|config|type)|version\s+code|application\s+id)\s*:/i;
 const hiddenPlatformDetail = /\b(?:armeabi-v7a|arm64-v8a|x86_64|API\s*level\s*\d+|SDK\s*\d+)\b/i;
 const studentReleaseNotesByVersion = {
+  'v1.0.2': [
+    'Scan your class timetable with AI and review it before saving.',
+    'Get class reminders so you are ready for what is next.',
+    'Track quizzes and topics in one place.',
+    'Use Exam Mode to focus on upcoming exams.',
+    'See your classes laid out across the week.',
+  ],
   'v1.0.1': [
     'Scan your class timetable with AI, then review it before saving.',
     'Set class reminders so you are ready for what is next.',
@@ -69,19 +76,30 @@ export function isPublicReleaseData(data) {
   if (!data || data.isLocal === true || typeof data.url !== 'string') return false;
   try {
     const url = new URL(data.url);
+    const version = typeof data.version === 'string' ? data.version.replace(/^[vV]/, '') : '';
+    const expectedName = version ? `NextClass-v${version}.apk` : '';
+    const tag = typeof data.version === 'string' ? data.version : '';
     return url.protocol === 'https:'
       && url.hostname === 'github.com'
-      && url.pathname.startsWith(releaseConfig.assetPathPrefix)
-      && url.pathname.toLowerCase().endsWith('.apk');
+      && url.pathname === `${releaseConfig.assetPathPrefix}${encodeURIComponent(tag)}/${expectedName}`
+      && data.fileName === expectedName
+      && url.pathname.endsWith(`/${expectedName}`);
   } catch {
     return false;
   }
 }
-export function isOfficialApkAsset(asset) {
+export function isOfficialApkAsset(asset, tagName) {
   if (!asset || asset.state !== 'uploaded' || !asset.name?.toLowerCase().endsWith('.apk') || asset.size <= 0) return false;
   try {
     const url = new URL(asset.browser_download_url);
-    return url.protocol === 'https:' && url.hostname === 'github.com' && url.pathname.startsWith(releaseConfig.assetPathPrefix);
+    const tag = typeof tagName === 'string' ? tagName : url.pathname.split('/')[5];
+    const version = tag?.replace(/^[vV]/, '');
+    const expectedName = version ? `NextClass-v${version}.apk` : '';
+    return url.protocol === 'https:'
+      && url.hostname === 'github.com'
+      && url.pathname === `${releaseConfig.assetPathPrefix}${encodeURIComponent(tag ?? '')}/${expectedName}`
+      && asset.name === expectedName
+      && url.pathname.endsWith(`/${expectedName}`);
   } catch {
     return false;
   }
@@ -97,7 +115,7 @@ export function getLocalRelease(env = buildEnv) {
   const minimumAndroid = env.VITE_LOCAL_APK_MIN_ANDROID;
   const checksum = parseSha256Digest({ digest: `sha256:${env.VITE_LOCAL_APK_SHA256 ?? ''}` });
   if (typeof url !== 'string' || !url.startsWith('/') || url.startsWith('//') || url.includes('..')) return null;
-  if (!version || !fileName?.toLowerCase().endsWith('.apk') || !Number.isSafeInteger(sizeBytes) || sizeBytes <= 0) return null;
+  if (!version || fileName !== `NextClass-v${version.replace(/^[vV]/, '')}.apk` || !Number.isSafeInteger(sizeBytes) || sizeBytes <= 0) return null;
   if (!architecture || !minimumAndroid || !checksum) return null;
   return {
     version,
